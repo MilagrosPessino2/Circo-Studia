@@ -29,12 +29,8 @@ export default class CargarMateriasAprobadasInicialWebPart extends BaseClientSid
         isDarkTheme: this._isDarkTheme,
         environmentMessage: this._environmentMessage,
         hasTeamsContext: !!this.context.sdks.microsoftTeams,
-<<<<<<< HEAD
         userDisplayName: this.context.pageContext.user.displayName,
         context: this.context
-=======
-        userDisplayName: this.context.pageContext.user.displayName
->>>>>>> 57340911cefd1bb41d0e14903c54b17e115e4487
       }
     );
 

@@ -1,6 +1,6 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
-<<<<<<< HEAD
+
   "id": "71e87811-0c54-4fa8-a2da-8d2c6fdae4e0",
   "alias": "CargarMateriasAprobadasInicialWebPart",
   "componentType": "WebPart",
@@ -8,25 +8,11 @@
   "version": "*",
   "manifestVersion": 2,
 
-=======
-  "id": "460df2ba-ea8c-4267-9acf-6a46fccbfb58",
-  "alias": "CargarMateriasAprobadasInicialWebPart",
-  "componentType": "WebPart",
-
-  // The "*" signifies that the version should be taken from the package.json
-  "version": "*",
-  "manifestVersion": 2,
-
-  // If true, the component can only be installed on sites where Custom Script is allowed.
-  // Components that allow authors to embed arbitrary script code should set this to true.
-  // https://support.office.com/en-us/article/Turn-scripting-capabilities-on-or-off-1f2c515f-5d7e-448a-9fd7-835da935584f
->>>>>>> 57340911cefd1bb41d0e14903c54b17e115e4487
   "requiresCustomScript": false,
   "supportedHosts": ["SharePointWebPart", "TeamsPersonalApp", "TeamsTab", "SharePointFullPage"],
   "supportsThemeVariants": true,
 
   "preconfiguredEntries": [{
-<<<<<<< HEAD
     "groupId": "5c03119e-3074-46fd-976b-c60198311f70",
     "group": { "default": "Advanced" },
     "title": { "default": "CargarMateriasAprobadasInicial" },
@@ -34,15 +20,6 @@
     "officeFabricIconFontName": "Page",
     "properties": {
       "description": "CargarMateriasAprobadasInicial"
-=======
-    "groupId": "5c03119e-3074-46fd-976b-c60198311f70", // Advanced
-    "group": { "default": "Advanced" },
-    "title": { "default": "cargarMateriasAprobadasInicial" },
-    "description": { "default": "cargarMateriasAprobadasInicial description" },
-    "officeFabricIconFontName": "Page",
-    "properties": {
-      "description": "cargarMateriasAprobadasInicial"
->>>>>>> 57340911cefd1bb41d0e14903c54b17e115e4487
     }
   }]
 }
