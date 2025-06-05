@@ -1,11 +1,6 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import {
-    Dropdown,
-    IDropdownOption,
-    PrimaryButton,
-    Spinner,
-} from '@fluentui/react'
+import { Dropdown, PrimaryButton, Spinner } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import { ISeleccionarCarreraProps } from './ISeleccionarCarreraProps'
 import { ICarreraItem } from '../../../interfaces'
@@ -13,18 +8,11 @@ import CargarMateriasAprobadasInicial from '../../cargarMateriasAprobadasInicial
 
 const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
     context,
-    description,
-    isDarkTheme,
-    environmentMessage,
-    hasTeamsContext,
-    userDisplayName,
-}): JSX.Element => {
+}) => {
     const sp = getSP(context)
 
-    const [carreras, setCarreras] = useState<IDropdownOption[]>([])
-    const [selectedCarreraId, setSelectedCarreraId] = useState<
-        number | undefined
-    >()
+    const [carreras, setCarreras] = useState<ICarreraItem[]>([])
+    const [selectedCarreraId, setSelectedCarreraId] = useState<string>('')
     const [estudianteId, setEstudianteId] = useState<number | null>(null)
     const [loading, setLoading] = useState<boolean>(true)
     const [mostrarCargaMaterias, setMostrarCargaMaterias] =
@@ -43,10 +31,8 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
             const coincidencia = estudianteItems.find(
                 (item) => item.usuario?.Id === currentUserId
             )
-
             if (!coincidencia) {
                 console.error('No se encontró el estudiante relacionado.')
-                setLoading(false)
                 return
             }
 
@@ -66,11 +52,7 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
                 .getByTitle('Carrera')
                 .items.select('Id', 'nombre')()
 
-            const opciones: IDropdownOption[] = carrerasData.map((carrera) => ({
-                key: carrera.Id,
-                text: carrera.nombre,
-            }))
-            setCarreras(opciones)
+            setCarreras(carrerasData)
         } catch (error) {
             console.error('Error cargando datos:', error)
         } finally {
@@ -91,9 +73,8 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
         try {
             await sp.web.lists.getByTitle('Inscripto').items.add({
                 idEstudianteId: estudianteId,
-                idCarreraId: selectedCarreraId,
+                idCarreraId: parseInt(selectedCarreraId),
             })
-
             alert('Carrera seleccionada correctamente.')
             setMostrarCargaMaterias(true)
         } catch (error) {
@@ -102,39 +83,49 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
     }
 
     if (loading) {
-        return <Spinner label='Cargando opciones...' />
+        return <Spinner label='Cargando datos...' />
     }
 
     if (mostrarCargaMaterias) {
         return (
             <CargarMateriasAprobadasInicial
                 context={context}
-                description={description}
-                isDarkTheme={isDarkTheme}
-                environmentMessage={environmentMessage}
-                hasTeamsContext={hasTeamsContext}
-                userDisplayName={userDisplayName}
+                description=''
+                environmentMessage=''
+                hasTeamsContext={false}
+                isDarkTheme={false}
+                userDisplayName=''
             />
         )
     }
 
     return (
-        <div>
-            <h2>Bienvenido a Circo Studio</h2>
-            <p>Seleccioná tu carrera para continuar:</p>
+        <div style={{ maxWidth: '400px', margin: 'auto' }}>
+            <h2 style={{ textAlign: 'center' }}>Bienvenido a Circo Studio</h2>
+            <p style={{ textAlign: 'center' }}>
+                Seleccioná tu carrera para continuar:
+            </p>
             <Dropdown
-                placeholder='Elegí una carrera'
                 label='Carrera'
-                options={carreras}
-                onChange={(_, option): void =>
-                    setSelectedCarreraId(Number(option?.key))
+                placeholder='Elegí una carrera'
+                options={carreras.map((c) => ({
+                    key: c.Id,
+                    text: c.nombre,
+                }))}
+                selectedKey={
+                    selectedCarreraId ? parseInt(selectedCarreraId) : undefined
+                }
+                onChange={(_, option) =>
+                    setSelectedCarreraId(String(option?.key))
                 }
             />
-            <PrimaryButton
-                text='Confirmar'
-                onClick={guardarSeleccion}
-                disabled={!selectedCarreraId || !estudianteId}
-            />
+            <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                <PrimaryButton
+                    text='Confirmar'
+                    onClick={guardarSeleccion}
+                    disabled={!selectedCarreraId || !estudianteId}
+                />
+            </div>
         </div>
     )
 }

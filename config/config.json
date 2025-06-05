@@ -25,14 +25,6 @@
           "manifest": "./src/webparts/cargarMateriasAprobadasInicial/CargarMateriasAprobadasInicialWebPart.manifest.json"
         }
       ]
-    },
-    "cargar-materias-aprobadas-inicial-web-part": {
-      "components": [
-        {
-          "entrypoint": "./lib/webparts/cargarMateriasAprobadasInicial/CargarMateriasAprobadasInicialWebPart.js",
-          "manifest": "./src/webparts/cargarMateriasAprobadasInicial/CargarMateriasAprobadasInicialWebPart.manifest.json"
-        }
-      ]
     }
   },
   "externals": {},
