@@ -1,11 +1,12 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
-  "id": "61de8fe0-867a-479a-a377-dd97450de92e",
-  "alias": "PlanDeEstudioIngInfWebPart",
+  "id": "71e87811-0c54-4fa8-a2da-8d2c6fdae4e0",
+  "alias": "CargarMateriasAprobadasInicialWebPart",
   "componentType": "WebPart",
 
   "version": "*",
   "manifestVersion": 2,
+
   "requiresCustomScript": false,
   "supportedHosts": ["SharePointWebPart", "TeamsPersonalApp", "TeamsTab", "SharePointFullPage"],
   "supportsThemeVariants": true,
@@ -13,11 +14,11 @@
   "preconfiguredEntries": [{
     "groupId": "5c03119e-3074-46fd-976b-c60198311f70",
     "group": { "default": "Advanced" },
-    "title": { "default": "PlanDeEstudioIngInf" },
-    "description": { "default": "PlanDeEstudioIngInf description" },
+    "title": { "default": "CargarMateriasAprobadasInicial" },
+    "description": { "default": "CargarMateriasAprobadasInicial description" },
     "officeFabricIconFontName": "Page",
     "properties": {
-      "description": "PlanDeEstudioIngInf"
+      "description": "CargarMateriasAprobadasInicial"
     }
   }]
 }

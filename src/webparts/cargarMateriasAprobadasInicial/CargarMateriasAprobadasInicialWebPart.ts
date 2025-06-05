@@ -8,22 +8,22 @@ import {
 import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 import { IReadonlyTheme } from '@microsoft/sp-component-base';
 
-import * as strings from 'PlanDeEstudioIngInfWebPartStrings';
-import PlanDeEstudioIngInf from './components/PlanDeEstudioIngInf';
-import { IPlanDeEstudioIngInfProps } from './components/IPlanDeEstudioIngInfProps';
+import * as strings from 'CargarMateriasAprobadasInicialWebPartStrings';
+import CargarMateriasAprobadasInicial from './components/CargarMateriasAprobadasInicial';
+import { ICargarMateriasAprobadasInicialProps } from './components/ICargarMateriasAprobadasInicialProps';
 
-export interface IPlanDeEstudioIngInfWebPartProps {
+export interface ICargarMateriasAprobadasInicialWebPartProps {
   description: string;
 }
 
-export default class PlanDeEstudioIngInfWebPart extends BaseClientSideWebPart<IPlanDeEstudioIngInfWebPartProps> {
+export default class CargarMateriasAprobadasInicialWebPart extends BaseClientSideWebPart<ICargarMateriasAprobadasInicialWebPartProps> {
 
   private _isDarkTheme: boolean = false;
   private _environmentMessage: string = '';
 
   public render(): void {
-    const element: React.ReactElement<IPlanDeEstudioIngInfProps> = React.createElement(
-      PlanDeEstudioIngInf,
+    const element: React.ReactElement<ICargarMateriasAprobadasInicialProps> = React.createElement(
+      CargarMateriasAprobadasInicial,
       {
         description: this.properties.description,
         isDarkTheme: this._isDarkTheme,

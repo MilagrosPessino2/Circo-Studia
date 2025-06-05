@@ -1,4 +1,4 @@
-declare interface IPlanDeEstudioIngInfWebPartStrings {
+declare interface ICargarMateriasAprobadasInicialWebPartStrings {
   PropertyPaneDescription: string;
   BasicGroupName: string;
   DescriptionFieldLabel: string;
@@ -13,7 +13,7 @@ declare interface IPlanDeEstudioIngInfWebPartStrings {
   UnknownEnvironment: string;
 }
 
-declare module 'PlanDeEstudioIngInfWebPartStrings' {
-  const strings: IPlanDeEstudioIngInfWebPartStrings;
+declare module 'CargarMateriasAprobadasInicialWebPartStrings' {
+  const strings: ICargarMateriasAprobadasInicialWebPartStrings;
   export = strings;
 }

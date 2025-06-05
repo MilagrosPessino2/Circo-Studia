@@ -1,4 +1,4 @@
-declare interface IOfertaMateriasIngInfWebPartStrings {
+declare interface ISeleccionarCarreraWebPartStrings {
   PropertyPaneDescription: string;
   BasicGroupName: string;
   DescriptionFieldLabel: string;
@@ -13,7 +13,7 @@ declare interface IOfertaMateriasIngInfWebPartStrings {
   UnknownEnvironment: string;
 }
 
-declare module 'OfertaMateriasIngInfWebPartStrings' {
-  const strings: IOfertaMateriasIngInfWebPartStrings;
+declare module 'SeleccionarCarreraWebPartStrings' {
+  const strings: ISeleccionarCarreraWebPartStrings;
   export = strings;
 }

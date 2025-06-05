@@ -1,6 +1,6 @@
 import { WebPartContext } from "@microsoft/sp-webpart-base";
 
-export interface IOfertaMateriasIngInfProps {
+export interface ICargarMateriasAprobadasInicialProps {
   description: string;
   isDarkTheme: boolean;
   environmentMessage: string;

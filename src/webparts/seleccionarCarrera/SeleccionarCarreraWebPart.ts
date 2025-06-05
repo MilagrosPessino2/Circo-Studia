@@ -8,22 +8,22 @@ import {
 import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 import { IReadonlyTheme } from '@microsoft/sp-component-base';
 
-import * as strings from 'OfertaMateriasIngInfWebPartStrings';
-import OfertaMateriasIngInf from './components/OfertaMateriasIngInf';
-import { IOfertaMateriasIngInfProps } from './components/IOfertaMateriasIngInfProps';
+import * as strings from 'SeleccionarCarreraWebPartStrings';
+import SeleccionarCarrera from './components/SeleccionarCarrera';
+import { ISeleccionarCarreraProps } from './components/ISeleccionarCarreraProps';
 
-export interface IOfertaMateriasIngInfWebPartProps {
+export interface ISeleccionarCarreraWebPartProps {
   description: string;
 }
 
-export default class OfertaMateriasIngInfWebPart extends BaseClientSideWebPart<IOfertaMateriasIngInfWebPartProps> {
+export default class SeleccionarCarreraWebPart extends BaseClientSideWebPart<ISeleccionarCarreraWebPartProps> {
 
   private _isDarkTheme: boolean = false;
   private _environmentMessage: string = '';
 
   public render(): void {
-    const element: React.ReactElement<IOfertaMateriasIngInfProps> = React.createElement(
-      OfertaMateriasIngInf,
+    const element: React.ReactElement<ISeleccionarCarreraProps> = React.createElement(
+      SeleccionarCarrera,
       {
         description: this.properties.description,
         isDarkTheme: this._isDarkTheme,
