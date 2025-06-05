@@ -5,6 +5,7 @@ import { getSP } from '../../../pnpjsConfig'
 import { ISeleccionarCarreraProps } from './ISeleccionarCarreraProps'
 import { ICarreraItem } from '../../../interfaces'
 import CargarMateriasAprobadasInicial from '../../cargarMateriasAprobadasInicial/components/CargarMateriasAprobadasInicial'
+import styles from './SeleccionarCarrera.module.scss'
 
 const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
     context,
@@ -100,12 +101,13 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
     }
 
     return (
-        <div style={{ maxWidth: '400px', margin: 'auto' }}>
-            <h2 style={{ textAlign: 'center' }}>Bienvenido a Circo Studio</h2>
-            <p style={{ textAlign: 'center' }}>
+        <div className={styles.seleccionarCarrera}>
+            <h2 className={styles.titulo}>Bienvenido a Circo Studio</h2>
+            <p className={styles.descripcion}>
                 Seleccioná tu carrera para continuar:
             </p>
             <Dropdown
+                className={styles.dropdown}
                 label='Carrera'
                 placeholder='Elegí una carrera'
                 options={carreras.map((c) => ({
@@ -121,6 +123,7 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
             />
             <div style={{ marginTop: '20px', textAlign: 'center' }}>
                 <PrimaryButton
+                    className={styles.boton}
                     text='Confirmar'
                     onClick={guardarSeleccion}
                     disabled={!selectedCarreraId || !estudianteId}
