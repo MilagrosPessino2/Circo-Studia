@@ -14,3 +14,22 @@ export interface ICarreraItem {
     Id: number
     nombre: string
 }
+
+export interface IMateriaEnCurso {
+  codigo: number;
+  nombre: string;
+  comision: string;
+  horario: string;
+  aula: string;
+  modalidad: string;
+  idOferta: number;
+}
+export interface IInscriptoItem {
+    Id: number;
+    idEstudianteId: number;
+    idCarrera?: {
+        Id: number;
+        codCarrera?: number;
+        nombre?: string;
+    };
+}

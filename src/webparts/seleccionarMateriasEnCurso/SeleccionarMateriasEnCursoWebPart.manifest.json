@@ -1,0 +1,25 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "846cb25f-9839-4108-9191-5b6a788912d8",
+  "alias": "SeleccionarMateriasEnCursoWebPart",
+  "componentType": "WebPart",
+
+  "version": "*",
+  "manifestVersion": 2,
+
+
+  "requiresCustomScript": false,
+  "supportedHosts": ["SharePointWebPart", "TeamsPersonalApp", "TeamsTab", "SharePointFullPage"],
+  "supportsThemeVariants": true,
+
+  "preconfiguredEntries": [{
+    "groupId": "5c03119e-3074-46fd-976b-c60198311f70", 
+    "group": { "default": "Advanced" },
+    "title": { "default": "SeleccionarMateriasEnCurso" },
+    "description": { "default": "SeleccionarMateriasEnCurso description" },
+    "officeFabricIconFontName": "Page",
+    "properties": {
+      "description": "SeleccionarMateriasEnCurso"
+    }
+  }]
+}
