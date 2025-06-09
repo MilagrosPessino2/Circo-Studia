@@ -10,6 +10,7 @@ export interface ICircoStudia{
     field_5: string;
     context: WebPartContext;
 }
+
 export interface ICarreraItem {
     Id: number
     nombre: string
