@@ -6,7 +6,11 @@ import { ISeleccionarCarreraProps } from '../../seleccionarCarrera/components/IS
 
 interface IOfertaDeMaterias {
     Id: number
-    codMateriaId: number
+    codMateria?: {
+        Id: number
+        codMateria?: number
+        nombre?: string
+    }
     codComision?: {
         Id: number
         descripcion?: string
@@ -26,30 +30,27 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
 
     const cargarOfertas = async (): Promise<void> => {
         try {
-            console.log(
-                '🔄 Cargando datos de OfertaDeMaterias con descripción de comisión...'
-            )
+            console.log('🔄 Cargando ofertas con comisiones y materias...')
 
             const items = await sp.web.lists
                 .getByTitle('OfertaDeMaterias')
                 .items.select(
                     'Id',
-                    'codMateriaId',
+                    'codMateria/Id',
+                    'codMateria/codMateria',
+                    'codMateria/nombre',
                     'codComision/Id',
                     'codComision/descripcion',
                     'fechaDePublicacion',
                     'Cuatrimestre',
                     'modalidad'
                 )
-                .expand('codComision')()
+                .expand('codMateria', 'codComision')()
 
-            console.log('📦 Datos obtenidos con comisión expandida:', items)
+            console.log('📦 Ofertas completas:', items)
             setOfertas(items)
         } catch (error) {
-            console.error(
-                '❌ Error al cargar datos de OfertaDeMaterias:',
-                error
-            )
+            console.error('❌ Error al cargar datos:', error)
         } finally {
             setLoading(false)
         }
@@ -74,9 +75,10 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     <tr>
                         <th>ID</th>
                         <th>codMateria</th>
-                        <th>descripcion Comisión</th>
-                        <th>fecha</th>
-                        <th>cuatrimestre</th>
+                        <th>nombreMateria</th>
+                        <th>descripción Comisión</th>
+                        {/* <th>fecha</th> */}
+                        {/* <th>cuatrimestre</th> */}
                         <th>modalidad</th>
                     </tr>
                 </thead>
@@ -84,18 +86,20 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     {ofertas.map((o) => (
                         <tr key={o.Id}>
                             <td>{o.Id}</td>
-                            <td>{o.codMateriaId}</td>
+                            <td>{o.codMateria?.codMateria ?? 'N/A'}</td>
+                            <td>{o.codMateria?.nombre ?? 'Sin nombre'}</td>
                             <td>
                                 {o.codComision?.descripcion ??
                                     'Sin descripción'}
                             </td>
-                            <td>{o.fechaDePublicacion}</td>
-                            <td>{o.Cuatrimestre}</td>
+                            {/* <td>{o.fechaDePublicacion}</td> */}
+                            {/* <td>{o.Cuatrimestre}</td> */}
                             <td>{o.modalidad}</td>
                         </tr>
                     ))}
                 </tbody>
             </table>
+            <h4>Test 1</h4>
         </div>
     )
 }
