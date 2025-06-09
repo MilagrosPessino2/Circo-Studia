@@ -20,6 +20,9 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
   const [carreraSeleccionada, setCarreraSeleccionada] = useState<string>('')
   const [carreraId, setCarreraId] = useState<number | null>(null)
   const [materias, setMaterias] = useState<{ id: number; nombre: string; checked: boolean }[]>([])
+  const [mensaje, setMensaje] = useState<string | null>(null)
+  const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null)
+
 
   useEffect(() => {
     const fetchCarrera = async () => {
@@ -159,6 +162,76 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
     }
   }
 
+  const handleGuardarMaterias = async () => {
+  try {
+    setMensaje(null)
+    const user = await sp.web.currentUser()
+    const currentUserId = user.Id
+
+    const estudianteItems = await sp.web.lists
+      .getByTitle('Estudiante')
+      .items.select('ID', 'usuario/Id')
+      .expand('usuario')()
+
+    const coincidencia = estudianteItems.find(
+      (item) => item.usuario?.Id === currentUserId
+    )
+
+    if (!coincidencia) {
+      setMensaje('Estudiante no encontrado.')
+      setTipoMensaje('error')
+      return
+    }
+
+    const estudianteID = coincidencia.ID
+    const materiasSeleccionadas = materias.filter((m) => m.checked)
+
+    if (materiasSeleccionadas.length === 0) {
+      setMensaje('Debes seleccionar al menos una materia.')
+      setTipoMensaje('error')
+      return
+    }
+
+    // ✅ Obtener materias ya guardadas en Estado
+    const materiasExistentes = await sp.web.lists
+      .getByTitle('Estado')
+      .items
+      .filter(`idEstudianteId eq ${estudianteID}`)
+      .select('id0')() // id0 es el campo lookup al código de materia (ajustá si usás otro)
+
+    const codigosExistentes = materiasExistentes.map((m: any) => m.id0)
+
+    // ✅ Filtrar las materias que no están aún en Estado
+    const nuevasMaterias = materiasSeleccionadas.filter(
+      (m) => !codigosExistentes.includes(m.id.toString())
+    )
+
+    if (nuevasMaterias.length === 0) {
+      setMensaje('Todas las materias seleccionadas ya estaban registradas.')
+      setTipoMensaje('error')
+      return
+    }
+
+    await Promise.all(
+      nuevasMaterias.map((materia) =>
+        sp.web.lists.getByTitle('Estado').items.add({
+          idEstudianteId: estudianteID,
+          id0Id: materia.id, // 👈 id0 es lookup, por eso id0Id
+          condicion: 'A',
+        })
+      )
+    )
+
+    setMensaje(`${nuevasMaterias.length} materia(s) guardadas correctamente.`)
+    setTipoMensaje('exito')
+  } catch (error) {
+    console.error('Error al guardar materias en Estado:', error)
+    setMensaje('Hubo un error al guardar las materias.')
+    setTipoMensaje('error')
+  }
+}
+
+
   const renderTitulo = () => {
     const nombreCarrera = typeof carreraSeleccionada === 'string'
       ? carreraSeleccionada.trim().toLowerCase()
@@ -195,6 +268,22 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
       ) : (
         <PrimaryButton text="Volver" onClick={handleVolver} />
       )}
+        <PrimaryButton
+      text="Continuar"
+      onClick={handleGuardarMaterias}
+      disabled={materias.every((m) => !m.checked)}
+      style={{ marginTop: 20 }}
+    />
+    {mensaje && (
+  <p
+    style={{
+      color: tipoMensaje === 'exito' ? 'green' : 'red',
+      marginTop: 10,
+    }}
+  >
+    {mensaje}
+  </p>
+)}
 
       <h2>{renderTitulo()}</h2>
 
