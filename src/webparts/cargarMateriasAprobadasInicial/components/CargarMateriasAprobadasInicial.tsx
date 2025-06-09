@@ -32,9 +32,7 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
           .items.select('ID', 'usuario/Id')
           .expand('usuario')()
 
-        const coincidencia = estudianteItems.find(
-          (item) => item.usuario?.Id === currentUserId
-        )
+        const coincidencia = estudianteItems.find(item => item.usuario?.Id === currentUserId)
 
         if (!coincidencia) {
           console.warn('Estudiante no encontrado')
@@ -59,10 +57,11 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
         const carreraItem = await sp.web.lists
           .getByTitle('Carrera')
           .items.getById(idCarrera)
-          .select('nombre')()
+          .select('nombre', 'codigoCarrera')()
 
         const nombreCarrera = carreraItem.nombre
         setCarreraSeleccionada(nombreCarrera)
+
       } catch (error) {
         console.error('Error al obtener la carrera del estudiante:', error)
       }
@@ -71,43 +70,40 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
     void fetchCarrera()
   }, [])
 
-  // Obtener materias una vez que tenemos la carrera
-useEffect(() => {
-  const fetchMaterias = async () => {
-    if (!carreraId) return
+  useEffect(() => {
+    const fetchMaterias = async () => {
+      if (!carreraId) return
 
-    try {
-      console.log('Obteniendo materias para carrera ID:', carreraId)
+      try {
+        console.log('Obteniendo materias para carrera ID:', carreraId)
 
-      const items = await sp.web.lists
-        .getByTitle('CarreraMateria')
-        .items
-        .filter(`idCarreraId eq ${carreraId}`)
-        .select('ID', 'idMateria/ID', 'idMateria/nombre')
-        .expand('idMateria')()
+        const items = await sp.web.lists
+          .getByTitle('MateriaCarrera')
+          .items
+          .filter(`codCarreraId eq ${carreraId}`)
+          .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
+          .expand('CodMateria')()
 
-      const materiasFormateadas = items
-        .filter((item: any) => item.idMateria) // evitar materias nulas
-        .map((item: any) => ({
-          id: item.idMateria.ID,
-          nombre: item.idMateria.nombre,
-          checked: false,
-        }))
+        const materiasFormateadas = items
+          .filter((item: any) => item.CodMateria)
+          .map((item: any) => ({
+            id: item.CodMateria.ID,
+            nombre: item.CodMateria.nombre,
+            checked: false,
+          }))
 
-      console.log('Materias encontradas:', materiasFormateadas)
-      setMaterias(materiasFormateadas)
-    } catch (error) {
-      console.error('Error al obtener materias desde CarreraMateria:', error)
+        setMaterias(materiasFormateadas)
+      } catch (error) {
+        console.error('Error al obtener materias desde CarreraMateria:', error)
+      }
     }
-  }
 
-  void fetchMaterias()
-}, [carreraId])
-
+    void fetchMaterias()
+  }, [carreraId])
 
   const handleCheckboxChange = (id: number) => {
-    setMaterias((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, checked: !m.checked } : m))
+    setMaterias(prev =>
+      prev.map(m => (m.id === id ? { ...m, checked: !m.checked } : m))
     )
   }
 
@@ -123,7 +119,7 @@ useEffect(() => {
         .expand('usuario')()
 
       const coincidencia = estudianteItems.find(
-        (item) => item.usuario?.Id === currentUserId
+        item => item.usuario?.Id === currentUserId
       )
 
       if (!coincidencia) {
@@ -139,7 +135,7 @@ useEffect(() => {
         .select('Id')()
 
       await Promise.all(
-        inscriptos.map((item) =>
+        inscriptos.map(item =>
           sp.web.lists.getByTitle('Inscripto').items.getById(item.Id).recycle()
         )
       )
@@ -147,7 +143,7 @@ useEffect(() => {
       let retries = 0
       let inscriptosRestantes = [{}]
       while (inscriptosRestantes.length > 0 && retries < 10) {
-        await new Promise((resolve) => setTimeout(resolve, 500))
+        await new Promise(resolve => setTimeout(resolve, 500))
         inscriptosRestantes = await sp.web.lists
           .getByTitle('Inscripto')
           .items.filter(`idEstudianteId eq ${estudianteID}`)
@@ -164,10 +160,9 @@ useEffect(() => {
   }
 
   const renderTitulo = () => {
-    const nombreCarrera =
-      typeof carreraSeleccionada === 'string'
-        ? carreraSeleccionada.trim().toLowerCase()
-        : ''
+    const nombreCarrera = typeof carreraSeleccionada === 'string'
+      ? carreraSeleccionada.trim().toLowerCase()
+      : ''
 
     switch (nombreCarrera) {
       case 'tecnicatura en desarrollo web':
@@ -205,7 +200,7 @@ useEffect(() => {
 
       {materias.length > 0 ? (
         <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
-          {materias.map((materia) => (
+          {materias.map(materia => (
             <Checkbox
               key={materia.id}
               label={materia.nombre}
