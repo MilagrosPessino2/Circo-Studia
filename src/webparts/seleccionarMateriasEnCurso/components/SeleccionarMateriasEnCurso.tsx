@@ -24,7 +24,10 @@ interface IOfertaDeMaterias {
 
 interface IMateriaCarreraExpandida {
     Id: number
-    codCarrera: string
+    codCarrera: {
+        Id: number
+        codigoCarrera: string
+    }
     CodMateria: {
         Id: number
         codMateria: string
@@ -70,16 +73,19 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     .getByTitle('MateriaCarrera')
                     .items.select(
                         'Id',
-                        'codCarrera',
                         'CodMateria/Id',
-                        'CodMateria/codMateria'
+                        'CodMateria/codMateria',
+                        'codCarrera/Id',
+                        'codCarrera/codigoCarrera'
                     )
-                    .expand('CodMateria')()
+                    .expand('CodMateria', 'codCarrera')()
+
             console.log('✅ MateriaCarrera cargada:', materiaCarreraItems)
 
             const carreraItems: ICarrera[] = await sp.web.lists
                 .getByTitle('Carrera')
                 .items.select('Id', 'codigoCarrera', 'nombre')()
+
             console.log('✅ Carrera cargada:', carreraItems)
 
             const ofertasConCarrera = ofertaItems.map((oferta) => {
@@ -96,12 +102,14 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                 }
 
                 const carrera = carreraItems.find(
-                    (c) => c.codigoCarrera === relacion?.codCarrera
+                    (c) =>
+                        c.codigoCarrera === relacion?.codCarrera?.codigoCarrera
                 )
 
                 return {
                     ...oferta,
-                    codigoCarrera: relacion?.codCarrera ?? undefined,
+                    codigoCarrera:
+                        relacion?.codCarrera?.codigoCarrera ?? undefined,
                     nombreCarrera: carrera?.nombre ?? 'Sin carrera',
                 }
             })
