@@ -1,11 +1,12 @@
+
 import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { PrimaryButton, Spinner, Checkbox } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
-import { ICargarMateriasAprobadasInicialProps } from './ICargarMateriasAprobadasInicialProps'
+import { ICargarMateriaRegularizadaProps } from './ICargarMateriaRegularizadaProps'
 import SeleccionarCarrera from '../../seleccionarCarrera/components/SeleccionarCarrera'
 
-const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialProps> = ({
+const CargarMateriasAprobadasInicial: React.FC<ICargarMateriaRegularizadaProps> = ({
   context,
   description,
   isDarkTheme,
@@ -222,7 +223,7 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
         sp.web.lists.getByTitle('Estado').items.add({
           idEstudianteId: estudianteID,
           codMateriaId: materia.id, 
-          condicion: 'A',
+          condicion: 'R',
         })
       )
     )
