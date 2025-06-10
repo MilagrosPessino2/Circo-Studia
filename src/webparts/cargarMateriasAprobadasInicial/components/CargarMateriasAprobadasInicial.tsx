@@ -186,22 +186,26 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
     const estudianteID = coincidencia.ID
     const materiasSeleccionadas = materias.filter((m) => m.checked)
 
-    if (materiasSeleccionadas.length === 0) {
-      setMensaje('Debes seleccionar al menos una materia.')
-      setTipoMensaje('error')
-      return
-    }
+   
 
-    // ✅ Obtener materias ya guardadas en Estado
+    // Obtener materias ya guardadas en Estado
+    // const materiasExistentes = await sp.web.lists
+    //   .getByTitle('Estado')
+    //   .items
+    //   .filter(`idEstudianteId eq ${estudianteID}`)
+    //   .select('codMateria/ID')
+    //   //.select('id0/Id')
+    //   .expand('codMateria')()
     const materiasExistentes = await sp.web.lists
-      .getByTitle('Estado')
-      .items
-      .filter(`idEstudianteId eq ${estudianteID}`)
-      .select('id0')() // id0 es el campo lookup al código de materia (ajustá si usás otro)
+    .getByTitle('Estado')
+    .items
+    .filter(`idEstudianteId eq ${estudianteID}`)
+    .select('codMateriaId')
+    ();
 
-    const codigosExistentes = materiasExistentes.map((m: any) => m.id0)
+    const codigosExistentes = materiasExistentes.map((m: any) => m.codMateria)
 
-    // ✅ Filtrar las materias que no están aún en Estado
+    // Filtrar las materias que no están aún en Estado
     const nuevasMaterias = materiasSeleccionadas.filter(
       (m) => !codigosExistentes.includes(m.id.toString())
     )
@@ -216,8 +220,8 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
       nuevasMaterias.map((materia) =>
         sp.web.lists.getByTitle('Estado').items.add({
           idEstudianteId: estudianteID,
-          id0Id: materia.id, // 👈 id0 es lookup, por eso id0Id
-          condicion: 'A',
+          codMateriaId: materia.id, // 👈 id0 es lookup, por eso id0Id
+          nombre: 'A',
         })
       )
     )
