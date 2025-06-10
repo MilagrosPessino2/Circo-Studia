@@ -200,10 +200,11 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
     .getByTitle('Estado')
     .items
     .filter(`idEstudianteId eq ${estudianteID}`)
-    .select('codMateriaId')
+    .select('codMateria/ID')
+    .expand('codMateria')
     ();
-
-    const codigosExistentes = materiasExistentes.map((m: any) => m.codMateria)
+ 
+    const codigosExistentes = materiasExistentes.map((m: any) => m.codMateria.ID)
 
     // Filtrar las materias que no están aún en Estado
     const nuevasMaterias = materiasSeleccionadas.filter(
@@ -220,7 +221,7 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
       nuevasMaterias.map((materia) =>
         sp.web.lists.getByTitle('Estado').items.add({
           idEstudianteId: estudianteID,
-          codMateriaId: materia.id, // 👈 id0 es lookup, por eso id0Id
+          codMateriaId: materia.id, 
           nombre: 'A',
         })
       )
