@@ -6,6 +6,7 @@ import { ISeleccionarCarreraProps } from './ISeleccionarCarreraProps'
 import { ICarreraItem } from '../../../interfaces'
 import { useNavigate } from 'react-router-dom'
 import { UserPresetContext } from '../../../app'
+import styles from './SeleccionarCarrera.module.scss'
 
 const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
     context,
