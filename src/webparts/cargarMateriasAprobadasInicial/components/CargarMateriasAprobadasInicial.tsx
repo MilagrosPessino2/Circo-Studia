@@ -88,12 +88,13 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
           .expand('CodMateria')()
 
         const materiasFormateadas = items
-          .filter((item: any) => item.CodMateria)
-          .map((item: any) => ({
-            id: item.CodMateria.ID,
-            nombre: item.CodMateria.nombre,
-            checked: false,
-          }))
+        .filter((item: any) => item.CodMateria && item.CodMateria.nombre?.trim())
+        .map((item: any) => ({
+          id: item.CodMateria.ID,
+          nombre: item.CodMateria.nombre,
+          checked: false,
+        }))
+
 
         setMaterias(materiasFormateadas)
       } catch (error) {
@@ -291,21 +292,25 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
 )}
 
       <h2>{renderTitulo()}</h2>
+      <p>Selecciona las materias que tengas en condicion de aprobado</p>
 
-      {materias.length > 0 ? (
-        <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
-          {materias.map(materia => (
-            <Checkbox
-              key={materia.id}
-              label={materia.nombre}
-              checked={materia.checked}
-              onChange={() => handleCheckboxChange(materia.id)}
-            />
-          ))}
-        </div>
-      ) : (
-        <p>No hay materias para esta carrera.</p>
-      )}
+      {materias.filter(m => m.nombre && m.nombre.trim() !== '').length > 0 ? (
+  <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
+    {materias
+      .filter(materia => materia.nombre && materia.nombre.trim() !== '')
+      .map(materia => (
+        <Checkbox
+          key={materia.id}
+          label={materia.nombre}
+          checked={materia.checked}
+          onChange={() => handleCheckboxChange(materia.id)}
+        />
+      ))}
+  </div>
+    ) : (
+      <p>No hay materias para esta carrera.</p>
+    )}
+
     </div>
   )
 }

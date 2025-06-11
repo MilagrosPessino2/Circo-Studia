@@ -75,35 +75,61 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriaRegularizadaProps> 
   }, [])
 
   useEffect(() => {
-    const fetchMaterias = async () => {
-      if (!carreraId) return
+  const fetchMaterias = async () => {
+    if (!carreraId) return
 
-      try {
-        console.log('Obteniendo materias para carrera ID:', carreraId)
+    try {
+      const user = await sp.web.currentUser()
+      const currentUserId = user.Id
 
-        const items = await sp.web.lists
-          .getByTitle('MateriaCarrera')
-          .items
-          .filter(`codCarreraId eq ${carreraId}`)
-          .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
-          .expand('CodMateria')()
+      const estudianteItems = await sp.web.lists
+        .getByTitle('Estudiante')
+        .items.select('ID', 'usuario/Id')
+        .expand('usuario')()
 
-        const materiasFormateadas = items
-          .filter((item: any) => item.CodMateria)
-          .map((item: any) => ({
-            id: item.CodMateria.ID,
-            nombre: item.CodMateria.nombre,
-            checked: false,
-          }))
+      const coincidencia = estudianteItems.find(item => item.usuario?.Id === currentUserId)
 
-        setMaterias(materiasFormateadas)
-      } catch (error) {
-        console.error('Error al obtener materias desde CarreraMateria:', error)
+      if (!coincidencia) {
+        console.warn('Estudiante no encontrado')
+        return
       }
-    }
 
-    void fetchMaterias()
-  }, [carreraId])
+      const estudianteID = coincidencia.ID
+
+      // Obtener materias ya aprobadas del estudiante
+      const materiasEstado = await sp.web.lists
+        .getByTitle('Estado')
+        .items
+        .filter(`idEstudianteId eq ${estudianteID}`)
+        .select('codMateria/ID')
+        .expand('codMateria')()
+
+      const idsAprobadas = materiasEstado.map((m: any) => m.codMateria.ID)
+
+      // Obtener todas las materias de la carrera
+      const items = await sp.web.lists
+        .getByTitle('MateriaCarrera')
+        .items
+        .filter(`codCarreraId eq ${carreraId}`)
+        .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
+        .expand('CodMateria')()
+
+      const materiasFormateadas = items
+        .filter((item: any) => item.CodMateria && !idsAprobadas.includes(item.CodMateria.ID)) // <-- filtro acá
+        .map((item: any) => ({
+          id: item.CodMateria.ID,
+          nombre: item.CodMateria.nombre,
+          checked: false,
+        }))
+
+      setMaterias(materiasFormateadas)
+    } catch (error) {
+      console.error('Error al obtener materias desde CarreraMateria:', error)
+    }
+  }
+
+  void fetchMaterias()
+}, [carreraId])
 
   const handleCheckboxChange = (id: number) => {
     setMaterias(prev =>
@@ -292,6 +318,7 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriaRegularizadaProps> 
 )}
 
       <h2>{renderTitulo()}</h2>
+      <p>Selecciona las materias que tengas en condicion de final</p>
 
       {materias.length > 0 ? (
         <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
