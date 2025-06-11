@@ -1,40 +1,31 @@
 import * as React from 'react';
 import * as ReactDom from 'react-dom';
 import { Version } from '@microsoft/sp-core-library';
-import {
-  type IPropertyPaneConfiguration,
-  PropertyPaneTextField
-} from '@microsoft/sp-property-pane';
 import { BaseClientSideWebPart } from '@microsoft/sp-webpart-base';
 import { IReadonlyTheme } from '@microsoft/sp-component-base';
-
-import * as strings from 'CircoStudiaWebPartStrings';
-import CircoStudia from './components/CircoStudia';
 import { ICircoStudiaProps } from './components/ICircoStudiaProps';
+
+import App from '../../app'; // ✅ Asegurate que la ruta esté bien
 
 export interface ICircoStudiaWebPartProps {
   description: string;
 }
 
 export default class CircoStudiaWebPart extends BaseClientSideWebPart<ICircoStudiaWebPartProps> {
-
   private _isDarkTheme: boolean = false;
   private _environmentMessage: string = '';
 
   public render(): void {
-    const element: React.ReactElement<ICircoStudiaProps> = React.createElement(
-      CircoStudia,
-      {
-        description: this.properties.description,
-        isDarkTheme: this._isDarkTheme,
-        environmentMessage: this._environmentMessage,
-        hasTeamsContext: !!this.context.sdks.microsoftTeams,
-        userDisplayName: this.context.pageContext.user.displayName,
-        context: this.context
-      }
-    );
+    const element: React.ReactElement<ICircoStudiaProps> = React.createElement(App, {
+      context: this.context,
+      description: this.properties.description,
+      isDarkTheme: this._isDarkTheme,
+      environmentMessage: this._environmentMessage,
+      hasTeamsContext: !!this.context.sdks.microsoftTeams,
+      userDisplayName: this.context.pageContext.user.displayName,
+    })
 
-    ReactDom.render(element, this.domElement);
+    ReactDom.render(element, this.domElement)
   }
 
   protected onInit(): Promise<void> {
@@ -43,51 +34,37 @@ export default class CircoStudiaWebPart extends BaseClientSideWebPart<ICircoStud
     });
   }
 
-
-
   private _getEnvironmentMessage(): Promise<string> {
-    if (!!this.context.sdks.microsoftTeams) { // running in Teams, office.com or Outlook
+    if (!!this.context.sdks.microsoftTeams) {
       return this.context.sdks.microsoftTeams.teamsJs.app.getContext()
         .then(context => {
           let environmentMessage: string = '';
           switch (context.app.host.name) {
-            case 'Office': // running in Office
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOffice : strings.AppOfficeEnvironment;
+            case 'Office':
+              environmentMessage = this.context.isServedFromLocalhost ? 'Local Office' : 'Office';
               break;
-            case 'Outlook': // running in Outlook
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentOutlook : strings.AppOutlookEnvironment;
+            case 'Outlook':
+              environmentMessage = this.context.isServedFromLocalhost ? 'Local Outlook' : 'Outlook';
               break;
-            case 'Teams': // running in Teams
-            case 'TeamsModern':
-              environmentMessage = this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentTeams : strings.AppTeamsTabEnvironment;
+            case 'Teams':
+              environmentMessage = this.context.isServedFromLocalhost ? 'Local Teams' : 'Teams';
               break;
             default:
-              environmentMessage = strings.UnknownEnvironment;
+              environmentMessage = 'Unknown';
           }
 
           return environmentMessage;
         });
     }
 
-    return Promise.resolve(this.context.isServedFromLocalhost ? strings.AppLocalEnvironmentSharePoint : strings.AppSharePointEnvironment);
+    return Promise.resolve(
+      this.context.isServedFromLocalhost ? 'Local SharePoint' : 'SharePoint'
+    );
   }
 
   protected onThemeChanged(currentTheme: IReadonlyTheme | undefined): void {
-    if (!currentTheme) {
-      return;
-    }
-
+    if (!currentTheme) return;
     this._isDarkTheme = !!currentTheme.isInverted;
-    const {
-      semanticColors
-    } = currentTheme;
-
-    if (semanticColors) {
-      this.domElement.style.setProperty('--bodyText', semanticColors.bodyText || null);
-      this.domElement.style.setProperty('--link', semanticColors.link || null);
-      this.domElement.style.setProperty('--linkHovered', semanticColors.linkHovered || null);
-    }
-
   }
 
   protected onDispose(): void {
@@ -96,27 +73,5 @@ export default class CircoStudiaWebPart extends BaseClientSideWebPart<ICircoStud
 
   protected get dataVersion(): Version {
     return Version.parse('1.0');
-  }
-
-  protected getPropertyPaneConfiguration(): IPropertyPaneConfiguration {
-    return {
-      pages: [
-        {
-          header: {
-            description: strings.PropertyPaneDescription
-          },
-          groups: [
-            {
-              groupName: strings.BasicGroupName,
-              groupFields: [
-                PropertyPaneTextField('description', {
-                  label: strings.DescriptionFieldLabel
-                })
-              ]
-            }
-          ]
-        }
-      ]
-    };
   }
 }

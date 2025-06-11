@@ -26,11 +26,11 @@
         }
       ]
     },
-    "seleccionar-materias-en-curso-web-part": {
+    "cargar-materia-regularizada-web-part": {
       "components": [
         {
-          "entrypoint": "./lib/webparts/seleccionarMateriasEnCurso/SeleccionarMateriasEnCursoWebPart.js",
-          "manifest": "./src/webparts/seleccionarMateriasEnCurso/SeleccionarMateriasEnCursoWebPart.manifest.json"
+          "entrypoint": "./lib/webparts/cargarMateriaRegularizada/CargarMateriaRegularizadaWebPart.js",
+          "manifest": "./src/webparts/cargarMateriaRegularizada/CargarMateriaRegularizadaWebPart.manifest.json"
         }
       ]
     }
@@ -40,6 +40,6 @@
     "CircoStudiaWebPartStrings": "lib/webparts/circoStudia/loc/{locale}.js",
     "SeleccionarCarreraWebPartStrings": "lib/webparts/seleccionarCarrera/loc/{locale}.js",
     "CargarMateriasAprobadasInicialWebPartStrings": "lib/webparts/cargarMateriasAprobadasInicial/loc/{locale}.js",
-    "SeleccionarMateriasEnCursoWebPartStrings": "lib/webparts/seleccionarMateriasEnCurso/loc/{locale}.js"
+    "CargarMateriaRegularizadaWebPartStrings": "lib/webparts/cargarMateriaRegularizada/loc/{locale}.js"
   }
 }
