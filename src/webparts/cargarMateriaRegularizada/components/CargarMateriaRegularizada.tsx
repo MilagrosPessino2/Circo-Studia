@@ -1,10 +1,9 @@
 import * as React from 'react'
-import { useEffect, useState, useContext } from 'react'
+import { useEffect, useState } from 'react'
 import { PrimaryButton, Spinner, Checkbox } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
-import { ICargarMateriasAprobadasInicialProps } from './ICargarMateriasAprobadasInicialProps'
-import { useNavigate } from 'react-router-dom'
-import { UserPresetContext } from '../../../app'
+import { ICargarMateriaRegularizadaProps } from './ICargarMateriaRegularizadaProps'
+import SeleccionarCarrera from '../../seleccionarCarrera/components/SeleccionarCarrera'
 
 interface IMateria {
     id: number
@@ -29,19 +28,26 @@ interface IEstadoItem {
         ID: number
     }
 }
-
 // Función para evitar `no-void` y manejar errores sincrónicamente
 const runAsync = (fn: () => Promise<void>): void => {
     fn().catch(console.error)
 }
 
-const CargarMateriasAprobadasInicial: React.FC<
-    ICargarMateriasAprobadasInicialProps
-> = ({ context }) => {
+const CargarMateriasRegularizadas: React.FC<
+    ICargarMateriaRegularizadaProps
+> = ({
+    context,
+    description,
+    isDarkTheme,
+    environmentMessage,
+    hasTeamsContext,
+    userDisplayName,
+}) => {
     const sp = getSP(context)
-    const navigate = useNavigate()
-    const { setIsPreset } = useContext(UserPresetContext)
 
+    const [volverASeleccionarCarrera, setVolverASeleccionarCarrera] =
+        useState(false)
+    const [eliminando, setEliminando] = useState(false)
     const [carreraSeleccionada, setCarreraSeleccionada] = useState<string>('')
     const [carreraId, setCarreraId] = useState<number | null>(null)
     const [materias, setMaterias] = useState<IMateria[]>([])
@@ -49,59 +55,50 @@ const CargarMateriasAprobadasInicial: React.FC<
     const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(
         null
     )
-    const [eliminando, setEliminando] = useState(false)
 
-    useEffect((): void => {
+    useEffect(() => {
         const fetchCarrera = async (): Promise<void> => {
             try {
                 const user = await sp.web.currentUser()
-                const currentUserId = user.Id
-
                 const estudiantes: IEstudiante[] = await sp.web.lists
                     .getByTitle('Estudiante')
                     .items.select('ID', 'usuario/Id')
                     .expand('usuario')()
 
-                const coincidencia = estudiantes.find(
-                    (item) => item.usuario?.Id === currentUserId
+                const estudiante = estudiantes.find(
+                    (e) => e.usuario?.Id === user.Id
                 )
-                if (!coincidencia) return
-
-                const estudianteID = coincidencia.ID
+                if (!estudiante) return
 
                 const inscripciones: IInscripcion[] = await sp.web.lists
                     .getByTitle('Inscripto')
-                    .items.filter(`idEstudianteId eq ${estudianteID}`)
-                    .select('ID', 'idCarreraId')()
+                    .items.filter(`idEstudianteId eq ${estudiante.ID}`)
+                    .select('idCarreraId')()
 
-                if (inscripciones.length === 0 || !inscripciones[0].idCarreraId)
-                    return
+                const idCarrera = inscripciones[0]?.idCarreraId
+                if (!idCarrera) return
 
-                const idCarrera = inscripciones[0].idCarreraId
-                setCarreraId(idCarrera)
-
-                const carreraItem = await sp.web.lists
+                const carrera = await sp.web.lists
                     .getByTitle('Carrera')
                     .items.getById(idCarrera)
                     .select('nombre')()
-                setCarreraSeleccionada(carreraItem.nombre)
+                setCarreraSeleccionada(carrera.nombre)
+                setCarreraId(idCarrera)
             } catch (error) {
-                console.error('Error al obtener la carrera:', error)
+                console.error('Error al obtener carrera:', error)
             }
         }
-
         runAsync(fetchCarrera)
     }, [])
 
-    useEffect((): void => {
+    useEffect(() => {
         const fetchMaterias = async (): Promise<void> => {
             if (!carreraId) return
-
             try {
                 const items = await sp.web.lists
                     .getByTitle('MateriaCarrera')
                     .items.filter(`codCarreraId eq ${carreraId}`)
-                    .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
+                    .select('CodMateria/ID', 'CodMateria/nombre')
                     .expand('CodMateria')()
 
                 const materiasFormateadas: IMateria[] = items
@@ -111,13 +108,11 @@ const CargarMateriasAprobadasInicial: React.FC<
                         nombre: item.CodMateria.nombre,
                         checked: false,
                     }))
-
                 setMaterias(materiasFormateadas)
             } catch (error) {
                 console.error('Error al obtener materias:', error)
             }
         }
-
         runAsync(fetchMaterias)
     }, [carreraId])
 
@@ -131,37 +126,41 @@ const CargarMateriasAprobadasInicial: React.FC<
         try {
             setEliminando(true)
             const user = await sp.web.currentUser()
-            const currentUserId = user.Id
-
-            const estudiantes: IEstudiante[] = await sp.web.lists
+            const estudiantes = await sp.web.lists
                 .getByTitle('Estudiante')
                 .items.select('ID', 'usuario/Id')
                 .expand('usuario')()
-
-            const coincidencia = estudiantes.find(
-                (item) => item.usuario?.Id === currentUserId
+            const estudiante = estudiantes.find(
+                (e) => e.usuario?.Id === user.Id
             )
-            if (!coincidencia) return
-
-            const estudianteID = coincidencia.ID
+            if (!estudiante) return
 
             const inscriptos = await sp.web.lists
                 .getByTitle('Inscripto')
-                .items.filter(`idEstudianteId eq ${estudianteID}`)
+                .items.filter(`idEstudianteId eq ${estudiante.ID}`)
                 .select('Id')()
 
             await Promise.all(
-                inscriptos.map((item) =>
+                inscriptos.map((i) =>
                     sp.web.lists
                         .getByTitle('Inscripto')
-                        .items.getById(item.Id)
+                        .items.getById(i.Id)
                         .recycle()
                 )
             )
 
-            setIsPreset(false)
-            localStorage.setItem('userPreset', 'false')
-            navigate('/preset/select-carrera')
+            let retries = 0
+            let restante = inscriptos.length > 0
+            while (restante && retries < 10) {
+                await new Promise<void>((resolve) => setTimeout(resolve, 500))
+                const verificacion: { Id: number }[] = await sp.web.lists
+                    .getByTitle('Inscripto')
+                    .items.filter(`idEstudianteId eq ${estudiante.ID}`)()
+                restante = verificacion.length > 0
+                retries++
+            }
+
+            setVolverASeleccionarCarrera(true)
         } catch (error) {
             console.error('Error al eliminar inscripción:', error)
         } finally {
@@ -173,31 +172,30 @@ const CargarMateriasAprobadasInicial: React.FC<
         try {
             setMensaje(null)
             const user = await sp.web.currentUser()
-            const currentUserId = user.Id
-
             const estudiantes: IEstudiante[] = await sp.web.lists
                 .getByTitle('Estudiante')
                 .items.select('ID', 'usuario/Id')
                 .expand('usuario')()
 
-            const coincidencia = estudiantes.find(
-                (item) => item.usuario?.Id === currentUserId
+            const estudiante = estudiantes.find(
+                (e) => e.usuario?.Id === user.Id
             )
-            if (!coincidencia) return
+            if (!estudiante) {
+                setMensaje('Estudiante no encontrado.')
+                setTipoMensaje('error')
+                return
+            }
 
-            const estudianteID = coincidencia.ID
             const materiasSeleccionadas = materias.filter((m) => m.checked)
-
             const materiasExistentes: IEstadoItem[] = await sp.web.lists
                 .getByTitle('Estado')
-                .items.filter(`idEstudianteId eq ${estudianteID}`)
+                .items.filter(`idEstudianteId eq ${estudiante.ID}`)
                 .select('codMateria/ID')
                 .expand('codMateria')()
 
             const codigosExistentes = materiasExistentes.map(
                 (m) => m.codMateria.ID
             )
-
             const nuevasMaterias = materiasSeleccionadas.filter(
                 (m) => !codigosExistentes.includes(m.id)
             )
@@ -211,9 +209,9 @@ const CargarMateriasAprobadasInicial: React.FC<
             await Promise.all(
                 nuevasMaterias.map((materia) =>
                     sp.web.lists.getByTitle('Estado').items.add({
-                        idEstudianteId: estudianteID,
+                        idEstudianteId: estudiante.ID,
                         codMateriaId: materia.id,
-                        condicion: 'A',
+                        condicion: 'R', // Regularizada
                     })
                 )
             )
@@ -224,17 +222,31 @@ const CargarMateriasAprobadasInicial: React.FC<
             setTipoMensaje('exito')
         } catch (error) {
             console.error('Error al guardar materias:', error)
-            setMensaje('Hubo un error al guardar las materias.')
+            setMensaje('Error al guardar materias.')
             setTipoMensaje('error')
         }
     }
 
     const renderTitulo = (): string => {
         const nombre = carreraSeleccionada.trim().toLowerCase()
-        if (nombre.includes('web')) return 'Materias de la Tecnicatura Web'
+        if (nombre.includes('web'))
+            return 'Materias regularizadas - Tecnicatura Web'
         if (nombre.includes('ingenier'))
-            return 'Materias de la Ingeniería Informática'
-        return 'Materias disponibles'
+            return 'Materias regularizadas - Ingeniería Informática'
+        return 'Materias regularizadas'
+    }
+
+    if (volverASeleccionarCarrera) {
+        return (
+            <SeleccionarCarrera
+                context={context}
+                description={description}
+                isDarkTheme={isDarkTheme}
+                environmentMessage={environmentMessage}
+                hasTeamsContext={hasTeamsContext}
+                userDisplayName={userDisplayName}
+            />
+        )
     }
 
     return (
@@ -245,10 +257,10 @@ const CargarMateriasAprobadasInicial: React.FC<
                 <PrimaryButton text='Volver' onClick={handleVolver} />
             )}
             <PrimaryButton
-                text='Continuar'
+                text='Guardar'
                 onClick={handleGuardarMaterias}
                 disabled={materias.every((m) => !m.checked)}
-                style={{ marginTop: 20, marginLeft: 10 }}
+                style={{ marginLeft: 10, marginTop: 20 }}
             />
             {mensaje && (
                 <p
@@ -281,10 +293,10 @@ const CargarMateriasAprobadasInicial: React.FC<
                     ))}
                 </div>
             ) : (
-                <p>No hay materias para esta carrera.</p>
+                <p>No hay materias disponibles.</p>
             )}
         </div>
     )
 }
 
-export default CargarMateriasAprobadasInicial
+export default CargarMateriasRegularizadas

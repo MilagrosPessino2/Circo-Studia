@@ -33,6 +33,14 @@
           "manifest": "./src/webparts/seleccionarMateriasEnCurso/SeleccionarMateriasEnCursoWebPart.manifest.json"
         }
       ]
+    },
+    "cargar-materia-regularizada-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/cargarMateriaRegularizada/CargarMateriaRegularizadaWebPart.js",
+          "manifest": "./src/webparts/cargarMateriaRegularizada/CargarMateriaRegularizadaWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -40,6 +48,8 @@
     "CircoStudiaWebPartStrings": "lib/webparts/circoStudia/loc/{locale}.js",
     "SeleccionarCarreraWebPartStrings": "lib/webparts/seleccionarCarrera/loc/{locale}.js",
     "CargarMateriasAprobadasInicialWebPartStrings": "lib/webparts/cargarMateriasAprobadasInicial/loc/{locale}.js",
-    "SeleccionarMateriasEnCursoWebPartStrings": "lib/webparts/seleccionarMateriasEnCurso/loc/{locale}.js"
+    "SeleccionarMateriasEnCursoWebPartStrings": "lib/webparts/seleccionarMateriasEnCurso/loc/{locale}.js",
+    "CargarMateriaRegularizadaWebPartStrings": "lib/webparts/cargarMateriaRegularizada/loc/{locale}.js"
   }
 }
+
