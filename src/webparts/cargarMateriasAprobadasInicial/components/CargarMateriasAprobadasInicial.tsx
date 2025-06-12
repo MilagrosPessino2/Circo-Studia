@@ -222,6 +222,9 @@ const CargarMateriasAprobadasInicial: React.FC<
                 `${nuevasMaterias.length} materia(s) guardadas correctamente.`
             )
             setTipoMensaje('exito')
+
+            // ✅ Redirigir al siguiente paso
+            navigate('/preset/cargar-regularizada')
         } catch (error) {
             console.error('Error al guardar materias:', error)
             setMensaje('Hubo un error al guardar las materias.')

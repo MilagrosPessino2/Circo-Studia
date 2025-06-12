@@ -68,42 +68,36 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
         try {
             console.log('🔄 Cargando datos...')
 
-            // Obtener usuario actual
             const user = await sp.web.currentUser()
             const currentUserId = user.Id
 
-            // Obtener estudiante asociado al usuario
             const estudianteItems: IEstudiante[] = await sp.web.lists
                 .getByTitle('Estudiante')
                 .items.select('ID', 'usuario/Id')
                 .expand('usuario')()
+
             const match = estudianteItems.find(
                 (e) => e.usuario?.Id === currentUserId
             )
             if (!match) {
-                console.error('Estudiante no encontrado')
                 setError('Estudiante no encontrado')
                 setLoading(false)
                 return
             }
             const estudianteID = match.ID
 
-            // Obtener carrera mediante lista Inscripto
             const inscriptoItems: IInscripto[] = await sp.web.lists
                 .getByTitle('Inscripto')
                 .items.filter(`idEstudianteId eq ${estudianteID}`)
                 .select('idCarrera/Id', 'idCarrera/codigoCarrera')
                 .expand('idCarrera')()
+
             if (inscriptoItems.length === 0) {
-                console.warn(
-                    'No se encontraron inscripciones para el estudiante'
-                )
                 setSelectedCarrera('Sin inscripción')
             } else {
                 setSelectedCarrera(inscriptoItems[0].idCarrera.codigoCarrera)
             }
 
-            // Cargar datos de OfertaDeMaterias
             const ofertaItems: IOfertaDeMaterias[] = await sp.web.lists
                 .getByTitle('OfertaDeMaterias')
                 .items.select(
@@ -119,7 +113,6 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                 )
                 .expand('codMateria', 'codComision')()
 
-            // Cargar relaciones MateriaCarrera y Carrera
             const materiaCarreraItems: IMateriaCarreraExpandida[] =
                 await sp.web.lists
                     .getByTitle('MateriaCarrera')
@@ -131,27 +124,31 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                         'codCarrera/codigoCarrera'
                     )
                     .expand('CodMateria', 'codCarrera')()
+
             const carreraItems: ICarrera[] = await sp.web.lists
                 .getByTitle('Carrera')
                 .items.select('Id', 'codigoCarrera', 'nombre')()
 
-            // Mapear ofertas con datos de carrera
             const ofertasConCarrera = ofertaItems.map((oferta) => {
-                const relacion = materiaCarreraItems.find(
-                    (mc) =>
-                        mc.CodMateria.codMateria.trim() ===
-                        String(oferta.codMateria?.codMateria).trim()
-                )
+                const codOferta = oferta.codMateria?.codMateria?.trim()
+                const relacion = materiaCarreraItems.find((mc) => {
+                    const codMC = mc.CodMateria?.codMateria?.trim()
+                    return codMC && codOferta && codMC === codOferta
+                })
+
                 const carrera = carreraItems.find(
                     (c) =>
-                        c.codigoCarrera === relacion?.codCarrera.codigoCarrera
+                        c.codigoCarrera === relacion?.codCarrera?.codigoCarrera
                 )
+
                 return {
                     ...oferta,
-                    codigoCarrera: relacion?.codCarrera.codigoCarrera,
+                    codigoCarrera:
+                        relacion?.codCarrera?.codigoCarrera ?? 'Sin código',
                     nombreCarrera: carrera?.nombre ?? 'Sin carrera',
                 }
             })
+
             setOfertas(ofertasConCarrera)
         } catch (err) {
             console.error('❌ Error cargando datos:', err)
@@ -202,7 +199,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                                     'Sin descripción'}
                             </td>
                             <td>{o.modalidad}</td>
-                            <td>{o.codigoCarrera ?? 'Sin código'}</td>
+                            <td>{o.codigoCarrera}</td>
                             <td>{o.nombreCarrera}</td>
                         </tr>
                     ))}

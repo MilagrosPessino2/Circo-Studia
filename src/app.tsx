@@ -13,6 +13,7 @@ import { ICircoStudiaProps } from './webparts/circoStudia/components/ICircoStudi
 import SeleccionarCarrera from './webparts/seleccionarCarrera/components/SeleccionarCarrera'
 import CargarMateriasAprobadasInicial from './webparts/cargarMateriasAprobadasInicial/components/CargarMateriasAprobadasInicial'
 import CargarMateriasRegularizada from './webparts/cargarMateriaRegularizada/components/CargarMateriaRegularizada'
+import SeleccionarMateriasEnCurso from './webparts/seleccionarMateriasEnCurso/components/SeleccionarMateriasEnCurso'
 
 export const UserPresetContext = createContext<{
     isPreset: boolean
@@ -43,6 +44,10 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
             <Route
                 path='/preset/cargar-regularizada'
                 element={<CargarMateriasRegularizada {...props} />}
+            />
+            <Route
+                path='/preset/select-materias-en-curso'
+                element={<SeleccionarMateriasEnCurso {...props} />}
             />
             <Route path='/home' element={<div>🏠 Bienvenido</div>} />
         </Routes>

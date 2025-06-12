@@ -1,9 +1,9 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { PrimaryButton, Spinner, Checkbox } from '@fluentui/react'
+import { PrimaryButton, Checkbox } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import { ICargarMateriaRegularizadaProps } from './ICargarMateriaRegularizadaProps'
-import SeleccionarCarrera from '../../seleccionarCarrera/components/SeleccionarCarrera'
+import { useNavigate } from 'react-router-dom'
 
 interface IMateria {
     id: number
@@ -28,7 +28,7 @@ interface IEstadoItem {
         ID: number
     }
 }
-// Función para evitar `no-void` y manejar errores sincrónicamente
+
 const runAsync = (fn: () => Promise<void>): void => {
     fn().catch(console.error)
 }
@@ -44,10 +44,8 @@ const CargarMateriasRegularizadas: React.FC<
     userDisplayName,
 }) => {
     const sp = getSP(context)
+    const navigate = useNavigate()
 
-    const [volverASeleccionarCarrera, setVolverASeleccionarCarrera] =
-        useState(false)
-    const [eliminando, setEliminando] = useState(false)
     const [carreraSeleccionada, setCarreraSeleccionada] = useState<string>('')
     const [carreraId, setCarreraId] = useState<number | null>(null)
     const [materias, setMaterias] = useState<IMateria[]>([])
@@ -82,6 +80,7 @@ const CargarMateriasRegularizadas: React.FC<
                     .getByTitle('Carrera')
                     .items.getById(idCarrera)
                     .select('nombre')()
+
                 setCarreraSeleccionada(carrera.nombre)
                 setCarreraId(idCarrera)
             } catch (error) {
@@ -122,50 +121,8 @@ const CargarMateriasRegularizadas: React.FC<
         )
     }
 
-    const handleVolver = async (): Promise<void> => {
-        try {
-            setEliminando(true)
-            const user = await sp.web.currentUser()
-            const estudiantes = await sp.web.lists
-                .getByTitle('Estudiante')
-                .items.select('ID', 'usuario/Id')
-                .expand('usuario')()
-            const estudiante = estudiantes.find(
-                (e) => e.usuario?.Id === user.Id
-            )
-            if (!estudiante) return
-
-            const inscriptos = await sp.web.lists
-                .getByTitle('Inscripto')
-                .items.filter(`idEstudianteId eq ${estudiante.ID}`)
-                .select('Id')()
-
-            await Promise.all(
-                inscriptos.map((i) =>
-                    sp.web.lists
-                        .getByTitle('Inscripto')
-                        .items.getById(i.Id)
-                        .recycle()
-                )
-            )
-
-            let retries = 0
-            let restante = inscriptos.length > 0
-            while (restante && retries < 10) {
-                await new Promise<void>((resolve) => setTimeout(resolve, 500))
-                const verificacion: { Id: number }[] = await sp.web.lists
-                    .getByTitle('Inscripto')
-                    .items.filter(`idEstudianteId eq ${estudiante.ID}`)()
-                restante = verificacion.length > 0
-                retries++
-            }
-
-            setVolverASeleccionarCarrera(true)
-        } catch (error) {
-            console.error('Error al eliminar inscripción:', error)
-        } finally {
-            setEliminando(false)
-        }
+    const handleVolver = (): void => {
+        navigate('/preset/cargar-aprobadas') // ✅ Redirige al paso anterior
     }
 
     const handleGuardarMaterias = async (): Promise<void> => {
@@ -211,7 +168,7 @@ const CargarMateriasRegularizadas: React.FC<
                     sp.web.lists.getByTitle('Estado').items.add({
                         idEstudianteId: estudiante.ID,
                         codMateriaId: materia.id,
-                        condicion: 'R', // Regularizada
+                        condicion: 'R',
                     })
                 )
             )
@@ -220,6 +177,9 @@ const CargarMateriasRegularizadas: React.FC<
                 `${nuevasMaterias.length} materia(s) guardadas correctamente.`
             )
             setTipoMensaje('exito')
+
+            // ✅ Redirigir al próximo paso
+            navigate('/preset/select-materias-en-curso')
         } catch (error) {
             console.error('Error al guardar materias:', error)
             setMensaje('Error al guardar materias.')
@@ -236,26 +196,9 @@ const CargarMateriasRegularizadas: React.FC<
         return 'Materias regularizadas'
     }
 
-    if (volverASeleccionarCarrera) {
-        return (
-            <SeleccionarCarrera
-                context={context}
-                description={description}
-                isDarkTheme={isDarkTheme}
-                environmentMessage={environmentMessage}
-                hasTeamsContext={hasTeamsContext}
-                userDisplayName={userDisplayName}
-            />
-        )
-    }
-
     return (
         <div style={{ textAlign: 'center' }}>
-            {eliminando ? (
-                <Spinner label='Eliminando inscripción...' />
-            ) : (
-                <PrimaryButton text='Volver' onClick={handleVolver} />
-            )}
+            <PrimaryButton text='Volver' onClick={handleVolver} />
             <PrimaryButton
                 text='Guardar'
                 onClick={handleGuardarMaterias}
