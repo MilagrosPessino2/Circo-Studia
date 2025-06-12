@@ -90,30 +90,62 @@ const CargarMateriasRegularizadas: React.FC<
         runAsync(fetchCarrera)
     }, [])
 
-    useEffect(() => {
-        const fetchMaterias = async (): Promise<void> => {
-            if (!carreraId) return
-            try {
-                const items = await sp.web.lists
-                    .getByTitle('MateriaCarrera')
-                    .items.filter(`codCarreraId eq ${carreraId}`)
-                    .select('CodMateria/ID', 'CodMateria/nombre')
-                    .expand('CodMateria')()
+        useEffect(() => {
+    const fetchMaterias = async () => {
+        if (!carreraId) return
 
-                const materiasFormateadas: IMateria[] = items
-                    .filter((item) => item.CodMateria)
-                    .map((item) => ({
-                        id: item.CodMateria.ID,
-                        nombre: item.CodMateria.nombre,
-                        checked: false,
-                    }))
-                setMaterias(materiasFormateadas)
-            } catch (error) {
-                console.error('Error al obtener materias:', error)
-            }
-        }
-        runAsync(fetchMaterias)
-    }, [carreraId])
+        try {
+        const user = await sp.web.currentUser()
+        const currentUserId = user.Id
+
+        const estudianteItems = await sp.web.lists
+            .getByTitle('Estudiante')
+            .items.select('ID', 'usuario/Id')
+            .expand('usuario')()
+
+        const coincidencia = estudianteItems.find(item => item.usuario?.Id === currentUserId)
+
+        if (!coincidencia) {
+            console.warn('Estudiante no encontrado')
+            return
+      }
+
+      const estudianteID = coincidencia.ID
+
+      // Obtener materias ya aprobadas del estudiante
+      const materiasEstado = await sp.web.lists
+        .getByTitle('Estado')
+        .items
+        .filter(`idEstudianteId eq ${estudianteID}`)
+        .select('codMateria/ID')
+        .expand('codMateria')()
+
+      const idsAprobadas = materiasEstado.map((m: any) => m.codMateria.ID)
+
+      // Obtener todas las materias de la carrera
+      const items = await sp.web.lists
+        .getByTitle('MateriaCarrera')
+        .items
+        .filter(`codCarreraId eq ${carreraId}`)
+        .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
+        .expand('CodMateria')()
+
+      const materiasFormateadas = items
+        .filter((item: any) => item.CodMateria && !idsAprobadas.includes(item.CodMateria.ID)) // <-- filtro acá
+        .map((item: any) => ({
+          id: item.CodMateria.ID,
+          nombre: item.CodMateria.nombre,
+          checked: false,
+        }))
+
+      setMaterias(materiasFormateadas)
+    } catch (error) {
+      console.error('Error al obtener materias desde CarreraMateria:', error)
+    }
+  }
+
+        void fetchMaterias()
+        }, [carreraId])
 
     const handleCheckboxChange = (id: number): void => {
         setMaterias((prev) =>
@@ -202,7 +234,6 @@ const CargarMateriasRegularizadas: React.FC<
             <PrimaryButton
                 text='Guardar'
                 onClick={handleGuardarMaterias}
-                disabled={materias.every((m) => !m.checked)}
                 style={{ marginLeft: 10, marginTop: 20 }}
             />
             {mensaje && (
@@ -218,22 +249,18 @@ const CargarMateriasRegularizadas: React.FC<
 
             <h2>{renderTitulo()}</h2>
 
-            {materias.length > 0 ? (
-                <div
-                    style={{
-                        maxWidth: '400px',
-                        margin: '0 auto',
-                        textAlign: 'left',
-                    }}
-                >
-                    {materias.map((materia) => (
-                        <Checkbox
-                            key={materia.id}
-                            label={materia.nombre}
-                            checked={materia.checked}
-                            onChange={() => handleCheckboxChange(materia.id)}
-                        />
-                    ))}
+            {materias.filter(m => m.nombre && m.nombre.trim() !== '').length > 0 ? (
+        <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
+            {materias
+            .filter(materia => materia.nombre && materia.nombre.trim() !== '')
+            .map(materia => (
+                <Checkbox
+                key={materia.id}
+                label={materia.nombre}
+                checked={materia.checked}
+                onChange={() => handleCheckboxChange(materia.id)}
+                />
+            ))}
                 </div>
             ) : (
                 <p>No hay materias disponibles.</p>

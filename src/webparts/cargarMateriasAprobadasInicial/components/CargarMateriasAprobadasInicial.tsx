@@ -202,11 +202,7 @@ const CargarMateriasAprobadasInicial: React.FC<
                 (m) => !codigosExistentes.includes(m.id)
             )
 
-            if (nuevasMaterias.length === 0) {
-                setMensaje('Todas las materias ya estaban registradas.')
-                setTipoMensaje('error')
-                return
-            }
+        
 
             await Promise.all(
                 nuevasMaterias.map((materia) =>
@@ -250,7 +246,6 @@ const CargarMateriasAprobadasInicial: React.FC<
             <PrimaryButton
                 text='Continuar'
                 onClick={handleGuardarMaterias}
-                disabled={materias.every((m) => !m.checked)}
                 style={{ marginTop: 20, marginLeft: 10 }}
             />
             {mensaje && (
@@ -266,22 +261,18 @@ const CargarMateriasAprobadasInicial: React.FC<
 
             <h2>{renderTitulo()}</h2>
 
-            {materias.length > 0 ? (
-                <div
-                    style={{
-                        maxWidth: '400px',
-                        margin: '0 auto',
-                        textAlign: 'left',
-                    }}
-                >
-                    {materias.map((materia) => (
-                        <Checkbox
-                            key={materia.id}
-                            label={materia.nombre}
-                            checked={materia.checked}
-                            onChange={() => handleCheckboxChange(materia.id)}
-                        />
-                    ))}
+            {materias.filter(m => m.nombre && m.nombre.trim() !== '').length > 0 ? (
+        <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
+            {materias
+            .filter(materia => materia.nombre && materia.nombre.trim() !== '')
+            .map(materia => (
+                <Checkbox
+                key={materia.id}
+                label={materia.nombre}
+                checked={materia.checked}
+                onChange={() => handleCheckboxChange(materia.id)}
+                />
+            ))}
                 </div>
             ) : (
                 <p>No hay materias para esta carrera.</p>
