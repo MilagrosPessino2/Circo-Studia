@@ -189,12 +189,6 @@ const CargarMateriasRegularizadas: React.FC<
                 (m) => !codigosExistentes.includes(m.id)
             )
 
-            if (nuevasMaterias.length === 0) {
-                setMensaje('Todas las materias ya estaban registradas.')
-                setTipoMensaje('error')
-                return
-            }
-
             await Promise.all(
                 nuevasMaterias.map((materia) =>
                     sp.web.lists.getByTitle('Estado').items.add({
