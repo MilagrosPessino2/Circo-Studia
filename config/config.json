@@ -41,6 +41,22 @@
           "manifest": "./src/webparts/cargarMateriaRegularizada/CargarMateriaRegularizadaWebPart.manifest.json"
         }
       ]
+    },
+    "inicio-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/inicio/InicioWebPart.js",
+          "manifest": "./src/webparts/inicio/InicioWebPart.manifest.json"
+        }
+      ]
+    },
+    "mis-materias-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/misMaterias/MisMateriasWebPart.js",
+          "manifest": "./src/webparts/misMaterias/MisMateriasWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -49,7 +65,8 @@
     "SeleccionarCarreraWebPartStrings": "lib/webparts/seleccionarCarrera/loc/{locale}.js",
     "CargarMateriasAprobadasInicialWebPartStrings": "lib/webparts/cargarMateriasAprobadasInicial/loc/{locale}.js",
     "SeleccionarMateriasEnCursoWebPartStrings": "lib/webparts/seleccionarMateriasEnCurso/loc/{locale}.js",
-    "CargarMateriaRegularizadaWebPartStrings": "lib/webparts/cargarMateriaRegularizada/loc/{locale}.js"
+    "CargarMateriaRegularizadaWebPartStrings": "lib/webparts/cargarMateriaRegularizada/loc/{locale}.js",
+    "InicioWebPartStrings": "lib/webparts/inicio/loc/{locale}.js",
+    "MisMateriasWebPartStrings": "lib/webparts/misMaterias/loc/{locale}.js"
   }
 }
-

@@ -154,7 +154,7 @@ const CargarMateriasRegularizadas: React.FC<
     }
 
     const handleVolver = (): void => {
-        navigate('/preset/cargar-aprobadas') // ✅ Redirige al paso anterior
+        navigate('/preset/cargar-aprobadas') 
     }
 
     const handleGuardarMaterias = async (): Promise<void> => {
