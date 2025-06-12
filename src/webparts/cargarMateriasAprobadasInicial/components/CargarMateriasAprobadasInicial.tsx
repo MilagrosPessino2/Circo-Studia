@@ -277,7 +277,6 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
         <PrimaryButton
       text="Continuar"
       onClick={handleGuardarMaterias}
-      disabled={materias.every((m) => !m.checked)}
       style={{ marginTop: 20 }}
     />
     {mensaje && (

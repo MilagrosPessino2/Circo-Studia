@@ -303,7 +303,6 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriaRegularizadaProps> 
         <PrimaryButton
       text="Continuar"
       onClick={handleGuardarMaterias}
-      disabled={materias.every((m) => !m.checked)}
       style={{ marginTop: 20 }}
     />
     {mensaje && (
@@ -320,16 +319,18 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriaRegularizadaProps> 
       <h2>{renderTitulo()}</h2>
       <p>Selecciona las materias que tengas en condicion de final</p>
 
-      {materias.length > 0 ? (
+      {materias.filter(m => m.nombre && m.nombre.trim() !== '').length > 0 ? (
         <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
-          {materias.map(materia => (
-            <Checkbox
-              key={materia.id}
-              label={materia.nombre}
-              checked={materia.checked}
-              onChange={() => handleCheckboxChange(materia.id)}
-            />
-          ))}
+          {materias
+            .filter(materia => materia.nombre && materia.nombre.trim() !== '')
+            .map(materia => (
+              <Checkbox
+                key={materia.id}
+                label={materia.nombre}
+                checked={materia.checked}
+                onChange={() => handleCheckboxChange(materia.id)}
+              />
+            ))}
         </div>
       ) : (
         <p>No hay materias para esta carrera.</p>
