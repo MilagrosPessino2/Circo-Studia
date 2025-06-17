@@ -2,9 +2,10 @@ import * as React from 'react'
 import { useEffect, useState } from 'react'
 import { IInicioProps } from './IInicioProps'
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http'
+import { Link } from 'react-router-dom';
 
 const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
-  const [nombre, setNombre] = useState<string>('Estudiante')
+  const [nombre, setNombre] = useState<string>('Mili')
   const [horario] = useState<string[][]>([
     ['08:00 a 12 hs', '', '', '', '', '', 'Tecnología de Redes'],
     ['14:00 a 18 hs', '', '', '', '', '', ''],
@@ -37,14 +38,13 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', minHeight: '100vh' }}>
-      {/* Sidebar */}
       <aside style={{ background: '#eee', padding: 16 }}>
         <h1>Circo Studia</h1>
         <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
-          <button>Inicio</button>
-          <button>Oferta</button>
-          <button>Mis materias</button>
-          <button>Coincidencias</button>
+          <Link to="/inicio"><button>Inicio</button></Link>
+          <Link to="/oferta"><button>Oferta</button></Link>
+          <Link to="/mis-materias"><button>Mis materias</button></Link>
+          <Link to="/coincidencias"><button>Coincidencias</button></Link>
         </nav>
       </aside>
 
@@ -52,7 +52,7 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
       <main style={{ padding: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
           <h2>
-            Bienvenido "{nombre}", actualmente estás cursando
+            Bienvenido `{nombre}`, actualmente estás cursando
           </h2>
           <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#999' }} />
         </div>

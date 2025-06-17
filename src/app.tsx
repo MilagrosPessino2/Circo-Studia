@@ -14,6 +14,10 @@ import SeleccionarCarrera from './webparts/seleccionarCarrera/components/Selecci
 import CargarMateriasAprobadasInicial from './webparts/cargarMateriasAprobadasInicial/components/CargarMateriasAprobadasInicial'
 import CargarMateriasRegularizada from './webparts/cargarMateriaRegularizada/components/CargarMateriaRegularizada'
 import SeleccionarMateriasEnCurso from './webparts/seleccionarMateriasEnCurso/components/SeleccionarMateriasEnCurso'
+import Inicio from './webparts/inicio/components/Inicio'
+import MisMaterias from './webparts/misMaterias/components/MisMaterias'
+import Coincidencias from './webparts/coincidencias/components/Coincidencias'
+import Oferta from './webparts/oferta/components/Oferta'
 
 export const UserPresetContext = createContext<{
     isPreset: boolean
@@ -49,7 +53,19 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
                 path='/preset/select-materias-en-curso'
                 element={<SeleccionarMateriasEnCurso {...props} />}
             />
-            <Route path='/home' element={<div>🏠 Bienvenido</div>} />
+            <Route
+                path='/mis-materias'
+                element={<MisMaterias {...props} />}
+            />
+            <Route
+                path='/coincidencias'
+                element={<Coincidencias {...props} />}
+            />
+              <Route
+                path='/oferta'
+                element={<Oferta {...props} />}
+            />
+            <Route path='/inicio' element={<Inicio {...props} />} />
         </Routes>
     )
 }

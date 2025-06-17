@@ -203,9 +203,9 @@ const CargarMateriasRegularizadas: React.FC<
                 `${nuevasMaterias.length} materia(s) guardadas correctamente.`
             )
             setTipoMensaje('exito')
-
-            // ✅ Redirigir al próximo paso
+            
             navigate('/preset/select-materias-en-curso')
+            
         } catch (error) {
             console.error('Error al guardar materias:', error)
             setMensaje('Error al guardar materias.')

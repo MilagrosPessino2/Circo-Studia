@@ -57,6 +57,22 @@
           "manifest": "./src/webparts/misMaterias/MisMateriasWebPart.manifest.json"
         }
       ]
+    },
+    "coincidencias-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/coincidencias/CoincidenciasWebPart.js",
+          "manifest": "./src/webparts/coincidencias/CoincidenciasWebPart.manifest.json"
+        }
+      ]
+    },
+    "oferta-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/oferta/OfertaWebPart.js",
+          "manifest": "./src/webparts/oferta/OfertaWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -67,6 +83,8 @@
     "SeleccionarMateriasEnCursoWebPartStrings": "lib/webparts/seleccionarMateriasEnCurso/loc/{locale}.js",
     "CargarMateriaRegularizadaWebPartStrings": "lib/webparts/cargarMateriaRegularizada/loc/{locale}.js",
     "InicioWebPartStrings": "lib/webparts/inicio/loc/{locale}.js",
-    "MisMateriasWebPartStrings": "lib/webparts/misMaterias/loc/{locale}.js"
+    "MisMateriasWebPartStrings": "lib/webparts/misMaterias/loc/{locale}.js",
+    "CoincidenciasWebPartStrings": "lib/webparts/coincidencias/loc/{locale}.js",
+    "OfertaWebPartStrings": "lib/webparts/oferta/loc/{locale}.js"
   }
 }
