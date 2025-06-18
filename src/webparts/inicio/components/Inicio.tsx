@@ -35,7 +35,7 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
                 const estado = await sp.web.lists
                     .getByTitle('Estado')
                     .items.filter(
-                        `idEstudianteId eq ${estudiante.ID} and condicion eq 'A'`
+                        `idEstudianteId eq ${estudiante.ID} and condicion eq 'C'`
                     )
                     .select(
                         'codMateria/ID',
