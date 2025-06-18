@@ -35,11 +35,12 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
           .getByTitle('Estado')
           .items
           .filter(`idEstudianteId eq ${estudiante.ID} and condicion eq 'A'`)
-          .select('codMateria/ID', 'codMateria/nombre')
+          .select('codMateria/ID'  , 'codMateria/codMateria', 'codMateria/nombre')
           .expand('codMateria')()
 
         const materiasCursando = estado.map(e => ({
           id: e.codMateria?.ID,
+          cod: e.codMateria?.codMateria,
           nombre: e.codMateria?.nombre
         }))
 
@@ -50,29 +51,39 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
         }
 
         const oferta = await sp.web.lists
-          .getByTitle('OfertaDeMaterias')
-          .items.select('codMateria/Id', 'codComision/Id')
-          .expand('codMateria', 'codComision')()
+        .getByTitle('OfertaDeMaterias')
+        .items
+        .select('codMateria/codMateria', 'codMateria/Id', 'codComision/codComision', 'codComision/Id')
+        .expand('codMateria', 'codComision')()
 
           console.log('Oferta de materias:', oferta)
 
         const comisiones = await sp.web.lists
           .getByTitle('Comision')
           .items.select('codComision', 'diaSemana', 'turno')()
-        console.log('Comisiones:', comisiones)
+          console.log('Comisiones:', comisiones)
        
         const franjas = ['08:00 a 12 hs', '14:00 a 18 hs', '19:00 a 23 hs']
         const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
         const tabla: string[][] = franjas.map(f => [f, '', '', '', '', '', ''])
 
-  materiasCursando.forEach(m => {
-  const ofertas = oferta.filter(o => o.codMateria?.Id === m.id)
+
+materiasCursando.forEach(m => {
+  console.log('Comparando m.cod:', m.cod, 'tipo:', typeof m.cod);
+
+  const ofertas = oferta.filter(o => `${o.codMateria?.codMateria}` === `${m.cod}`)
+
+  console.log('Materia:', m.nombre, '→ Ofertas encontradas:', ofertas.length)
 
   ofertas.forEach(of => {
-    const com = comisiones.find(c => c.codComision == of.codComision?.Id)
+    const com = comisiones.find(c => c.codComision === of.codComision?.codComision)
+    console.log(`Comisión encontrada:`, com)
+
     if (com) {
       const col = dias.indexOf(com.diaSemana)
+      console.log(`Día: ${com.diaSemana}, Índice de columna: ${col}`)
       const row = com.turno === 'M' ? 0 : com.turno === 'T' ? 1 : 2
+
       if (col >= 0) {
         console.log(`→ Asignando: ${m.nombre} a ${com.diaSemana} (${com.turno})`)
         tabla[row][col + 1] = m.nombre
@@ -80,6 +91,8 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
     }
   })
 })
+
+
 
 setHorario(tabla)
 console.log('Horario generado:', tabla)
