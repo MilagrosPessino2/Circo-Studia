@@ -79,16 +79,19 @@ materiasCursando.forEach(m => {
     const com = comisiones.find(c => c.codComision === of.codComision?.codComision)
     console.log(`Comisión encontrada:`, com)
 
-    if (com) {
-      const col = dias.indexOf(com.diaSemana)
-      console.log(`Día: ${com.diaSemana}, Índice de columna: ${col}`)
-      const row = com.turno === 'M' ? 0 : com.turno === 'T' ? 1 : 2
+ const col = dias.findIndex(d => d.toLowerCase() === com.diaSemana.toLowerCase())
+const row = com.turno === 'M' ? 0 : com.turno === 'T' ? 1 : com.turno === 'N' ? 2 : -1
 
-      if (col >= 0) {
-        console.log(`→ Asignando: ${m.nombre} a ${com.diaSemana} (${com.turno})`)
-        tabla[row][col + 1] = m.nombre
-      }
-    }
+if (col >= 0 && row >= 0) {
+  if (!tabla[row][col + 1]) {
+    tabla[row][col + 1] = m.nombre
+  } else {
+    console.warn(`⚠ Ya hay una materia en ${dias[col]} (${com.turno}):`, tabla[row][col + 1])
+    tabla[row][col + 1] += ` / ${m.nombre}` // opcional: mostrar ambas
+  }
+}
+
+
   })
 })
 
