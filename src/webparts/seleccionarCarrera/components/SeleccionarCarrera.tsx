@@ -36,7 +36,7 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
             )
 
             if (!coincidencia) {
-                console.error('❌ No se encontró el estudiante relacionado.')
+                console.error('No se encontró el estudiante relacionado.')
                 return
             }
 
@@ -49,7 +49,7 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
 
             if (inscriptoItems.length > 0) {
                 console.log(
-                    '✅ Estudiante ya tiene una carrera asociada. Redireccionando...'
+                    'Estudiante ya tiene una carrera asociada. Redireccionando...'
                 )
                 setIsPreset(true)
                 localStorage.setItem('userPreset', 'true')
@@ -76,7 +76,7 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
 
     const guardarSeleccion = async (): Promise<void> => {
         if (!selectedCarreraId || !estudianteId) {
-            console.warn('⚠️ Faltan datos para guardar')
+            console.warn('Faltan datos para guardar')
             return
         }
 
@@ -86,7 +86,7 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
                 idCarreraId: parseInt(selectedCarreraId),
             })
 
-            alert('✅ Carrera seleccionada correctamente.')
+            alert('Carrera seleccionada correctamente.')
 
             setIsPreset(true)
             localStorage.setItem('userPreset', 'true')
