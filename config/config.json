@@ -73,6 +73,14 @@
           "manifest": "./src/webparts/oferta/OfertaWebPart.manifest.json"
         }
       ]
+    },
+    "menu-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/menu/MenuWebPart.js",
+          "manifest": "./src/webparts/menu/MenuWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -85,6 +93,7 @@
     "InicioWebPartStrings": "lib/webparts/inicio/loc/{locale}.js",
     "MisMateriasWebPartStrings": "lib/webparts/misMaterias/loc/{locale}.js",
     "CoincidenciasWebPartStrings": "lib/webparts/coincidencias/loc/{locale}.js",
-    "OfertaWebPartStrings": "lib/webparts/oferta/loc/{locale}.js"
+    "OfertaWebPartStrings": "lib/webparts/oferta/loc/{locale}.js",
+    "MenuWebPartStrings": "lib/webparts/menu/loc/{locale}.js"
   }
 }
