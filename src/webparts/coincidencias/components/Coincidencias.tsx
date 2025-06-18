@@ -1,13 +1,22 @@
-import * as React from 'react';
-import type { ICoincidenciasProps } from './ICoincidenciasProps';
+import * as React from 'react'
+import Menu from '../../menu/components/Menu'
+import type { ICoincidenciasProps } from './ICoincidenciasProps'
 
-
-export default class Coincidencias extends React.Component<ICoincidenciasProps> {
-  public render(): React.ReactElement<ICoincidenciasProps> {
- 
-
+const Coincidencias: React.FC<ICoincidenciasProps> = () => {
     return (
-      <h2>Coincidencias</h2>
-    );
-  }
+        <div
+            style={{
+                display: 'grid',
+                gridTemplateColumns: '200px 1fr',
+                minHeight: '100vh',
+            }}
+        >
+            <Menu />
+            <main style={{ padding: 24 }}>
+                <h1>Coincidencias</h1>
+            </main>
+        </div>
+    )
 }
+
+export default Coincidencias
