@@ -15,6 +15,7 @@ interface IOfertaDeMaterias {
     codComision?: {
         Id: number
         descripcion?: string
+        codComision: string
     }
     fechaDePublicacion: string
     Cuatrimestre: number
@@ -132,6 +133,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                         'codMateria/codMateria',
                         'codMateria/nombre',
                         'codComision/Id',
+                        'codComision/codComision',
                         'codComision/descripcion',
                         'fechaDePublicacion',
                         'Cuatrimestre',
@@ -337,7 +339,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     {ofertas.map((o) => (
                         <Checkbox
                             key={o.Id}
-                            label={`${o.codMateria?.nombre} (${o.codMateria?.codMateria})`}
+                            label={`[${o.codMateria?.codMateria}] ${o.codMateria?.nombre} - Comisión${o.codComision?.codComision} - ${o.codComision?.descripcion}`}
                             checked={o.checked}
                             onChange={() =>
                                 handleCheckboxChange(o.codMateria?.Id)
