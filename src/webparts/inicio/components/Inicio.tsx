@@ -64,7 +64,7 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
           console.log('Comisiones:', comisiones)
        
         const franjas = ['08:00 a 12 hs', '14:00 a 18 hs', '19:00 a 23 hs']
-        const dias = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+        const dias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado']
         const tabla: string[][] = franjas.map(f => [f, '', '', '', '', '', ''])
 
 
@@ -87,7 +87,7 @@ if (col >= 0 && row >= 0) {
     tabla[row][col + 1] = m.nombre
   } else {
     console.warn(`⚠ Ya hay una materia en ${dias[col]} (${com.turno}):`, tabla[row][col + 1])
-    tabla[row][col + 1] += ` / ${m.nombre}` // opcional: mostrar ambas
+    tabla[row][col + 1] += ` / ${m.nombre}` 
   }
 }
 
