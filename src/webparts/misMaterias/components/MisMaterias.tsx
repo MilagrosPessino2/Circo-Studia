@@ -28,7 +28,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
           .getByTitle('Estado')
           .items
           .filter(`idEstudianteId eq ${estudiante.ID} and condicion eq '${estadoFiltro}'`)
-          .select('codMateria/ID', 'codMateria/codMateria', 'codMateria/nombre', 'condicion')
+          .select('ID', 'codMateria/ID', 'codMateria/codMateria', 'codMateria/nombre', 'condicion')
           .expand('codMateria')()
 
         const oferta = await sp.web.lists
@@ -45,6 +45,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
           const com = comisiones.find(c => c.codComision === ofertaRelacionada?.codComision?.Id)
 
           return {
+            id: e.ID,
             codigo: e.codMateria?.codMateria,
             nombre: e.codMateria?.nombre,
             comision: com?.codComision || '-',
@@ -66,6 +67,14 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
     void fetchMaterias()
   }, [estadoFiltro])
 
+  const eliminarMateria = async (id: number): Promise<void> => {
+    try {
+      await sp.web.lists.getByTitle('Estado').items.getById(id).recycle()
+      setMaterias(materias.filter(m => m.id !== id))
+    } catch (error) {
+      console.error('Error eliminando materia:', error)
+    }
+  }
     return (
         <div
             style={{
@@ -80,7 +89,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
       <aside style={{ background: '', padding: 16 }}>
         
        <div style={{ marginTop: 16 }}>
-          <h3>Filtrar materias</h3>
+           <h3>Filtrar materias</h3>
           <section>
             <select
               style={{ width: '100%', padding: 8 }}
@@ -111,6 +120,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 <th>Aula</th>
                 <th>Modalidad</th>
                 <th>Estado</th>
+                <th></th>
               </tr>
             </thead>
             <tbody>
@@ -123,6 +133,15 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                   <td>{m.aula}</td>
                   <td>{m.modalidad}</td>
                   <td>{m.estado}</td>
+                  <td>
+                    <button
+                      onClick={() => eliminarMateria(m.id)}
+                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', fontSize: 18 }}
+                      title='Eliminar materia'
+                    >
+                      🗑️
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>
