@@ -202,6 +202,8 @@ const CargarMateriasAprobadasInicial: React.FC<
                 (m) => !codigosExistentes.includes(m.id)
             )
 
+        
+
             await Promise.all(
                 nuevasMaterias.map((materia) =>
                     sp.web.lists.getByTitle('Estado').items.add({
@@ -259,30 +261,18 @@ const CargarMateriasAprobadasInicial: React.FC<
 
             <h2>{renderTitulo()}</h2>
 
-            {materias.filter((m) => m.nombre && m.nombre.trim() !== '').length >
-            0 ? (
-                <div
-                    style={{
-                        maxWidth: '400px',
-                        margin: '0 auto',
-                        textAlign: 'left',
-                    }}
-                >
-                    {materias
-                        .filter(
-                            (materia) =>
-                                materia.nombre && materia.nombre.trim() !== ''
-                        )
-                        .map((materia) => (
-                            <Checkbox
-                                key={materia.id}
-                                label={materia.nombre}
-                                checked={materia.checked}
-                                onChange={() =>
-                                    handleCheckboxChange(materia.id)
-                                }
-                            />
-                        ))}
+            {materias.filter(m => m.nombre && m.nombre.trim() !== '').length > 0 ? (
+        <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
+            {materias
+            .filter(materia => materia.nombre && materia.nombre.trim() !== '')
+            .map(materia => (
+                <Checkbox
+                key={materia.id}
+                label={materia.nombre}
+                checked={materia.checked}
+                onChange={() => handleCheckboxChange(materia.id)}
+                />
+            ))}
                 </div>
             ) : (
                 <p>No hay materias para esta carrera.</p>

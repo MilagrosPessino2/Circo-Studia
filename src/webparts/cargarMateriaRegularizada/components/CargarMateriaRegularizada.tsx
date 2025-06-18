@@ -27,28 +27,22 @@ interface IEstadoItem {
     codMateria: {
         ID: number
     }
-    Id: number
-}
-
-interface IMateriaCarreraItem {
-    CodMateria: {
-        ID: number
-        nombre: string
-    }
 }
 
 const runAsync = (fn: () => Promise<void>): void => {
     fn().catch(console.error)
 }
 
-const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
+const CargarMateriasRegularizadas: React.FC<
+    ICargarMateriaRegularizadaProps
+> = ({
     context,
     description,
     isDarkTheme,
     environmentMessage,
     hasTeamsContext,
     userDisplayName,
-}): JSX.Element => {
+}) => {
     const sp = getSP(context)
     const navigate = useNavigate()
 
@@ -60,7 +54,7 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
         null
     )
 
-    useEffect((): void => {
+    useEffect(() => {
         const fetchCarrera = async (): Promise<void> => {
             try {
                 const user = await sp.web.currentUser()
@@ -93,72 +87,65 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
                 console.error('Error al obtener carrera:', error)
             }
         }
-
         runAsync(fetchCarrera)
     }, [])
 
-    useEffect((): void => {
-        const fetchMaterias = async (): Promise<void> => {
-            if (!carreraId) return
+        useEffect(() => {
+    const fetchMaterias = async () => {
+        if (!carreraId) return
 
-            try {
-                const user = await sp.web.currentUser()
-                const currentUserId = user.Id
+        try {
+        const user = await sp.web.currentUser()
+        const currentUserId = user.Id
 
-                const estudianteItems: IEstudiante[] = await sp.web.lists
-                    .getByTitle('Estudiante')
-                    .items.select('ID', 'usuario/Id')
-                    .expand('usuario')()
+        const estudianteItems = await sp.web.lists
+            .getByTitle('Estudiante')
+            .items.select('ID', 'usuario/Id')
+            .expand('usuario')()
 
-                const coincidencia = estudianteItems.find(
-                    (item) => item.usuario?.Id === currentUserId
-                )
-                if (!coincidencia) {
-                    console.warn('Estudiante no encontrado')
-                    return
-                }
+        const coincidencia = estudianteItems.find(item => item.usuario?.Id === currentUserId)
 
-                const estudianteID = coincidencia.ID
+        if (!coincidencia) {
+            console.warn('Estudiante no encontrado')
+            return
+      }
 
-                const materiasEstado: IEstadoItem[] = await sp.web.lists
-                    .getByTitle('Estado')
-                    .items.filter(`idEstudianteId eq ${estudianteID}`)
-                    .select('codMateria/ID')
-                    .expand('codMateria')()
+      const estudianteID = coincidencia.ID
 
-                const idsAprobadas: number[] = materiasEstado.map(
-                    (m) => m.codMateria.ID
-                )
+      // Obtener materias ya aprobadas del estudiante
+      const materiasEstado = await sp.web.lists
+        .getByTitle('Estado')
+        .items
+        .filter(`idEstudianteId eq ${estudianteID}`)
+        .select('codMateria/ID')
+        .expand('codMateria')()
 
-                const items: IMateriaCarreraItem[] = await sp.web.lists
-                    .getByTitle('MateriaCarrera')
-                    .items.filter(`codCarreraId eq ${carreraId}`)
-                    .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
-                    .expand('CodMateria')()
+      const idsAprobadas = materiasEstado.map((m: any) => m.codMateria.ID)
 
-                const materiasFormateadas: IMateria[] = items
-                    .filter(
-                        (item) =>
-                            item.CodMateria &&
-                            !idsAprobadas.includes(item.CodMateria.ID)
-                    )
-                    .map((item) => ({
-                        id: item.CodMateria.ID,
-                        nombre: item.CodMateria.nombre,
-                        checked: false,
-                    }))
+      // Obtener todas las materias de la carrera
+      const items = await sp.web.lists
+        .getByTitle('MateriaCarrera')
+        .items
+        .filter(`codCarreraId eq ${carreraId}`)
+        .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
+        .expand('CodMateria')()
 
-                setMaterias(materiasFormateadas)
-            } catch (error) {
-                console.error(
-                    'Error al obtener materias desde MateriaCarrera:',
-                    error
-                )
-            }
-        }
+      const materiasFormateadas = items
+        .filter((item: any) => item.CodMateria && !idsAprobadas.includes(item.CodMateria.ID)) // <-- filtro acá
+        .map((item: any) => ({
+          id: item.CodMateria.ID,
+          nombre: item.CodMateria.nombre,
+          checked: false,
+        }))
 
-        runAsync(fetchMaterias)
-    }, [carreraId])
+      setMaterias(materiasFormateadas)
+    } catch (error) {
+      console.error('Error al obtener materias desde CarreraMateria:', error)
+    }
+  }
+
+        void fetchMaterias()
+        }, [carreraId])
 
     const handleCheckboxChange = (id: number): void => {
         setMaterias((prev) =>
@@ -166,39 +153,8 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
         )
     }
 
-    const handleVolver = async (): Promise<void> => {
-        try {
-            const user = await sp.web.currentUser()
-            const estudiantes: IEstudiante[] = await sp.web.lists
-                .getByTitle('Estudiante')
-                .items.select('ID', 'usuario/Id')
-                .expand('usuario')()
-
-            const estudiante = estudiantes.find(
-                (e) => e.usuario?.Id === user.Id
-            )
-            if (!estudiante) return
-
-            const materiasAprobadas: IEstadoItem[] = await sp.web.lists
-                .getByTitle('Estado')
-                .items.filter(
-                    `idEstudianteId eq ${estudiante.ID} and condicion eq 'A'`
-                )
-                .select('Id')()
-
-            await Promise.all(
-                materiasAprobadas.map((item) =>
-                    sp.web.lists
-                        .getByTitle('Estado')
-                        .items.getById(item.Id)
-                        .recycle()
-                )
-            )
-
-            navigate('/preset/cargar-aprobadas')
-        } catch (error) {
-            console.error('Error al eliminar materias aprobadas:', error)
-        }
+    const handleVolver = (): void => {
+        navigate('/preset/cargar-aprobadas') 
     }
 
     const handleGuardarMaterias = async (): Promise<void> => {
@@ -220,7 +176,6 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
             }
 
             const materiasSeleccionadas = materias.filter((m) => m.checked)
-
             const materiasExistentes: IEstadoItem[] = await sp.web.lists
                 .getByTitle('Estado')
                 .items.filter(`idEstudianteId eq ${estudiante.ID}`)
@@ -230,7 +185,6 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
             const codigosExistentes = materiasExistentes.map(
                 (m) => m.codMateria.ID
             )
-
             const nuevasMaterias = materiasSeleccionadas.filter(
                 (m) => !codigosExistentes.includes(m.id)
             )
@@ -249,8 +203,9 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
                 `${nuevasMaterias.length} materia(s) guardadas correctamente.`
             )
             setTipoMensaje('exito')
-
+            
             navigate('/preset/select-materias-en-curso')
+            
         } catch (error) {
             console.error('Error al guardar materias:', error)
             setMensaje('Error al guardar materias.')
@@ -269,10 +224,7 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
 
     return (
         <div style={{ textAlign: 'center' }}>
-            <PrimaryButton
-                text='Volver'
-                onClick={() => runAsync(handleVolver)}
-            />
+            <PrimaryButton text='Volver' onClick={handleVolver} />
             <PrimaryButton
                 text='Guardar'
                 onClick={handleGuardarMaterias}
@@ -291,30 +243,18 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
 
             <h2>{renderTitulo()}</h2>
 
-            {materias.filter((m) => m.nombre && m.nombre.trim() !== '').length >
-            0 ? (
-                <div
-                    style={{
-                        maxWidth: '400px',
-                        margin: '0 auto',
-                        textAlign: 'left',
-                    }}
-                >
-                    {materias
-                        .filter(
-                            (materia) =>
-                                materia.nombre && materia.nombre.trim() !== ''
-                        )
-                        .map((materia) => (
-                            <Checkbox
-                                key={materia.id}
-                                label={materia.nombre}
-                                checked={materia.checked}
-                                onChange={() =>
-                                    handleCheckboxChange(materia.id)
-                                }
-                            />
-                        ))}
+            {materias.filter(m => m.nombre && m.nombre.trim() !== '').length > 0 ? (
+        <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
+            {materias
+            .filter(materia => materia.nombre && materia.nombre.trim() !== '')
+            .map(materia => (
+                <Checkbox
+                key={materia.id}
+                label={materia.nombre}
+                checked={materia.checked}
+                onChange={() => handleCheckboxChange(materia.id)}
+                />
+            ))}
                 </div>
             ) : (
                 <p>No hay materias disponibles.</p>
@@ -323,4 +263,4 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
     )
 }
 
-export default CargarMateriaRegularizada
+export default CargarMateriasRegularizadas
