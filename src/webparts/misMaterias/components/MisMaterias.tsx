@@ -79,11 +79,20 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
         <div>
       <aside style={{ background: '', padding: 16 }}>
         
-        <nav style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 16 }}>
-          <button onClick={() => setEstadoFiltro('C')}>Materias en curso</button>
-          <button onClick={() => setEstadoFiltro('A')}>Materias aprobadas</button>
-          <button onClick={() => setEstadoFiltro('R')}>Materias en final</button>
-        </nav>
+       <div style={{ marginTop: 16 }}>
+          <h3>Filtrar materias</h3>
+          <section>
+            <select
+              style={{ width: '100%', padding: 8 }}
+              value={estadoFiltro}
+              onChange={(e) => setEstadoFiltro(e.target.value as 'C' | 'A' | 'R')}
+            >
+              <option value="C">Materias en curso</option>
+              <option value="A">Materias aprobadas</option>
+              <option value="R">Materias en final</option>
+            </select>
+          </section>
+        </div>
       </aside>
 
       <main style={{ padding: 24 }}>
