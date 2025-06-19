@@ -117,7 +117,6 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 <th>Materia</th>
                 <th>Comisión</th>
                 <th>Horario</th>
-                <th>Aula</th>
                 <th>Modalidad</th>
                 <th>Estado</th>
                 <th></th>
@@ -130,7 +129,6 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                   <td>{m.nombre}</td>
                   <td>{m.comision}</td>
                   <td>{m.horario}</td>
-                  <td>{m.aula}</td>
                   <td>{m.modalidad}</td>
                   <td>{m.estado}</td>
                   <td>
