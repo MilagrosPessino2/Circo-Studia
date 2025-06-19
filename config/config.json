@@ -81,6 +81,14 @@
           "manifest": "./src/webparts/menu/MenuWebPart.manifest.json"
         }
       ]
+    },
+    "anadir-materia-admin-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/anadirMateriaAdmin/AnadirMateriaAdminWebPart.js",
+          "manifest": "./src/webparts/anadirMateriaAdmin/AnadirMateriaAdminWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -94,6 +102,7 @@
     "MisMateriasWebPartStrings": "lib/webparts/misMaterias/loc/{locale}.js",
     "CoincidenciasWebPartStrings": "lib/webparts/coincidencias/loc/{locale}.js",
     "OfertaWebPartStrings": "lib/webparts/oferta/loc/{locale}.js",
-    "MenuWebPartStrings": "lib/webparts/menu/loc/{locale}.js"
+    "MenuWebPartStrings": "lib/webparts/menu/loc/{locale}.js",
+    "AnadirMateriaAdminWebPartStrings": "lib/webparts/anadirMateriaAdmin/loc/{locale}.js"
   }
 }
