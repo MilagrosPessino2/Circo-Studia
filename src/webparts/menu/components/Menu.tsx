@@ -25,6 +25,9 @@ const Menu: React.FC = () => {
                 <Link to='/coincidencias'>
                     <button>Coincidencias</button>
                 </Link>
+                <Link to='/perfil'>
+                    <button>Perfil</button>
+                </Link>
             </nav>
         </aside>
     )
