@@ -153,14 +153,7 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
                     }}
                 >
                     <h2>Bienvenido {nombre}, actualmente estás cursando</h2>
-                    <div
-                        style={{
-                            width: 32,
-                            height: 32,
-                            borderRadius: '50%',
-                            background: '#999',
-                        }}
-                    />
+                    <div/>
                 </div>
 
                 <table
