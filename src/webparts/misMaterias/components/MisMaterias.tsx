@@ -4,6 +4,7 @@ import type { IMisMateriasProps } from './IMisMateriasProps'
 import { getSP } from '../../../pnpjsConfig'
 import { useEffect, useState } from 'react'
 import { Spinner } from '@fluentui/react'
+import { Link } from 'react-router-dom'
 
 interface IMateria {
     id: number
@@ -205,9 +206,11 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                         </table>
                     )}
 
-                    <button style={{ marginTop: 16, padding: '8px 16px' }}>
-                        Añadir
-                    </button>
+                    
+                        <Link to='/formulario'>
+                            <button style={{ marginTop: 16, padding: '8px 16px' }}>Añadir</button>
+                                        </Link>
+                    
                 </main>
             </div>
         </div>
