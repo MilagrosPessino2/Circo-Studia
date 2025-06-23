@@ -3,13 +3,29 @@
 .menu {
   overflow: hidden;
   padding: 1em;
-  color: "[theme:bodyText, default: #323130]";
+  color: "[theme:bodyText, default: #1fb286]";
   color: var(--bodyText);
   &.teams {
     font-family: $ms-font-family-fallbacks;
   }
 }
 
+.titulo{
+  font-size: 29px;
+  color: #fff;
+}
+.buttonNav{
+  background-color: #009266;
+  padding: 12px 15px;
+  color: #fff;
+  text-decoration: none;
+  border: 1px solid transparent;
+  width: 100%;
+}
+
+.buttonNav:hover {
+  background-color: #0fa276;
+}
 .welcome {
   text-align: center;
 }

@@ -231,7 +231,7 @@ useEffect(() => {
                         marginBottom: 40,
                     }}
                 >
-                    <thead style={{ background: '#ddd' }}>
+                    <thead style={{ background: '#1fb286' }}>
                         <tr>
                             <th>Horario</th>
                             <th>Lunes</th>
@@ -281,9 +281,10 @@ useEffect(() => {
                 <button
                 style={{
                     padding: '8px 16px',
-                    background: '#bbb',
+                    background: '#009266',
                     border: 'none',
                     borderRadius: 4,
+                    color: '#fff',
                 }}
                 >
                 Ver coincidencias
