@@ -4,6 +4,7 @@ import { IInicioProps } from './IInicioProps'
 import { Spinner } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import Menu from '../../menu/components/Menu'
+import { Link } from 'react-router-dom'
 
 const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
     const sp = getSP(context)
@@ -219,7 +220,8 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
                             </li>
                         ))}
                     </ul>
-                    <button
+                     <Link to='/coincidencias'>
+                                      <button
                         style={{
                             padding: '8px 16px',
                             background: '#bbb',
@@ -229,6 +231,8 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
                     >
                         Ver coincidencias
                     </button>
+                                    </Link>
+                  
                 </section>
             </main>
         </div>
