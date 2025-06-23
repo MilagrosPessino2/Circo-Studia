@@ -89,6 +89,14 @@
           "manifest": "./src/webparts/formulario/FormularioWebPart.manifest.json"
         }
       ]
+    },
+    "perfil-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/perfil/PerfilWebPart.js",
+          "manifest": "./src/webparts/perfil/PerfilWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -103,6 +111,7 @@
     "CoincidenciasWebPartStrings": "lib/webparts/coincidencias/loc/{locale}.js",
     "OfertaWebPartStrings": "lib/webparts/oferta/loc/{locale}.js",
     "MenuWebPartStrings": "lib/webparts/menu/loc/{locale}.js",
-    "FormularioWebPartStrings": "lib/webparts/formulario/loc/{locale}.js"
+    "FormularioWebPartStrings": "lib/webparts/formulario/loc/{locale}.js",
+    "PerfilWebPartStrings": "lib/webparts/perfil/loc/{locale}.js"
   }
 }
