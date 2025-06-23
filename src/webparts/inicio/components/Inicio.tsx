@@ -6,16 +6,15 @@ import { getSP } from '../../../pnpjsConfig'
 import Menu from '../../menu/components/Menu'
 import { Link } from 'react-router-dom'
 
+
+
+
 const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
     const sp = getSP(context)
     const [nombre, setNombre] = useState<string>('Estudiante')
     const [horario, setHorario] = useState<string[][]>([])
     const [loading, setLoading] = useState<boolean>(true)
-    const [coincidencias] = useState([
-        { nombre: 'Maria María', materia: 'Tecnología de Redes' },
-        { nombre: 'Antonio López', materia: 'Tecnología de Redes' },
-        { nombre: 'Sol Vallejos', materia: 'Tecnología de Redes' },
-    ])
+    const [coincidencias, setCoincidencias] = useState<Record<string, string[]>>({});
 
     useEffect(() => {
         const fetchHorarioEnCurso = async (): Promise<void> => {
@@ -131,9 +130,76 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
         fetchHorarioEnCurso().catch(console.error)
     }, [context])
 
+    
+
+useEffect(() => {
+  const cargarCoincidencias = async (): Promise<void> => {
+    try {
+      const user = await sp.web.currentUser();
+      const estudiantes = await sp.web.lists
+        .getByTitle('Estudiante')
+        .items.select('ID', 'usuario/Id', 'usuario/Title')
+        .expand('usuario')();
+      const estudianteActual = estudiantes.find(e => e.usuario?.Id === user.Id);
+      if (!estudianteActual) throw new Error('Estudiante no encontrado');
+
+      // Obtener materias en curso del usuario actual
+      const misMaterias = await sp.web.lists
+        .getByTitle('Estado')
+        .items
+        .filter(`idEstudianteId eq ${estudianteActual.ID} and condicion eq 'C'`)
+        .select('codMateria/Id', 'codMateria/nombre')
+        .expand('codMateria')();
+
+        console.log('Mis materias:', misMaterias);
+
+      const coincidenciasPorMateria: Record<string, string[]> = {};
+
+      for (const m of misMaterias) {
+        const materiaId = m.codMateria?.Id;
+        const nombreMateria = m.codMateria?.nombre;
+
+        // Buscar otros estudiantes cursando la misma materia
+        const coincidencias = await sp.web.lists
+        .getByTitle('Estado')
+        .items
+        .filter(`codMateriaId eq ${materiaId} and condicion eq 'C' and idEstudianteId ne ${estudianteActual.ID}`)
+        .select('idEstudiante/ID') 
+        .expand('idEstudiante')();
+
+                       
+
+        console.log(`Coincidencias para ${nombreMateria}:`, coincidencias);
+
+        const nombres = coincidencias.map(c => {
+        const est = estudiantes.find(e => e.ID === c.idEstudiante?.ID);
+        return est?.usuario?.Title || 'Desconocido';
+        }).filter(Boolean);
+
+
+
+        console.log(`Nombres:`, nombres);
+        console.log(`Nombres encontrados para ${nombreMateria}:`, nombres);
+
+        if (nombres.length > 0) {
+          coincidenciasPorMateria[nombreMateria] = nombres;
+        }
+      }
+
+      setCoincidencias(coincidenciasPorMateria);
+    } catch (err) {
+      console.error('Error al cargar coincidencias:', err);
+    }
+  };
+
+  cargarCoincidencias().catch(console.error);
+}, []);
+
+
     if (loading) {
         return <Spinner label='Cargando datos...' />
     }
+
 
     return (
         <div
@@ -195,45 +261,36 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
                     </tbody>
                 </table>
 
+               
                 <section>
-                    <h3 style={{ marginBottom: 8 }}>Algunas coincidencias</h3>
-                    <p style={{ fontWeight: 'bold' }}>Tecnología de Redes</p>
-                    <ul style={{ marginBottom: 16 }}>
-                        {coincidencias.map((c, i) => (
-                            <li
-                                key={i}
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 8,
-                                }}
-                            >
-                                <span
-                                    style={{
-                                        width: 24,
-                                        height: 24,
-                                        borderRadius: '50%',
-                                        background: '#666',
-                                    }}
-                                />
-                                {c.nombre}
-                            </li>
-                        ))}
-                    </ul>
-                     <Link to='/coincidencias'>
-                                      <button
-                        style={{
-                            padding: '8px 16px',
-                            background: '#bbb',
-                            border: 'none',
-                            borderRadius: 4,
-                        }}
-                    >
-                        Ver coincidencias
-                    </button>
-                                    </Link>
-                  
+            <h3>Coincidencias:</h3>
+            {Object.entries(coincidencias).length === 0 && <p>No hay coincidencias.</p>}
+            {Object.entries(coincidencias).map(([materia, nombres], idx) => (
+                <div key={idx}>
+                <strong>{materia}</strong>
+                <ul>
+                    {nombres.map((nombre, i) => (
+                    <li key={i}>{nombre}</li>
+                    ))}
+                </ul>
+                </div>
+            ))}
+
+
+            <Link to="/coincidencias">
+                <button
+                style={{
+                    padding: '8px 16px',
+                    background: '#bbb',
+                    border: 'none',
+                    borderRadius: 4,
+                }}
+                >
+                Ver coincidencias
+                </button>
+            </Link>
                 </section>
+
             </main>
         </div>
     )
