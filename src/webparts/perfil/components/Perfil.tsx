@@ -1,43 +1,71 @@
 import * as React from 'react';
-import styles from './Perfil.module.scss';
 import type { IPerfilProps } from './IPerfilProps';
-import { escape } from '@microsoft/sp-lodash-subset';
+import Menu from '../../menu/components/Menu';
+import { getSP } from '../../../pnpjsConfig'
+import { useEffect, useState } from 'react'
 
-export default class Perfil extends React.Component<IPerfilProps> {
-  public render(): React.ReactElement<IPerfilProps> {
-    const {
-      description,
-      isDarkTheme,
-      environmentMessage,
-      hasTeamsContext,
-      userDisplayName
-    } = this.props;
+const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
+   const sp = getSP(context)
+   const [nombre, setNombre] = useState<string>('Estudiante')
+   const [email, setEmail] = useState<string>('Estudiante')
+   const [foto, setFoto] = useState<string>('')
 
-    return (
-      <section className={`${styles.perfil} ${hasTeamsContext ? styles.teams : ''}`}>
-        <div className={styles.welcome}>
-          <img alt="" src={isDarkTheme ? require('../assets/welcome-dark.png') : require('../assets/welcome-light.png')} className={styles.welcomeImage} />
-          <h2>Well done, {escape(userDisplayName)}!</h2>
-          <div>{environmentMessage}</div>
-          <div>Web part property value: <strong>{escape(description)}</strong></div>
-        </div>
-        <div>
-          <h3>Welcome to SharePoint Framework!</h3>
-          <p>
-            The SharePoint Framework (SPFx) is a extensibility model for Microsoft Viva, Microsoft Teams and SharePoint. It&#39;s the easiest way to extend Microsoft 365 with automatic Single Sign On, automatic hosting and industry standard tooling.
-          </p>
-          <h4>Learn more about SPFx development:</h4>
-          <ul className={styles.links}>
-            <li><a href="https://aka.ms/spfx" target="_blank" rel="noreferrer">SharePoint Framework Overview</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-graph" target="_blank" rel="noreferrer">Use Microsoft Graph in your solution</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-teams" target="_blank" rel="noreferrer">Build for Microsoft Teams using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-viva" target="_blank" rel="noreferrer">Build for Microsoft Viva Connections using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-store" target="_blank" rel="noreferrer">Publish SharePoint Framework applications to the marketplace</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-api" target="_blank" rel="noreferrer">SharePoint Framework API reference</a></li>
-            <li><a href="https://aka.ms/m365pnp" target="_blank" rel="noreferrer">Microsoft 365 Developer Community</a></li>
-          </ul>
-        </div>
-      </section>
+   useEffect(() => {
+           const datosPerfil = async (): Promise<void> => {
+               try {
+                   const user = await sp.web.currentUser()
+                   setNombre(user.Title)
+                    setEmail(user.Email)
+
+            // Obtener PictureUrl desde User Profile
+            const profile = await sp.profiles.myProperties()
+            const fotoPerfil = profile?.UserProfileProperties?.find(
+            (p: { Key: string; Value: string }) => p.Key === 'PictureURL'
+          )?.Value
+
+
+            setFoto(fotoPerfil || '')
+        } catch (error) {
+            console.error('Error cargando datos del perfil:', error)
+        }
+    }
+   
+           datosPerfil().catch(console.error)
+       }, [context])
+
+
+   return (
+       <div
+            style={{
+                display: 'grid',
+                gridTemplateColumns: '200px 1fr',
+                minHeight: '100vh',
+            }}
+        >
+            <Menu />
+      <h1>Perfil</h1>
+      <img src="" alt="" />
+      <h2>{nombre}</h2>
+      <h3>{email}</h3>
+      <img
+      src={foto || 'https://static.thenounproject.com/png/5034901-200.png'}
+      alt="Foto de perfil"
+      style={{
+        width: 120,
+        height: 120,
+        borderRadius: '50%',
+        border: '2px solid #000',
+        objectFit: 'cover',
+      }}
+    />
+
+      </div>
     );
-  }
+  
 }
+export default PerfilEstudiante
+
+
+
+   
+

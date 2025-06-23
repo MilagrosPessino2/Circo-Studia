@@ -263,7 +263,7 @@ useEffect(() => {
 
                
                 <section>
-            <h3>Coincidencias:</h3>
+            <h3> Algunas Coincidencias:</h3>
             {Object.entries(coincidencias).length === 0 && <p>No hay coincidencias.</p>}
             {Object.entries(coincidencias).map(([materia, nombres], idx) => (
                 <div key={idx}>
