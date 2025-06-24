@@ -12,8 +12,10 @@
 }
 
 .titulo {
-  text-align: center;
-  color: #119877;
+  font-size: 28px;
+  font-weight: bold;
+  color: #1fb286;
+  margin-bottom: 16px;
 }
 
 .descripcion {
@@ -25,15 +27,20 @@
 }
 
 .boton {
-  background-color: #119877;
+  background-color: #009266;
+  color: white;
+  padding: 10px 18px;
   border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
 
   &:hover {
-    background-color: darken(#119877, 10%);
+    background-color: #0fa276;
   }
 
   &:disabled {
-    background-color: #c8c8c8 !important; // gris claro
+    background-color: #c8c8c8 !important; 
     color: #666 !important;
     cursor: not-allowed;
   }

@@ -18,6 +18,8 @@ import Inicio from './webparts/inicio/components/Inicio'
 import MisMaterias from './webparts/misMaterias/components/MisMaterias'
 import Coincidencias from './webparts/coincidencias/components/Coincidencias'
 import Oferta from './webparts/oferta/components/Oferta'
+import Formulario from './webparts/formulario/components/Formulario'
+import Perfil from './webparts/perfil/components/Perfil'
 
 export const UserPresetContext = createContext<{
     isPreset: boolean
@@ -64,6 +66,14 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
               <Route
                 path='/oferta'
                 element={<Oferta {...props} />}
+            />
+              <Route
+                path='/formulario'
+                element={<Formulario {...props} />}
+            />
+              <Route
+                path='/perfil'
+                element={<Perfil {...props} />}
             />
             <Route path='/inicio' element={<Inicio {...props} />} />
         </Routes>

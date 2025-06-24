@@ -103,12 +103,9 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
     return (
         <div className={styles.seleccionarCarrera}>
             <h2 className={styles.titulo}>Bienvenido a Circo Studio</h2>
-            <p className={styles.descripcion}>
-                Seleccioná tu carrera para continuar:
-            </p>
             <Dropdown
                 className={styles.dropdown}
-                label='Carrera'
+                label='Seleccioná tu carrera para continuar:'
                 placeholder='Elegí una carrera'
                 styles={{ root: { zIndex: 1000 } }} // Soluciona problemas de despliegue
                 options={carreras.map((c) => ({
