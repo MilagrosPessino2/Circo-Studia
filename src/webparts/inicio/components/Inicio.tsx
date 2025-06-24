@@ -259,11 +259,16 @@ useEffect(() => {
               </div>
                
                 <section>
-            <h3 className={styles.coincidencias}> Algunas Coincidencias:</h3>
-            {Object.entries(coincidencias).length === 0 && <p>No hay coincidencias.</p>}
+           <h3 className={styles.tituloCoincidencias}>Algunas Coincidencias:</h3>
+
+            {Object.entries(coincidencias).length === 0 && (
+            <p className={styles.noCoincidencias}>No hay coincidencias.</p>
+            )}
+
+            <div className={styles.listaCoincidencias}>
             {Object.entries(coincidencias).map(([materia, nombres], idx) => (
-                <div key={idx}>
-                <strong>{materia}</strong>
+                <div key={idx} className={styles.bloqueMateria}>
+                <strong className={styles.nombreMateria}>{materia}</strong>
                 <ul>
                     {nombres.map((nombre, i) => (
                     <li key={i}>{nombre}</li>
@@ -271,6 +276,8 @@ useEffect(() => {
                 </ul>
                 </div>
             ))}
+            </div>
+
 
 
             <Link to="/coincidencias">
