@@ -1,34 +1,47 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
-.perfil {
-  overflow: hidden;
-  padding: 1em;
-  color: "[theme:bodyText, default: #323130]";
-  color: var(--bodyText);
-  &.teams {
-    font-family: $ms-font-family-fallbacks;
-  }
+.perfilContainer {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 100vh;
 }
 
-.welcome {
-  text-align: center;
+.mainContent {
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
 }
 
-.welcomeImage {
-  width: 100%;
-  max-width: 420px;
+.perfilInfo {
+  display: flex;
+  align-items: center;
+  padding: 24px 32px;
+  border-radius: 12px;
+
 }
 
-.links {
-  a {
-    text-decoration: none;
-    color: "[theme:link, default:#03787c]";
-    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
+.foto {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid #1fb286;
+  object-fit: cover;
+  margin-right: 24px;
+}
 
-    &:hover {
-      text-decoration: underline;
-      color: "[theme:linkHovered, default: #014446]";
-      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
-    }
-  }
+.textos {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nombre {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.email {
+  font-size: 14px;
+  color: #555;
 }

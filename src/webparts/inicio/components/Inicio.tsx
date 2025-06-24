@@ -5,6 +5,8 @@ import { Spinner } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import Menu from '../../menu/components/Menu'
 import { Link } from 'react-router-dom'
+import styles from './Inicio.module.scss'
+
 
 
 
@@ -219,19 +221,13 @@ useEffect(() => {
                         marginBottom: 24,
                     }}
                 >
-                    <h2>Bienvenido {nombre}, actualmente estás cursando</h2>
+                    <h2  className={styles.titulo}>Bienvenido {nombre}, actualmente estás cursando</h2>
                     <div/>
                 </div>
 
-                <table
-                    style={{
-                        width: '100%',
-                        border: '1px solid #aaa',
-                        textAlign: 'center',
-                        marginBottom: 40,
-                    }}
-                >
-                    <thead style={{ background: '#1fb286' }}>
+            <div className={styles.tablaWrapper}>
+                <table className={styles.tabla}>
+                    <thead>
                         <tr>
                             <th>Horario</th>
                             <th>Lunes</th>
@@ -260,10 +256,10 @@ useEffect(() => {
                         ))}
                     </tbody>
                 </table>
-
+              </div>
                
                 <section>
-            <h3> Algunas Coincidencias:</h3>
+            <h3 className={styles.coincidencias}> Algunas Coincidencias:</h3>
             {Object.entries(coincidencias).length === 0 && <p>No hay coincidencias.</p>}
             {Object.entries(coincidencias).map(([materia, nombres], idx) => (
                 <div key={idx}>
@@ -278,17 +274,7 @@ useEffect(() => {
 
 
             <Link to="/coincidencias">
-                <button
-                style={{
-                    padding: '8px 16px',
-                    background: '#009266',
-                    border: 'none',
-                    borderRadius: 4,
-                    color: '#fff',
-                }}
-                >
-                Ver coincidencias
-                </button>
+                <button className={styles.boton}> Ver coincidencias </button>
             </Link>
                 </section>
 

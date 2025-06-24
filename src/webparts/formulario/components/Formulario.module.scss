@@ -1,34 +1,60 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
-.formulario {
+.contenedor {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 100vh;
+}
+
+.principal {
+  padding: 32px;
+  background-color: #f9f9f9;
+}
+
+.titulo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1fb286;
+  margin-bottom: 20px;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
   overflow: hidden;
-  padding: 1em;
-  color: "[theme:bodyText, default: #323130]";
-  color: var(--bodyText);
-  &.teams {
-    font-family: $ms-font-family-fallbacks;
+  margin-bottom: 24px;
+
+  th {
+    background-color: #1fb286;
+    color: white;
+    text-align: left;
+    padding: 10px;
+  }
+
+  td {
+    padding: 10px;
+    border-bottom: 1px solid #ccc;
+  }
+
+  select {
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    width: 100%;
   }
 }
 
-.welcome {
-  text-align: center;
-}
+.botonGuardar {
+  background-color: #1fb286;
+  color: white;
+  padding: 10px 18px;
+  border: none;
+  border-radius: 6px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
 
-.welcomeImage {
-  width: 100%;
-  max-width: 420px;
-}
-
-.links {
-  a {
-    text-decoration: none;
-    color: "[theme:link, default:#03787c]";
-    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
-
-    &:hover {
-      text-decoration: underline;
-      color: "[theme:linkHovered, default: #014446]";
-      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
-    }
+  &:hover {
+    background-color: #159c6f;
   }
 }

@@ -4,18 +4,11 @@ import menuStyles from './Menu.module.scss'
 
 const Menu: React.FC = () => {
     return (
-        <aside style={{ background: '#1fb286', padding: 16 }}>
+        <aside className={menuStyles.menu}>
             <h1 className={menuStyles.titulo}>Circo Studia</h1>
-            <nav
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                    marginTop: 16,
-                }}
-            >
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <Link to='/inicio'>
-                    <button className={menuStyles.buttonNav} >Inicio</button>
+                    <button className={menuStyles.buttonNav}>Inicio</button>
                 </Link>
                 <Link to='/oferta'>
                     <button className={menuStyles.buttonNav}>Oferta</button>

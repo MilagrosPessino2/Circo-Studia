@@ -3,6 +3,7 @@ import type { IPerfilProps } from './IPerfilProps';
 import Menu from '../../menu/components/Menu';
 import { getSP } from '../../../pnpjsConfig';
 import { useEffect, useState } from 'react';
+import styles from './Perfil.module.scss';
 
 const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
   const sp = getSP(context);
@@ -11,49 +12,36 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
   const [foto, setFoto] = useState<string>('');
 
   useEffect(() => {
-  const datosPerfil = async (): Promise<void> => {
-    try {
-      const user = await sp.web.currentUser();
-      setNombre(user.Title);
-      setEmail(user.Email);
+    const datosPerfil = async (): Promise<void> => {
+      try {
+        const user = await sp.web.currentUser();
+        setNombre(user.Title);
+        setEmail(user.Email);
 
-      const imagenSharePoint = `/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(user.LoginName)}&size=M`;
-      setFoto(imagenSharePoint);
-    } catch (error) {
-      console.error('Error cargando datos del perfil:', error);
-    }
-  };
+        const imagenSharePoint = `/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(user.LoginName)}&size=M`;
+        setFoto(imagenSharePoint);
+      } catch (error) {
+        console.error('Error cargando datos del perfil:', error);
+      }
+    };
 
-  datosPerfil().catch(console.error);
-}, [context]);
-
+    datosPerfil().catch(console.error);
+  }, [context]);
 
   return (
-    <div
-      style={{
-        display: 'grid',
-        gridTemplateColumns: '200px 1fr',
-        minHeight: '100vh',
-      }}
-    >
+    <div className={styles.perfilContainer}>
       <Menu />
-      <main style={{ padding: 32 }}>
-        <h1>Perfil</h1>
-        <div style={{ textAlign: 'center', marginBottom: 20 }}>
+      <main className={styles.mainContent}>
+        <div className={styles.perfilInfo}>
           <img
             src={foto || 'https://static.thenounproject.com/png/5034901-200.png'}
             alt="Foto de perfil"
-            style={{
-              width: 120,
-              height: 120,
-              borderRadius: '50%',
-              border: '2px solid #000',
-              objectFit: 'cover',
-              marginBottom: 16,
-            }}
+            className={styles.foto}
           />
-          <h2>{nombre}</h2>
-          <p>{email}</p>
+          <div className={styles.textos}>
+            <div className={styles.nombre}>{nombre}</div>
+            <div className={styles.email}>{email}</div>
+          </div>
         </div>
       </main>
     </div>

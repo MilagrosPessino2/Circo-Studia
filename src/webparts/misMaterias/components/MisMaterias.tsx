@@ -5,6 +5,7 @@ import { getSP } from '../../../pnpjsConfig'
 import { useEffect, useState } from 'react'
 import { Spinner } from '@fluentui/react'
 import { Link } from 'react-router-dom'
+import styles from '../../inicio/components/Inicio.module.scss'
 
 interface IMateria {
     id: number
@@ -126,13 +127,15 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
         >
             <Menu />
 
-            <div>
-                <aside style={{ background: '', padding: 16 }}>
+            <div style={{ padding: 24 }}>
+                 <h2 className={styles.titulo} >Mis materias</h2> 
+
+                <aside>
                     <div style={{ marginTop: 16 }}>
                         <h3>Filtrar materias</h3>
                         <section>
                             <select
-                                style={{ width: '100%', padding: 8 }}
+                                className={styles.seleccionar}
                                 value={estadoFiltro}
                                 onChange={(e) =>
                                     setEstadoFiltro(
@@ -148,21 +151,13 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                     </div>
                 </aside>
 
-                <main style={{ padding: 24 }}>
-                    <h2>Mis materias</h2>
+                <main>
 
                     {loading ? (
                         <Spinner label='Cargando materias...' />
                     ) : (
-                        <table
-                            style={{
-                                width: '100%',
-                                border: '1px solid #aaa',
-                                textAlign: 'center',
-                                marginTop: 16,
-                            }}
-                        >
-                            <thead style={{ background: '#ddd' }}>
+                        <table className={styles.tabla}>
+                            <thead >
                                 <tr>
                                     <th>Código</th>
                                     <th>Materia</th>
@@ -171,7 +166,6 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                                     <th>Aula</th>
                                     <th>Modalidad</th>
                                     <th>Estado</th>
-                                    <th />
                                 </tr>
                             </thead>
                             <tbody>
@@ -208,7 +202,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
 
                     
                         <Link to='/formulario'>
-                            <button style={{ marginTop: 16, padding: '8px 16px' }}>Añadir</button>
+                            <button className={styles.boton}>Añadir</button>
                                         </Link>
                     
                 </main>

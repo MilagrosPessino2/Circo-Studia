@@ -4,6 +4,8 @@ import { getSP } from '../../../pnpjsConfig'
 import type { IOfertaProps } from './IOfertaProps'
 import { useEffect, useState } from 'react'
 import { Spinner } from '@fluentui/react'
+import styles from '../../inicio/components/Inicio.module.scss'
+
 
 interface IOfertaDeMaterias {
     Id: number
@@ -161,14 +163,15 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
         >
             <Menu />
             <main style={{ padding: 24 }}>
-                <h1>Oferta de Materias</h1>
+                <h1  className={styles.titulo} >Oferta de Materias</h1>
 
                 {error && <p style={{ color: 'red' }}>{error}</p>}
 
-                <label htmlFor='carrera-select'>Filtrar por carrera:</label>
+                <h3>filtrar por carrera:</h3>
+                <label htmlFor='carrera-select'></label>
                 <select
                     id='carrera-select'
-                    style={{ marginLeft: 8, padding: 4 }}
+                    className={styles.seleccionar}
                     value={selectedCarrera}
                     onChange={(e) => setSelectedCarrera(e.target.value)}
                 >
@@ -182,14 +185,9 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
                 {loading ? (
                     <Spinner label='Cargando oferta...' />
                 ) : (
-                    <table
-                        style={{
-                            width: '100%',
-                            marginTop: 24,
-                            borderCollapse: 'collapse',
-                        }}
-                    >
-                        <thead style={{ backgroundColor: '#f4f4f4' }}>
+                    <table  className={styles.tabla}>
+
+                        <thead>
                             <tr>
                                 <th>Cód. Materia</th>
                                 <th>Nombre Materia</th>
