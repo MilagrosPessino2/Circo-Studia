@@ -105,6 +105,14 @@
           "manifest": "./src/webparts/anadirMateriaAdmin/AnadirMateriaAdminWebPart.manifest.json"
         }
       ]
+    },
+    "estudiantes-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/estudiantes/EstudiantesWebPart.js",
+          "manifest": "./src/webparts/estudiantes/EstudiantesWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -121,6 +129,7 @@
     "MenuWebPartStrings": "lib/webparts/menu/loc/{locale}.js",
     "FormularioWebPartStrings": "lib/webparts/formulario/loc/{locale}.js",
     "PerfilWebPartStrings": "lib/webparts/perfil/loc/{locale}.js",
-    "AnadirMateriaAdminWebPartStrings": "lib/webparts/anadirMateriaAdmin/loc/{locale}.js"
+    "AnadirMateriaAdminWebPartStrings": "lib/webparts/anadirMateriaAdmin/loc/{locale}.js",
+    "EstudiantesWebPartStrings": "lib/webparts/estudiantes/loc/{locale}.js"
   }
 }
