@@ -1,40 +1,40 @@
-@import '~@fluentui/react/dist/sass/References.scss';
-
-
-
-.main {
-  padding: 24px;
-}
-
 .titulo {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: bold;
   color: #1fb286;
   margin-bottom: 16px;
 }
 
-.checkboxList {
-  max-width: 400px;
-  margin: 0 auto;
-  text-align: left;
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  margin-bottom: 20px;
+
+  th {
+    background-color: #1fb286;
+    color: white;
+    padding: 10px;
+    border: 1px solid #ccc;
+  }
+
+  td {
+    padding: 10px;
+    border: 1px solid #ccc;
+  }
 }
 
 .btnAccion {
   background-color: #009266;
   color: white;
-  padding: 10px 16px;
   border: none;
-  border-radius: 6px;
+  padding: 10px 16px;
+  margin: 0 8px;
+  border-radius: 5px;
+  font-weight: bold;
   cursor: pointer;
-  margin-right: 8px;
-  margin-top: 15px;
 
   &:hover {
     background-color: #0fa276;
   }
-}
-
-.mensaje {
-  margin-top: 12px;
-  font-weight: bold;
 }

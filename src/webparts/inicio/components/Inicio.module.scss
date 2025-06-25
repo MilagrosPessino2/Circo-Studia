@@ -72,3 +72,68 @@
     background-color: #0fa276;
   }
 }
+
+.tituloCoincidencias {
+  font-size: 22px;
+  color: #1fb286;
+  font-weight: bold;
+
+  text-align: left;
+  border-bottom: 2px solid #1fb286;
+  padding-bottom: 6px;
+}
+
+.noCoincidencias {
+  font-style: italic;
+  color: #777;
+  margin-top: 10px;
+}
+
+.listaCoincidencias {
+  margin-top: 16px;
+  padding-left: 0;
+  list-style-type: none;
+}
+
+.bloqueMateria {
+  background-color: #f6fdfc;
+  border: 1px solid #1fb28655;
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  width: 80%;
+}
+
+.nombreMateria {
+  color: #0b8067;
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.bloqueMateria ul {
+  list-style-type: disc;
+  margin-left: 20px;
+  padding-left: 0;
+}
+
+.listaPersonas {
+  list-style-type: none;
+  padding-left: 0;
+  margin-top: 8px;
+}
+
+.itemPersona {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  gap: 10px;
+}
+
+.fotoPersona {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid #ccc;
+}

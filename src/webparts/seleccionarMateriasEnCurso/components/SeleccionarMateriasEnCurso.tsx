@@ -305,11 +305,6 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                 Carrera del estudiante: <strong>{selectedCarrera}</strong>
             </p>
 
-            <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-                 <button className={styles.btnAccion} onClick={() => runAsync(handleVolverConBorrado)}>Volver</button>
-                <button className={styles.btnAccion} onClick={handleGuardar}>Guadar</button>
-            </div>
-
             {mensaje && (
                 <p
                     style={{
@@ -322,27 +317,47 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
             )}
 
             {ofertas.length > 0 ? (
-                <div
-                    style={{
-                        maxWidth: '600px',
-                        margin: '20px auto',
-                        textAlign: 'left',
-                    }}
-                >
-                    {ofertas.map((o) => (
-                        <Checkbox
-                            key={o.Id}
-                            label={`[${o.codMateria?.codMateria}] ${o.codMateria?.nombre} - Comisión ${o.codComision?.codComision}: ${o.codComision?.descripcion}`}
-                            checked={o.checked}
-                            onChange={() =>
-                                handleCheckboxChange(o.codMateria?.Id)
-                            }
-                        />
-                    ))}
-                </div>
+                <table className={styles.tabla}>
+                    <thead>
+                        <tr>
+                            <th>Materia</th>
+                            <th>Comisión</th>
+                            <th>Seleccionar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {ofertas.map((o) => (
+                            <tr key={o.Id}>
+
+                                <td>
+                                    [{o.codMateria?.codMateria}] {o.codMateria?.nombre}
+                                </td>
+
+                                <td>
+                                    {o.codComision?.codComision}: {o.codComision?.descripcion}
+                                </td>
+
+                                <td>
+                                    <Checkbox
+                                        checked={o.checked}
+                                        onChange={() =>
+                                            handleCheckboxChange(o.codMateria?.Id)
+                                        }
+                                    />
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             ) : (
                 <p>No hay materias disponibles para cursar.</p>
             )}
+            
+            <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
+                 <button className={styles.btnAccion} onClick={() => runAsync(handleVolverConBorrado)}>Volver</button>
+                <button className={styles.btnAccion} onClick={handleGuardar}>Guardar</button>
+            </div>
+            
         </div>
     )
 }
