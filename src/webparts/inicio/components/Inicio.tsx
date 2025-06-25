@@ -101,6 +101,7 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
           .expand('codMateria')();
 
         const coincidenciasPorMateria: Record<string, { nombre: string; fotoUrl: string }[]> = {};
+        const yaAgregado = new Set<string>();
 
         for (const m of misMaterias) {
           const materiaId = m.codMateria?.Id;
@@ -114,18 +115,18 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
             .select('idEstudiante/ID')
             .expand('idEstudiante')();
 
-          const nombres = coincidencias
-            .map((c) => {
-              const est = estudiantes.find((e) => e.ID === c.idEstudiante?.ID);
-              return {
-                nombre: est?.usuario?.Title || 'Desconocido',
-                fotoUrl: `/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(est?.usuario?.Name || '')}&size=S`,
-              };
-            })
-            .filter((p) => p.nombre);
-
-          if (nombres.length > 0) {
-            coincidenciasPorMateria[nombreMateria] = nombres;
+          for (const c of coincidencias) {
+            const est = estudiantes.find((e) => e.ID === c.idEstudiante?.ID);
+            const name = est?.usuario?.Name;
+            if (!name || yaAgregado.has(name)) continue;
+            yaAgregado.add(name);
+            if (!coincidenciasPorMateria[nombreMateria]) {
+              coincidenciasPorMateria[nombreMateria] = [];
+            }
+            coincidenciasPorMateria[nombreMateria].push({
+              nombre: est?.usuario?.Title || 'Desconocido',
+              fotoUrl: `/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(name)}&size=S`,
+            });
           }
         }
 
@@ -145,7 +146,6 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', minHeight: '100vh' }}>
       <Menu />
-
       <main style={{ padding: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
           <h2 className={styles.titulo}>Bienvenido {nombre}, actualmente estás cursando</h2>
@@ -179,33 +179,37 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
 
         <section>
           <h3 className={styles.tituloCoincidencias}>Algunas Coincidencias:</h3>
+          {(() => {
+            const primeraCoincidencia = Object.entries(coincidencias).find(([, personas]) => personas.length > 0);
+            if (!primeraCoincidencia) {
+              return <p className={styles.noCoincidencias}>No hay coincidencias.</p>;
+            }
 
-          {Object.entries(coincidencias).length === 0 && (
-            <p className={styles.noCoincidencias}>No hay coincidencias.</p>
-          )}
+            const [materia, personas] = primeraCoincidencia;
 
-          <div className={styles.listaCoincidencias}>
-            {Object.entries(coincidencias).map(([materia, personas], idx) => (
-              <div key={idx} className={styles.bloqueMateria}>
-                <strong className={styles.nombreMateria}>{materia}</strong>
-                <ul>
-                  {personas.map((coincidente, i) => (
-                    <li
-                      key={i}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}
-                    >
-                      <img
-                        src={coincidente.fotoUrl || 'https://static.thenounproject.com/png/5034901-200.png'}
-                        alt={`Foto de ${coincidente.nombre}`}
-                        style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
-                      />
-                      <span>{coincidente.nombre}</span>
-                    </li>
-                  ))}
-                </ul>
+            return (
+              <div className={styles.listaCoincidencias}>
+                <div className={styles.bloqueMateria}>
+                  <strong className={styles.nombreMateria}>{materia}</strong>
+                  <ul>
+                    {personas.map((coincidente, i) => (
+                      <li
+                        key={i}
+                        style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}
+                      >
+                        <img
+                          src={coincidente.fotoUrl || 'https://static.thenounproject.com/png/5034901-200.png'}
+                          alt={`Foto de ${coincidente.nombre}`}
+                          style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
+                        />
+                        <span>{coincidente.nombre}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </div>
-            ))}
-          </div>
+            );
+          })()}
 
           <Link to="/coincidencias">
             <button className={styles.boton}>Ver coincidencias</button>
