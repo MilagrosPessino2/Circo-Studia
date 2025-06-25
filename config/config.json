@@ -97,6 +97,14 @@
           "manifest": "./src/webparts/perfil/PerfilWebPart.manifest.json"
         }
       ]
+    },
+    "perfil-colega-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/perfilColega/PerfilColegaWebPart.js",
+          "manifest": "./src/webparts/perfilColega/PerfilColegaWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -112,6 +120,7 @@
     "OfertaWebPartStrings": "lib/webparts/oferta/loc/{locale}.js",
     "MenuWebPartStrings": "lib/webparts/menu/loc/{locale}.js",
     "FormularioWebPartStrings": "lib/webparts/formulario/loc/{locale}.js",
-    "PerfilWebPartStrings": "lib/webparts/perfil/loc/{locale}.js"
+    "PerfilWebPartStrings": "lib/webparts/perfil/loc/{locale}.js",
+    "PerfilColegaWebPartStrings": "lib/webparts/perfilColega/loc/{locale}.js"
   }
 }

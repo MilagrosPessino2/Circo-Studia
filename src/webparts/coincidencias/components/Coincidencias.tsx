@@ -5,6 +5,7 @@ import { getSP } from '../../../pnpjsConfig';
 import { Spinner } from '@fluentui/react';
 import styles from './Coincidencias.module.scss';
 import type { ICoincidenciasProps } from './ICoincidenciasProps';
+import { Link } from 'react-router-dom';
 
 interface Colega {
   nombre: string;
@@ -105,14 +106,6 @@ const colegasFiltrados = colegas.filter(c => {
   const coincideCarrera =
     carreraSeleccionadaNormalizado === '' ||
     carreraNombreNormalizado === carreraSeleccionadaNormalizado;
-
-  console.log({
-    carreraSeleccionada,
-    carreraNombre: c.carreraNombre,
-    coincideCarrera,
-    coincideBusqueda
-  });
-
   return coincideBusqueda && coincideCarrera;
 });
 
@@ -163,7 +156,9 @@ const colegasFiltrados = colegas.filter(c => {
               <li key={idx} className={styles.colegaItem}>
                 <img src={c.fotoUrl} alt={`Foto de ${c.nombre}`} />
                 <span>{c.nombre}</span>
+                <Link to='/perfilColega'>
                 <button>Ver perfil</button>
+                     </Link>
               </li>
             ))}
           </ul>

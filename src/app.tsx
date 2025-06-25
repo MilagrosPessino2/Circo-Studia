@@ -20,6 +20,7 @@ import Coincidencias from './webparts/coincidencias/components/Coincidencias'
 import Oferta from './webparts/oferta/components/Oferta'
 import Formulario from './webparts/formulario/components/Formulario'
 import Perfil from './webparts/perfil/components/Perfil'
+import PerfilColega from './webparts/perfilColega/components/PerfilColega'
 
 export const UserPresetContext = createContext<{
     isPreset: boolean
@@ -74,6 +75,10 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
               <Route
                 path='/perfil'
                 element={<Perfil {...props} />}
+            />
+            <Route
+                path='/perfilColega'
+                element={<PerfilColega {...props} />}
             />
             <Route path='/inicio' element={<Inicio {...props} />} />
         </Routes>
