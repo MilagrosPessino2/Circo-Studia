@@ -28,6 +28,16 @@
     border: 1px solid #ccc;
   }
 
+  .fotoColumna {
+    text-align: center; // ✅ solo afecta la celda de foto
+
+    img {
+      display: block;
+      margin: 0 auto;
+      border-radius: 50%;
+    }
+  }
+
   tr:hover {
     background-color: #f3fdf9;
   }

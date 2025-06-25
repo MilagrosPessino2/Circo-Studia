@@ -82,13 +82,12 @@ const Estudiantes: React.FC<IEstudiantesProps> = ({ context }): JSX.Element => {
                             return (
                                 <tr key={e.Id}>
                                     <td>{e.Id}</td>
-                                    <td>
+                                    <td className={styles.fotoColumna}>
                                         <img
                                             src={imagen}
                                             alt={e.usuario?.Title}
                                             width='40'
                                             height='40'
-                                            style={{ borderRadius: '50%' }}
                                         />
                                     </td>
                                     <td>{e.usuario?.Title}</td>
@@ -99,7 +98,6 @@ const Estudiantes: React.FC<IEstudiantesProps> = ({ context }): JSX.Element => {
                     </tbody>
                 </table>
             )}
-            <p>hola mundo</p>
         </div>
     )
 }
