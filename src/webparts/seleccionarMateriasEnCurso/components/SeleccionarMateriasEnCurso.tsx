@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { Checkbox, PrimaryButton, Spinner } from '@fluentui/react'
+import { Checkbox, Spinner } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import { ISeleccionarCarreraProps } from '../../seleccionarCarrera/components/ISeleccionarCarreraProps'
 import { useNavigate } from 'react-router-dom'
+import styles from './SeleccionarMateriasEnCurso.module.scss'
 
 interface IOfertaDeMaterias {
     Id: number
@@ -299,20 +300,14 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
         <div>Error: {error}</div>
     ) : (
         <div style={{ padding: '20px' }}>
-            <h2>Seleccionar Materias en Curso</h2>
+            <h2 className={styles.titulo}>Seleccionar Materias en Curso</h2>
             <p>
                 Carrera del estudiante: <strong>{selectedCarrera}</strong>
             </p>
 
             <div style={{ display: 'flex', gap: 10, marginBottom: 16 }}>
-                <PrimaryButton
-                    text='Volver'
-                    onClick={() => runAsync(handleVolverConBorrado)}
-                />
-                <PrimaryButton
-                    text='Guardar materias en curso'
-                    onClick={handleGuardar}
-                />
+                 <button className={styles.btnAccion} onClick={() => runAsync(handleVolverConBorrado)}>Volver</button>
+                <button className={styles.btnAccion} onClick={handleGuardar}>Guadar</button>
             </div>
 
             {mensaje && (

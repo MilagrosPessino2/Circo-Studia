@@ -1,34 +1,40 @@
 @import '~@fluentui/react/dist/sass/References.scss';
 
-.cargarMateriasAprobadasInicial {
-  overflow: hidden;
-  padding: 1em;
-  color: "[theme:bodyText, default: #323130]";
-  color: var(--bodyText);
-  &.teams {
-    font-family: $ms-font-family-fallbacks;
+
+
+.main {
+  padding: 24px;
+}
+
+.titulo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #1fb286;
+  margin-bottom: 16px;
+}
+
+.checkboxList {
+  max-width: 400px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.btnAccion {
+  background-color: #009266;
+  color: white;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-right: 8px;
+  margin-top: 15px;
+
+  &:hover {
+    background-color: #0fa276;
   }
 }
 
-.welcome {
-  text-align: center;
-}
-
-.welcomeImage {
-  width: 100%;
-  max-width: 420px;
-}
-
-.links {
-  a {
-    text-decoration: none;
-    color: "[theme:link, default:#03787c]";
-    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
-
-    &:hover {
-      text-decoration: underline;
-      color: "[theme:linkHovered, default: #014446]";
-      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
-    }
-  }
+.mensaje {
+  margin-top: 12px;
+  font-weight: bold;
 }

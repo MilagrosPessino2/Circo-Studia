@@ -1,10 +1,11 @@
 import * as React from 'react'
 import { useEffect, useState, useContext } from 'react'
-import { PrimaryButton, Spinner, Checkbox } from '@fluentui/react'
+import {  Spinner, Checkbox } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import { ICargarMateriasAprobadasInicialProps } from './ICargarMateriasAprobadasInicialProps'
 import { useNavigate } from 'react-router-dom'
 import { UserPresetContext } from '../../../app'
+import styles from './CargarMateriasAprobadasInicial.module.scss'
 
 interface IMateria {
     id: number
@@ -238,16 +239,7 @@ const CargarMateriasAprobadasInicial: React.FC<
 
     return (
         <div style={{ textAlign: 'center' }}>
-            {eliminando ? (
-                <Spinner label='Eliminando inscripción...' />
-            ) : (
-                <PrimaryButton text='Volver' onClick={handleVolver} />
-            )}
-            <PrimaryButton
-                text='Continuar'
-                onClick={handleGuardarMaterias}
-                style={{ marginTop: 20, marginLeft: 10 }}
-            />
+           
             {mensaje && (
                 <p
                     style={{
@@ -259,7 +251,7 @@ const CargarMateriasAprobadasInicial: React.FC<
                 </p>
             )}
 
-            <h2>{renderTitulo()}</h2>
+            <h2 className={styles.titulo}>{renderTitulo()}</h2>
 
             {materias.filter(m => m.nombre && m.nombre.trim() !== '').length > 0 ? (
         <div style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}>
@@ -277,6 +269,14 @@ const CargarMateriasAprobadasInicial: React.FC<
             ) : (
                 <p>No hay materias para esta carrera.</p>
             )}
+              {eliminando ? (
+          <Spinner label="Eliminando inscripción..." />
+        ) : (
+          <>
+            <button className={styles.btnAccion} onClick={handleVolver}>Volver</button>
+            <button className={styles.btnAccion} onClick={handleGuardarMaterias}>Continuar</button>
+          </>
+        )}
         </div>
     )
 }

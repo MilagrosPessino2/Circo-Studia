@@ -1,9 +1,10 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { PrimaryButton, Checkbox } from '@fluentui/react'
+import { Checkbox } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import { ICargarMateriaRegularizadaProps } from './ICargarMateriaRegularizadaProps'
 import { useNavigate } from 'react-router-dom'
+import styles from './CargarMateriaRegularizada.module.scss'
 
 interface IMateria {
     id: number
@@ -269,17 +270,7 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
 
     return (
         <div style={{ textAlign: 'center' }}>
-            <div style={{ marginBottom: 16 }}>
-                <PrimaryButton
-                    text='Volver'
-                    onClick={() => runAsync(handleVolver)}
-                />
-                <PrimaryButton
-                    text='Guardar'
-                    onClick={handleGuardarMaterias}
-                    style={{ marginLeft: 10 }}
-                />
-            </div>
+           
             {mensaje && (
                 <p
                     style={{
@@ -291,7 +282,7 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
                 </p>
             )}
 
-            <h2>{renderTitulo()}</h2>
+            <h2 className={styles.titulo}>{renderTitulo()}</h2>
 
             {materias.filter((m) => m.nombre && m.nombre.trim() !== '').length >
             0 ? (
@@ -320,7 +311,9 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
                 </div>
             ) : (
                 <p>No hay materias disponibles.</p>
-            )}
+            )}    
+                <button className={styles.btnAccion} onClick={() => runAsync(handleVolver)}>Volver</button>
+                <button className={styles.btnAccion} onClick={handleGuardarMaterias}>Continuar</button>
         </div>
     )
 }

@@ -1,32 +1,26 @@
 import * as React from 'react'
 import { Link } from 'react-router-dom'
+import menuStyles from './Menu.module.scss'
 
 const Menu: React.FC = () => {
     return (
-        <aside style={{ background: '#eee', padding: 16 }}>
-            <h1>Circo Studia</h1>
-            <nav
-                style={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 8,
-                    marginTop: 16,
-                }}
-            >
+        <aside className={menuStyles.menu}>
+            <h1 className={menuStyles.titulo}>Circo Studia</h1>
+            <nav style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 <Link to='/inicio'>
-                    <button>Inicio</button>
+                    <button className={menuStyles.buttonNav}>Inicio</button>
                 </Link>
                 <Link to='/oferta'>
-                    <button>Oferta</button>
+                    <button className={menuStyles.buttonNav}>Oferta</button>
                 </Link>
                 <Link to='/mis-materias'>
-                    <button>Mis materias</button>
+                    <button className={menuStyles.buttonNav}>Mis materias</button>
                 </Link>
                 <Link to='/coincidencias'>
-                    <button>Coincidencias</button>
+                    <button className={menuStyles.buttonNav}>Coincidencias</button>
                 </Link>
                 <Link to='/perfil'>
-                    <button>Perfil</button>
+                    <button className={menuStyles.buttonNav}>Perfil</button>
                 </Link>
             </nav>
         </aside>
