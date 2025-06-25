@@ -1,30 +1,51 @@
 import * as React from 'react';
-import type { IPerfilColegaProps } from './IPerfilColegaProps';
+import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 import { getSP } from '../../../pnpjsConfig';
-import { useEffect } from 'react';
-
-
+import type { IPerfilColegaProps } from './IPerfilColegaProps';
+import Menu from '../../menu/components/Menu';
 
 const PerfilColega: React.FC<IPerfilColegaProps> = ({ context }) => {
+  const { id } = useParams(); // obtiene el ID desde la URL
   const sp = getSP(context);
-useEffect(() => {
+
+  const [colega, setColega] = useState<any>(null);
+
+  useEffect(() => {
     const cargarPerfil = async () => {
+      try {
+        if (!id) return;
 
-          const estudiantes = await sp.web.lists
+        const estudiante = await sp.web.lists
           .getByTitle('Estudiante')
-          .items.select('ID', 'usuario/Id', 'usuario/Title', 'usuario/Name')
+          .items
+          .getById(Number(id))
+          .select('ID', 'usuario/Id', 'usuario/Title', 'usuario/Name')
           .expand('usuario')();
-          console.log(estudiantes);
 
+        setColega(estudiante);
+      } catch (err) {
+        console.error('Error al cargar perfil del colega', err);
+      }
     };
-    void cargarPerfil();
- }, [context]);
 
-    return (
-     
-      <h1>Hola Mili</h1>
-    );
+    void cargarPerfil();
+  }, [context, id]);
+
+  if (!colega) return <p>Cargando...</p>;
+
+  return (
   
-}
+    <div style={{ padding: '1rem' }}>
+      <Menu />
+      <h2>Perfil de {colega.usuario?.Title}</h2>
+      <img
+        src={`/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(colega.usuario?.Name)}&size=L`}
+        alt="Foto del colega"
+      />
+      <p><strong>ID:</strong> {colega.ID}</p>
+    </div>
+  );
+};
 
 export default PerfilColega;

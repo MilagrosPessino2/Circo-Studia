@@ -5,7 +5,7 @@ import { getSP } from '../../../pnpjsConfig';
 import { Spinner } from '@fluentui/react';
 import styles from './Coincidencias.module.scss';
 import type { ICoincidenciasProps } from './ICoincidenciasProps';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 interface Colega {
   nombre: string;
@@ -21,6 +21,8 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
   const [busqueda, setBusqueda] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const cargarColegas = async () => {
@@ -156,9 +158,8 @@ const colegasFiltrados = colegas.filter(c => {
               <li key={idx} className={styles.colegaItem}>
                 <img src={c.fotoUrl} alt={`Foto de ${c.nombre}`} />
                 <span>{c.nombre}</span>
-                <Link to='/perfilColega'>
-                <button>Ver perfil</button>
-                     </Link>
+                <button onClick={() => navigate(`/perfilColega/${c.id}`)}>Ver perfil</button>
+
               </li>
             ))}
           </ul>

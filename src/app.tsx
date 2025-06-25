@@ -76,10 +76,11 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
                 path='/perfil'
                 element={<Perfil {...props} />}
             />
-            <Route
-                path='/perfilColega'
-                element={<PerfilColega {...props} />}
+           <Route
+            path="/perfilColega/:id"
+            element={<PerfilColega {...props} />}
             />
+
             <Route path='/inicio' element={<Inicio {...props} />} />
         </Routes>
     )
