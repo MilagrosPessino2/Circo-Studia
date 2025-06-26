@@ -4,9 +4,9 @@ import { useParams } from 'react-router-dom';
 import { getSP } from '../../../pnpjsConfig';
 import type { IPerfilColegaProps } from './IPerfilColegaProps';
 import Menu from '../../menu/components/Menu';
-
+import styles from './PerfilColega.module.scss';
 const PerfilColega: React.FC<IPerfilColegaProps> = ({ context }) => {
-  const { id } = useParams(); // obtiene el ID desde la URL
+  const { id } = useParams();
   const sp = getSP(context);
 
   const [colega, setColega] = useState<any>(null);
@@ -36,15 +36,20 @@ const PerfilColega: React.FC<IPerfilColegaProps> = ({ context }) => {
 
   return (
   
-    <div style={{ padding: '1rem' }}>
-      <Menu />
-      <h2>Perfil de {colega.usuario?.Title}</h2>
-      <img
-        src={`/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(colega.usuario?.Name)}&size=L`}
-        alt="Foto del colega"
-      />
-      <p><strong>ID:</strong> {colega.ID}</p>
-    </div>
+ <div className={styles.container}>
+  <Menu />
+
+  <main className={styles.perfil}>
+    <h2 className={styles.titulo}>Perfil de {colega.usuario?.Title}</h2>
+
+    <img
+      className={styles.foto}
+      src={`/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(colega.usuario?.Name)}&size=L`}
+      alt="Foto del colega"
+    />
+  </main>
+</div>
+
   );
 };
 

@@ -1,34 +1,33 @@
-@import '~@fluentui/react/dist/sass/References.scss';
-
-.perfilColega {
-  overflow: hidden;
-  padding: 1em;
-  color: "[theme:bodyText, default: #323130]";
-  color: var(--bodyText);
-  &.teams {
-    font-family: $ms-font-family-fallbacks;
-  }
+.container {
+  display: flex;
 }
 
-.welcome {
+.perfil {
+  flex: 1;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center; 
+  justify-content: center;
+}
+
+.titulo {
+  font-size: 1.8rem;
+  margin-bottom: 1rem;
   text-align: center;
+  color: #333;
 }
 
-.welcomeImage {
-  width: 100%;
-  max-width: 420px;
+.foto {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  margin-bottom: 1rem;
 }
 
-.links {
-  a {
-    text-decoration: none;
-    color: "[theme:link, default:#03787c]";
-    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
-
-    &:hover {
-      text-decoration: underline;
-      color: "[theme:linkHovered, default: #014446]";
-      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
-    }
-  }
+.info {
+  font-size: 1.2rem;
+  color: #555;
 }
