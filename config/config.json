@@ -98,19 +98,11 @@
         }
       ]
     },
-    "anadir-materia-admin-web-part": {
+    "perfil-colega-web-part": {
       "components": [
         {
-          "entrypoint": "./lib/webparts/anadirMateriaAdmin/AnadirMateriaAdminWebPart.js",
-          "manifest": "./src/webparts/anadirMateriaAdmin/AnadirMateriaAdminWebPart.manifest.json"
-        }
-      ]
-    },
-    "estudiantes-web-part": {
-      "components": [
-        {
-          "entrypoint": "./lib/webparts/estudiantes/EstudiantesWebPart.js",
-          "manifest": "./src/webparts/estudiantes/EstudiantesWebPart.manifest.json"
+          "entrypoint": "./lib/webparts/perfilColega/PerfilColegaWebPart.js",
+          "manifest": "./src/webparts/perfilColega/PerfilColegaWebPart.manifest.json"
         }
       ]
     }
@@ -129,7 +121,6 @@
     "MenuWebPartStrings": "lib/webparts/menu/loc/{locale}.js",
     "FormularioWebPartStrings": "lib/webparts/formulario/loc/{locale}.js",
     "PerfilWebPartStrings": "lib/webparts/perfil/loc/{locale}.js",
-    "AnadirMateriaAdminWebPartStrings": "lib/webparts/anadirMateriaAdmin/loc/{locale}.js",
-    "EstudiantesWebPartStrings": "lib/webparts/estudiantes/loc/{locale}.js"
+    "PerfilColegaWebPartStrings": "lib/webparts/perfilColega/loc/{locale}.js"
   }
 }
