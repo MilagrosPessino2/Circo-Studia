@@ -21,8 +21,8 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
   const [busqueda, setBusqueda] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [modoVista, setModoVista] = useState<'carrera' | 'materia'>('carrera');
   const navigate = useNavigate();
-
 
   useEffect(() => {
     const cargarColegas = async () => {
@@ -34,52 +34,45 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
           .expand('usuario')();
 
         const inscripciones = await sp.web.lists
-        .getByTitle('Inscripto')
-        .items.select('idEstudiante/ID', 'idCarreraId')
-        .expand('idEstudiante')();
+          .getByTitle('Inscripto')
+          .items.select('idEstudiante/ID', 'idCarreraId')
+          .expand('idEstudiante')();
 
-    const carrerasMap = new Map<number, string>();
+        const carrerasMap = new Map<number, string>();
+        const colegas: Colega[] = [];
 
-    const colegas: Colega[] = [];
+        for (const ins of inscripciones) {
+          const estudianteId = ins.idEstudiante?.ID;
+          const carreraId = ins.idCarreraId;
+          if (!estudianteId || !carreraId) continue;
 
-    for (const ins of inscripciones) {
-    const estudianteId = ins.idEstudiante?.ID;
-    const carreraId = ins.idCarreraId;
+          const estudiante = estudiantes.find(e => e.ID === estudianteId);
+          if (!estudiante) continue;
 
-    if (!estudianteId || !carreraId) continue;
+          let carreraNombre: any = carrerasMap.get(carreraId);
+          if (!carreraNombre) {
+            try {
+              const carreraItem = await sp.web.lists
+                .getByTitle('Carrera')
+                .items
+                .getById(carreraId)
+                .select('nombre')();
 
-    const estudiante = estudiantes.find(e => e.ID === estudianteId);
-    if (!estudiante) continue;
+              carreraNombre = carreraItem.nombre || 'desconocido';
+              carrerasMap.set(carreraId, carreraNombre);
+            } catch (e) {
+              console.error(`Error al obtener carrera con ID ${carreraId}`, e);
+              carreraNombre = 'desconocido';
+            }
+          }
 
-
-   let carreraNombre: any = carrerasMap.get(carreraId);
-
-if (!carreraNombre) {
-  try {
-    const carreraItem = await sp.web.lists
-      .getByTitle('Carrera')
-      .items
-      .getById(carreraId)
-      .select('nombre')();
-
-    carreraNombre = carreraItem.nombre || 'desconocido';
-    carrerasMap.set(carreraId, carreraNombre); 
-  } catch (e) {
-    console.error(`Error al obtener carrera con ID ${carreraId}`, e);
-    carreraNombre = 'desconocido';
-  }
-}
-
-
-
-  colegas.push({
-    nombre: estudiante.usuario?.Title || 'Desconocido',
-    fotoUrl: `/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(estudiante.usuario?.Name || '')}&size=S`,
-    id: estudiante.ID,
-    carreraNombre
-  });
-}
-
+          colegas.push({
+            nombre: estudiante.usuario?.Title || 'Desconocido',
+            fotoUrl: `/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(estudiante.usuario?.Name || '')}&size=S`,
+            id: estudiante.ID,
+            carreraNombre
+          });
+        }
 
         setColegas(colegas);
       } catch (err) {
@@ -93,77 +86,99 @@ if (!carreraNombre) {
     cargarColegas().catch(console.error);
   }, [context]);
 
-
   const normalizar = (texto: string) =>
-  texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    texto.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 
-const colegasFiltrados = colegas.filter(c => {
-  const nombreUsuarioNormalizado = normalizar(c.nombre).trim();
-  const busquedaNormalizada = normalizar(busqueda).trim();
-  const carreraNombreNormalizado = normalizar(c.carreraNombre).trim();
-  const carreraSeleccionadaNormalizado = normalizar(carreraSeleccionada).trim();
+  const colegasFiltrados = colegas.filter(c => {
+    const nombreUsuarioNormalizado = normalizar(c.nombre).trim();
+    const busquedaNormalizada = normalizar(busqueda).trim();
+    const carreraNombreNormalizado = normalizar(c.carreraNombre).trim();
+    const carreraSeleccionadaNormalizado = normalizar(carreraSeleccionada).trim();
 
-  const coincideBusqueda = nombreUsuarioNormalizado.includes(busquedaNormalizada);
+    const coincideBusqueda = nombreUsuarioNormalizado.includes(busquedaNormalizada);
 
-  const coincideCarrera =
-    carreraSeleccionadaNormalizado === '' ||
-    carreraNombreNormalizado === carreraSeleccionadaNormalizado;
-  return coincideBusqueda && coincideCarrera;
-});
+    const coincideCarrera =
+      carreraSeleccionadaNormalizado === '' ||
+      carreraNombreNormalizado === carreraSeleccionadaNormalizado;
 
-
-
+    return coincideBusqueda && coincideCarrera;
+  });
 
   return (
     <div className={styles.container}>
       <Menu />
       <main className={styles.main}>
-        <h2 className={styles.titulo}>Listado de estudiantes</h2>
 
-        <div className={styles.controls}>
-         <select
-            value={carreraSeleccionada}
-            onChange={(e) => setCarreraSeleccionada(e.target.value)}
-            >
-            <option value="">Todas las carreras</option>
-            <option value="Tecnicatura en desarrollo web">Tecnicatura en desarrollo web</option>
-            <option value="Ingenieria informatica">Ingeniería informática</option>
-            </select>
-
-
-          <div className={styles.searchBox}>
-            <input
-              type="text"
-              placeholder="Buscar colegas"
-              value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
-            />
-            <button>Buscar</button>
-          </div>
+        <div className={styles.vistaHeader}>
+          <button
+            className={`${styles.tabButton} ${modoVista === 'carrera' ? styles.activo : ''}`}
+            onClick={() => setModoVista('carrera')}
+          >
+            Coincidencias por carrera
+          </button>
+          <button
+            className={`${styles.tabButton} ${modoVista === 'materia' ? styles.activo : ''}`}
+            onClick={() => setModoVista('materia')}
+          >
+            Coincidencias por materia
+          </button>
         </div>
 
-        {error && <p style={{ color: 'red' }}>{error}</p>}
+        <h2 className={styles.titulo}>Estudiantes por {modoVista}</h2>
+         <div className={styles.searchBox}>
+              <input
+                type="text"
+                placeholder="Buscar colegas"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+              />
+              <button>Buscar</button>
+               {error && <p style={{ color: 'red' }}>{error}</p>}
+            </div>
 
-        <h3>
-          Mostrando estudiantes de {carreraSeleccionada || 'todas las carreras'}
-        </h3>
+        {modoVista === 'carrera' && (
+          <div className={styles.controls}>
+            <select
+              value={carreraSeleccionada}
+              onChange={(e) => setCarreraSeleccionada(e.target.value)}
+            >
+              <option value="">Todas las carreras</option>
+              <option value="Tecnicatura en desarrollo web">Tecnicatura en desarrollo web</option>
+              <option value="Ingenieria informatica">Ingeniería informática</option>
+            </select>
 
-        {loading ? (
-          <Spinner label="Cargando estudiantes..." />
-        ) : colegasFiltrados.length === 0 ? (
-          <p className={styles.noCoincidencias}>No hay estudiantes encontrados.</p>
-        ) : (
-          <ul className={styles.listaColegas}>
-            {colegasFiltrados.map((c, idx) => (
-              <li key={idx} className={styles.colegaItem}>
-                <img src={c.fotoUrl} alt={`Foto de ${c.nombre}`} />
-                <span>{c.nombre}</span>
-                <button onClick={() => navigate(`/perfilColega/${c.id}`)}>Ver perfil</button>
-
-              </li>
-            ))}
-          </ul>
+           
+          </div>
         )}
+
+        {modoVista === 'carrera' && (
+          <h3>
+            Mostrando estudiantes de {carreraSeleccionada || 'todas las carreras'}
+          </h3>
+        )}
+
+        {modoVista === 'carrera' ? (
+          loading ? (
+            <Spinner label="Cargando estudiantes..." />
+          ) : colegasFiltrados.length === 0 ? (
+            <p className={styles.noCoincidencias}>No hay estudiantes encontrados.</p>
+          ) : (
+            <ul className={styles.listaColegas}>
+              {colegasFiltrados.map((c, idx) => (
+                <li key={idx} className={styles.colegaItem}>
+                  <img src={c.fotoUrl} alt={`Foto de ${c.nombre}`} />
+                  <span>{c.nombre}</span>
+                  <button onClick={() => navigate(`/perfilColega/${c.id}`)}>Ver perfil</button>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : (
+          <p className={styles.noCoincidencias}>
+            Aquí irá la lógica para coincidencias por materia.
+          </p>
+        )}
+
       </main>
     </div>
   );

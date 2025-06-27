@@ -22,12 +22,14 @@
     padding: 8px;
   }
 
-  .searchBox {
+}
+
+.searchBox {
     display: flex;
     gap: 10px;
 
     input {
-      margin-top: 40px;
+      margin-bottom: 40px;
       padding: 8px;
       width: 300px;
     }
@@ -39,10 +41,9 @@
       border: none;
       border-radius: 4px;
       cursor: pointer;
-      margin-top: 40px;
+      margin-bottom: 40px;
     }
   }
-}
 
 .listaColegas {
   list-style: none;
@@ -91,5 +92,69 @@
       background-color: #0fa276;
     }
   }
+}
+
+.vistaHeader {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tabButton {
+  padding: 0.5rem 1.2rem;
+  border: 2px solid #1fb286;
+  background: white;
+  color: #1fb286;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.tabButton:hover {
+  background: #e3f9f3;
+}
+
+.tabButton.activo {
+  background: #1fb286;
+  color: white;
+}
+
+.listaCoincidencias {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin-top: 1rem;
+}
+
+.bloqueMateria {
+  background-color: #f8f8f8;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.nombreMateria {
+  font-size: 1.2rem;
+  color: #1fb286;
+  margin-bottom: 0.5rem;
+  display: block;
+  font-weight: bold;
+}
+
+.itemCoincidencia {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
+  font-size: 1rem;
+}
+
+.itemCoincidencia img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ccc;
 }
 

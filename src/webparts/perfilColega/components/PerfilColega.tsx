@@ -125,7 +125,6 @@ const materiasFinal = materiasCursando.map(e => {
             <th>Materia</th>
             <th>Comisión</th>
             <th>Horario</th>
-            <th></th>
           </tr>
         </thead>
         <tbody>
