@@ -241,11 +241,18 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
             ) : (
               <div className={styles.carreraBloque}>
                 <h3 className={styles.carreraTitulo}>{filtroCarreraMateria}</h3>
-                {Object.entries(coincidenciasMateria).map(([materia, personas], idx) => (
-                  <div key={idx} className={styles.bloqueMateria}>
-                    <strong className={styles.nombreMateria}>{materia}</strong>
-                    <ul className={styles.listaColegas}>
-                        {personas.map((c, i) => (
+                
+                {Object.entries(coincidenciasMateria).map(([materia, personas], idx) => {
+                  const personasFiltradas = personas.filter(p =>
+                    normalizar(p.nombre).includes(normalizar(busqueda.trim()))
+                  );
+                  if (personasFiltradas.length === 0) return null;
+
+                  return (
+                    <div key={idx} className={styles.bloqueMateria}>
+                      <strong className={styles.nombreMateria}>{materia}</strong>
+                      <ul className={styles.listaColegas}>
+                        {personasFiltradas.map((c, i) => (
                           <li key={i} className={styles.colegaItem}>
                             <img
                               src={c.fotoUrl}
@@ -257,9 +264,10 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
                           </li>
                         ))}
                       </ul>
+                    </div>
+                  );
+                })}
 
-                  </div>
-                ))}
               </div>
             )}
           </div>
