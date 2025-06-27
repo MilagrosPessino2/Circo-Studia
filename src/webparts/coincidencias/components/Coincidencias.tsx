@@ -97,7 +97,7 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
       try {
         const [estudiantes, estados, inscripciones, carreras] = await Promise.all([
           sp.web.lists.getByTitle('Estudiante').items.select('ID', 'usuario/Id', 'usuario/Title', 'usuario/Name').expand('usuario')(),
-          sp.web.lists.getByTitle('Estado').items.select('idEstudiante/ID', 'codMateria/nombre').expand('idEstudiante', 'codMateria')(),
+          sp.web.lists.getByTitle('Estado').items.select('idEstudiante/ID', 'codMateria/nombre', 'condicion').expand('idEstudiante', 'codMateria')(),
           sp.web.lists.getByTitle('Inscripto').items.select('idEstudiante/ID', 'idCarreraId').expand('idEstudiante')(),
           sp.web.lists.getByTitle('Carrera').items.select('ID', 'nombre')()
         ]);
@@ -107,11 +107,12 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
           carreraMap.set(c.ID, c.nombre);
         }
 
-        const estMap = new Map<number, { nombre: string; fotoUrl: string; carreraNombre: string }>();
+        const estMap = new Map<number, { id: number; nombre: string; fotoUrl: string; carreraNombre: string }>();
         for (const est of estudiantes) {
           const insc = inscripciones.find(i => i.idEstudiante?.ID === est.ID);
           const carreraNombre = carreraMap.get(insc?.idCarreraId || 0) || 'Desconocido';
           estMap.set(est.ID, {
+            id: est.ID,
             nombre: est.usuario?.Title || 'Desconocido',
             fotoUrl: `/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(est.usuario?.Name || '')}&size=S`,
             carreraNombre
@@ -120,17 +121,20 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
 
         const agrupadas: CoincidenciaMateria = {};
 
-        for (const estado of estados) {
-          const estudianteId = estado.idEstudiante?.ID;
-          const materiaNombre = estado.codMateria?.nombre;
-          if (!estudianteId || !materiaNombre) continue;
+            for (const estado of estados) {
+        const estudianteId = estado.idEstudiante?.ID;
+        const materiaNombre = estado.codMateria?.nombre;
+        const condicion = estado.condicion;
 
-          const estudiante: any= estMap.get(estudianteId);
-          if (!estudiante || estudiante.carreraNombre !== filtroCarreraMateria) continue;
+        if (!estudianteId || !materiaNombre || condicion !== 'C') continue; // solo los que están cursando
 
-          if (!agrupadas[materiaNombre]) agrupadas[materiaNombre] = [];
-          agrupadas[materiaNombre].push(estudiante);
-        }
+        const estudiante: any = estMap.get(estudianteId);
+        if (!estudiante || estudiante.carreraNombre !== filtroCarreraMateria) continue;
+
+        if (!agrupadas[materiaNombre]) agrupadas[materiaNombre] = [];
+        agrupadas[materiaNombre].push(estudiante);
+      }
+
 
         setCoincidenciasMateria(agrupadas);
       } catch (err) {
@@ -178,6 +182,7 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
         </div>
 
         <h2 className={styles.titulo}>Estudiantes por {modoVista}</h2>
+        
         <div className={styles.searchBox}>
           <input
             type="text"
@@ -226,7 +231,7 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
           )
         ) : (
           <div className={styles.controls}>
-            <label>Seleccionar carrera:</label>
+            <h3>Seleccionar carrera</h3>
             <select value={filtroCarreraMateria} onChange={e => setFiltroCarreraMateria(e.target.value)}>
               <option value="Tecnicatura en desarrollo web">Tecnicatura en desarrollo web</option>
               <option value="Ingenieria informatica ">Ingeniería informática</option>
@@ -239,21 +244,20 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
                 {Object.entries(coincidenciasMateria).map(([materia, personas], idx) => (
                   <div key={idx} className={styles.bloqueMateria}>
                     <strong className={styles.nombreMateria}>{materia}</strong>
-                    <ul>
-                      {personas.map((c, i) => (
-                        <li
-                          key={i}
-                          style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}
-                        >
-                          <img
-                            src={c.fotoUrl}
-                            alt={`Foto de ${c.nombre}`}
-                            style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
-                          />
-                          <span>{c.nombre}</span>
-                        </li>
-                      ))}
-                    </ul>
+                    <ul className={styles.listaColegas}>
+                        {personas.map((c, i) => (
+                          <li key={i} className={styles.colegaItem}>
+                            <img
+                              src={c.fotoUrl}
+                              alt={`Foto de ${c.nombre}`}
+                              style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover' }}
+                            />
+                            <span>{c.nombre}</span>
+                            <button onClick={() => navigate(`/perfilColega/${c.id}`)}>Ver perfil</button>
+                          </li>
+                        ))}
+                      </ul>
+
                   </div>
                 ))}
               </div>
