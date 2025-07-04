@@ -23,6 +23,7 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = (
     const [codMateria, setCodMateria] = useState('')
     const [nombreMateria, setNombreMateria] = useState('')
     const [anio, setAnio] = useState<number>(1)
+    const [correlativasInput, setCorrelativasInput] = useState('')
     const [mensaje, setMensaje] = useState('')
     const [cargando, setCargando] = useState(false)
 
@@ -54,7 +55,7 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = (
             return
         }
 
-        if (!/^\d{4}$/.test(cod)) {
+        if (!/^[0-9]{4}$/.test(cod)) {
             setMensaje('El código de materia debe ser un número de 4 dígitos.')
             setCargando(false)
             return
@@ -103,15 +104,9 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = (
 
                 if (nuevaMateria.length > 0) {
                     nuevaMateriaId = nuevaMateria[0].ID
-                    console.log(
-                        `🔄 Intento ${
-                            intento + 1
-                        }: Materia encontrada con ID ${nuevaMateriaId}`
-                    )
                     break
                 }
 
-                console.log(`⌛ Esperando inserción... intento ${intento + 1}`)
                 await new Promise((resolve) => setTimeout(resolve, 1000))
             }
 
@@ -128,24 +123,40 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = (
                 )
                 .top(1)()
 
-            if (relacionExiste.length > 0) {
-                setMensaje(
-                    'Ya existe una relación entre esa materia y la carrera.'
-                )
-                setCargando(false)
-                return
+            if (relacionExiste.length === 0) {
+                await sp.web.lists.getByTitle('MateriaCarrera').items.add({
+                    CodMateriaId: nuevaMateriaId,
+                    codCarreraId: selectedCarreraId,
+                })
             }
 
-            await sp.web.lists.getByTitle('MateriaCarrera').items.add({
-                CodMateriaId: nuevaMateriaId,
-                codCarreraId: selectedCarreraId,
-            })
+            const codsCorrelativas = correlativasInput
+                .split(',')
+                .map((c) => c.trim())
+                .filter((c) => c)
 
-            setMensaje('✅ Materia y relación cargadas correctamente.')
+            for (const codCorrelativa of codsCorrelativas) {
+                const correlativa = await sp.web.lists
+                    .getByTitle('Materia')
+                    .items.filter(`codMateria eq '${codCorrelativa}'`)
+                    .top(1)()
+
+                if (correlativa.length > 0) {
+                    await sp.web.lists.getByTitle('Correlativa').items.add({
+                        codMateriaId: nuevaMateriaId,
+                        codMateriaRequeridaId: correlativa[0].ID,
+                    })
+                }
+            }
+
+            setMensaje(
+                '✅ Materia, relación y correlativas cargadas correctamente.'
+            )
             setCodMateria('')
             setNombreMateria('')
             setAnio(1)
             setSelectedCarreraId(null)
+            setCorrelativasInput('')
         } catch (error: unknown) {
             if (error instanceof Error) {
                 console.error('❌ Error al guardar:', error)
@@ -163,7 +174,11 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = (
         <section className={styles.container}>
             <main className={styles.main}>
                 <h2 className={styles.titulo}>Gestionar Plan de Estudios</h2>
-
+                {cargando && (
+                    <div className={styles.loader}>
+                        <Spinner label='Cargando materia...' />
+                    </div>
+                )}
                 <div className={styles.controls}>
                     <label>Carrera:</label>
                     <select
@@ -203,18 +218,20 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = (
                         onChange={(e) => setAnio(Number(e.target.value))}
                     />
 
+                    <label>Correlativas (códigos separados por coma):</label>
+                    <input
+                        type='text'
+                        value={correlativasInput}
+                        onChange={(e) => setCorrelativasInput(e.target.value)}
+                        placeholder='Ej: 3621,3623'
+                    />
+
                     <button
                         className={styles.botonCargar}
                         onClick={handleSubmit}
                     >
                         Cargar materia
                     </button>
-
-                    {cargando && (
-                        <div className={styles.loader}>
-                            <Spinner label='Cargando materia...' />
-                        </div>
-                    )}
                 </div>
 
                 {mensaje && <p className={styles.mensaje}>{mensaje}</p>}
