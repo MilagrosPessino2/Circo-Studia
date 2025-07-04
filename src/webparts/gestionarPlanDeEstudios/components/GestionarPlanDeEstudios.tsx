@@ -146,6 +146,10 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = (
                         codMateriaId: nuevaMateriaId,
                         codMateriaRequeridaId: correlativa[0].ID,
                     })
+                } else {
+                    throw new Error(
+                        `No se encontró la materia con código ${codCorrelativa} como correlativa.`
+                    )
                 }
             }
 
@@ -174,11 +178,7 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = (
         <section className={styles.container}>
             <main className={styles.main}>
                 <h2 className={styles.titulo}>Gestionar Plan de Estudios</h2>
-                {cargando && (
-                    <div className={styles.loader}>
-                        <Spinner label='Cargando materia...' />
-                    </div>
-                )}
+
                 <div className={styles.controls}>
                     <label>Carrera:</label>
                     <select
@@ -209,6 +209,14 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = (
                         onChange={(e) => setNombreMateria(e.target.value)}
                     />
 
+                    <label>Correlativas (códigos separados por coma):</label>
+                    <input
+                        type='text'
+                        value={correlativasInput}
+                        onChange={(e) => setCorrelativasInput(e.target.value)}
+                        placeholder='Ej: 3621,3623'
+                    />
+
                     <label>Año:</label>
                     <input
                         type='number'
@@ -218,14 +226,6 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = (
                         onChange={(e) => setAnio(Number(e.target.value))}
                     />
 
-                    <label>Correlativas (códigos separados por coma):</label>
-                    <input
-                        type='text'
-                        value={correlativasInput}
-                        onChange={(e) => setCorrelativasInput(e.target.value)}
-                        placeholder='Ej: 3621,3623'
-                    />
-
                     <button
                         className={styles.botonCargar}
                         onClick={handleSubmit}
@@ -233,7 +233,11 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = (
                         Cargar materia
                     </button>
                 </div>
-
+                {cargando && (
+                    <div className={styles.loader}>
+                        <Spinner label='Cargando materia...' />
+                    </div>
+                )}
                 {mensaje && <p className={styles.mensaje}>{mensaje}</p>}
             </main>
         </section>
