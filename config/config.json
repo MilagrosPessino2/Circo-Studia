@@ -105,6 +105,14 @@
           "manifest": "./src/webparts/perfilColega/PerfilColegaWebPart.manifest.json"
         }
       ]
+    },
+    "gestionar-plan-de-estudios-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/gestionarPlanDeEstudios/GestionarPlanDeEstudiosWebPart.js",
+          "manifest": "./src/webparts/gestionarPlanDeEstudios/GestionarPlanDeEstudiosWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -121,6 +129,7 @@
     "MenuWebPartStrings": "lib/webparts/menu/loc/{locale}.js",
     "FormularioWebPartStrings": "lib/webparts/formulario/loc/{locale}.js",
     "PerfilWebPartStrings": "lib/webparts/perfil/loc/{locale}.js",
-    "PerfilColegaWebPartStrings": "lib/webparts/perfilColega/loc/{locale}.js"
+    "PerfilColegaWebPartStrings": "lib/webparts/perfilColega/loc/{locale}.js",
+    "GestionarPlanDeEstudiosWebPartStrings": "lib/webparts/gestionarPlanDeEstudios/loc/{locale}.js"
   }
 }

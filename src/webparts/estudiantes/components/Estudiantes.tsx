@@ -10,7 +10,7 @@ interface IEstudiante {
     usuario: {
         Title: string
         EMail: string
-        Name: string // Ojo: este es el loginName o userPrincipalName
+        Name: string 
     }
 }
 
