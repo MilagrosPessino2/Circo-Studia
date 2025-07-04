@@ -17,6 +17,7 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
   const [materias, setMaterias] = useState<IMateria[]>([]);
   const [condiciones, setCondiciones] = useState<{ [materiaId: number]: string }>({});
   const [loading, setLoading] = useState(true);
+  const [materiasAsignadas, setMateriasAsignadas] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     const cargarMateriasDeCarrera = async () => {
@@ -50,6 +51,7 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
           nombre: r.CodMateria.nombre,
         }));
 
+        // Obtener todas las materias con estado (C, A o R)
         const estados = await sp.web.lists
           .getByTitle('Estado')
           .items
@@ -57,9 +59,12 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
           .select('codMateria/Id')
           .expand('codMateria')();
 
-        const idsConEstado = new Set(estados.map(e => e.codMateria?.Id));
-        const materiasSinEstado = todasLasMaterias.filter(m => !idsConEstado.has(m.Id));
-        setMaterias(materiasSinEstado);
+        const idsAsignados = new Set(estados.map(e => e.codMateria?.Id));
+        setMateriasAsignadas(idsAsignados);
+
+        // Filtrar las que no están en Estado
+        const materiasNoAsignadas = todasLasMaterias.filter(m => !idsAsignados.has(m.Id));
+        setMaterias(materiasNoAsignadas);
       } catch (err) {
         console.error('Error al cargar materias:', err);
       } finally {
@@ -85,6 +90,9 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
         const condicion = condiciones[materia.Id];
         if (!condicion) continue;
 
+        // Doble chequeo en caso de que la materia haya sido asignada mientras se completaba el formulario
+        if (materiasAsignadas.has(materia.Id)) continue;
+
         await sp.web.lists.getByTitle('Estado').items.add({
           idEstudianteId: estudiante.ID,
           codMateriaId: materia.Id,
@@ -93,6 +101,7 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
       }
 
       alert('Estados guardados correctamente.');
+      window.location.reload(); // recargar para reflejar cambios
     } catch (err) {
       console.error('Error al guardar estados:', err);
       alert('Error al guardar estados.');
@@ -106,38 +115,44 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
       <Menu />
       <div className={styles.principal}>
         <h2 className={styles.titulo}>Asignar estado a materias</h2>
-        <table className={styles.tabla}>
-          <thead>
-            <tr>
-              <th>Código</th>
-              <th>Materia</th>
-              <th>Estado</th>
-            </tr>
-          </thead>
-          <tbody>
-            {materias.map(m => (
-              <tr key={m.Id}>
-                <td>{m.codMateria}</td>
-                <td>{m.nombre}</td>
-                <td>
-                  <select
-                    value={condiciones[m.Id] || ''}
-                    onChange={e => handleCondicionChange(m.Id, e.target.value)}
-                  >
-                    <option value="">-</option>
-                    <option value="C">Cursando</option>
-                    <option value="A">Aprobada</option>
-                    <option value="R">Regularizada</option>
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {materias.length === 0 ? (
+          <p>No hay materias disponibles para asignar.</p>
+        ) : (
+          <>
+            <table className={styles.tabla}>
+              <thead>
+                <tr>
+                  <th>Código</th>
+                  <th>Materia</th>
+                  <th>Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {materias.map(m => (
+                  <tr key={m.Id}>
+                    <td>{m.codMateria}</td>
+                    <td>{m.nombre}</td>
+                    <td>
+                      <select
+                        value={condiciones[m.Id] || ''}
+                        onChange={e => handleCondicionChange(m.Id, e.target.value)}
+                      >
+                        <option value="">-</option>
+                        <option value="C">Cursando</option>
+                        <option value="A">Aprobada</option>
+                        <option value="R">Regularizada</option>
+                      </select>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-        <button className={styles.botonGuardar} onClick={guardarCondiciones}>
-          Guardar estados
-        </button>
+            <button className={styles.botonGuardar} onClick={guardarCondiciones}>
+              Guardar estados
+            </button>
+          </>
+        )}
       </div>
     </div>
   );
