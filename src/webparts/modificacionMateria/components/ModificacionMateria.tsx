@@ -1,43 +1,188 @@
-import * as React from 'react';
-import styles from './ModificacionMateria.module.scss';
-import type { IModificacionMateriaProps } from './IModificacionMateriaProps';
-import { escape } from '@microsoft/sp-lodash-subset';
+// src/webparts/modificacionMateria/components/ModificacionMateria.tsx
+import * as React from 'react'
+import styles from './ModificacionMateria.module.scss'
+import type { IModificacionMateriaProps } from './IModificacionMateriaProps'
+import { getSP } from '../../../pnpjsConfig'
+import { Spinner } from '@fluentui/react'
 
-export default class ModificacionMateria extends React.Component<IModificacionMateriaProps> {
-  public render(): React.ReactElement<IModificacionMateriaProps> {
-    const {
-      description,
-      isDarkTheme,
-      environmentMessage,
-      hasTeamsContext,
-      userDisplayName
-    } = this.props;
+interface Materia {
+    ID: number
+    codMateria: string
+    nombre: string
+    anio: number
+}
+
+const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
+    const sp = getSP(props.context)
+
+    const [materias, setMaterias] = React.useState<Materia[]>([])
+    const [materiaSeleccionada, setMateriaSeleccionada] =
+        React.useState<Materia | null>(null)
+    const [mensaje, setMensaje] = React.useState('')
+    const [cargando, setCargando] = React.useState(false)
+
+    React.useEffect(() => {
+        const fetchMaterias = async (): Promise<void> => {
+            try {
+                const result = await sp.web.lists
+                    .getByTitle('Materia')
+                    .items.select('ID', 'codMateria', 'nombre', 'anio')()
+                setMaterias(result)
+            } catch (error) {
+                console.error('Error al cargar materias:', error)
+            }
+        }
+
+        fetchMaterias().catch(console.error)
+    }, [])
+
+    const handleGuardar = async (): Promise<void> => {
+        if (!materiaSeleccionada) return
+
+        const cod = materiaSeleccionada.codMateria.trim()
+        const nom = materiaSeleccionada.nombre.trim()
+        const anio = materiaSeleccionada.anio
+
+        if (!cod || !nom || !anio) {
+            setMensaje('Por favor, complete todos los campos.')
+            return
+        }
+
+        if (!/^[0-9]{4}$/.test(cod)) {
+            setMensaje('El código debe ser un número de 4 dígitos.')
+            return
+        }
+
+        setCargando(true)
+        setMensaje('')
+
+        try {
+            // Verificar si otro registro ya tiene ese código
+            const codigoExistente = await sp.web.lists
+                .getByTitle('Materia')
+                .items.filter(
+                    `codMateria eq '${cod}' and ID ne ${materiaSeleccionada.ID}`
+                )
+                .top(1)()
+
+            if (codigoExistente.length > 0) {
+                setMensaje('⚠️ Ya existe otra materia con ese código.')
+                return
+            }
+
+            // Verificar si otro registro ya tiene ese nombre
+            const nombreExistente = await sp.web.lists
+                .getByTitle('Materia')
+                .items.filter(
+                    `nombre eq '${nom.replace("'", "''")}' and ID ne ${
+                        materiaSeleccionada.ID
+                    }`
+                )
+                .top(1)()
+
+            if (nombreExistente.length > 0) {
+                setMensaje('⚠️ Ya existe otra materia con ese nombre.')
+                return
+            }
+
+            await sp.web.lists
+                .getByTitle('Materia')
+                .items.getById(materiaSeleccionada.ID)
+                .update({
+                    codMateria: cod,
+                    nombre: nom,
+                    anio,
+                })
+
+            setMensaje('✅ Materia actualizada correctamente.')
+
+            // Refrescar lista de materias
+            const nuevasMaterias = await sp.web.lists
+                .getByTitle('Materia')
+                .items.select('ID', 'codMateria', 'nombre', 'anio')()
+            setMaterias(nuevasMaterias)
+        } catch (error: unknown) {
+            console.error('Error al actualizar materia:', error)
+            if (error instanceof Error) {
+                setMensaje(`❌ Error: ${error.message}`)
+            } else {
+                setMensaje('❌ Error desconocido')
+            }
+        } finally {
+            setCargando(false) // 🔧 IMPORTANTE: desactiva el spinner siempre
+        }
+    }
 
     return (
-      <section className={`${styles.modificacionMateria} ${hasTeamsContext ? styles.teams : ''}`}>
-        <div className={styles.welcome}>
-          <img alt="" src={isDarkTheme ? require('../assets/welcome-dark.png') : require('../assets/welcome-light.png')} className={styles.welcomeImage} />
-          <h2>Well done, {escape(userDisplayName)}!</h2>
-          <div>{environmentMessage}</div>
-          <div>Web part property value: <strong>{escape(description)}</strong></div>
-        </div>
-        <div>
-          <h3>Welcome to SharePoint Framework!</h3>
-          <p>
-            The SharePoint Framework (SPFx) is a extensibility model for Microsoft Viva, Microsoft Teams and SharePoint. It&#39;s the easiest way to extend Microsoft 365 with automatic Single Sign On, automatic hosting and industry standard tooling.
-          </p>
-          <h4>Learn more about SPFx development:</h4>
-          <ul className={styles.links}>
-            <li><a href="https://aka.ms/spfx" target="_blank" rel="noreferrer">SharePoint Framework Overview</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-graph" target="_blank" rel="noreferrer">Use Microsoft Graph in your solution</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-teams" target="_blank" rel="noreferrer">Build for Microsoft Teams using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-viva" target="_blank" rel="noreferrer">Build for Microsoft Viva Connections using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-store" target="_blank" rel="noreferrer">Publish SharePoint Framework applications to the marketplace</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-api" target="_blank" rel="noreferrer">SharePoint Framework API reference</a></li>
-            <li><a href="https://aka.ms/m365pnp" target="_blank" rel="noreferrer">Microsoft 365 Developer Community</a></li>
-          </ul>
-        </div>
-      </section>
-    );
-  }
+        <section className={styles.modificacionMateria}>
+            <h3 className={styles.titulo}>Modificación de Materia</h3>
+
+            <label>Seleccionar materia:</label>
+            <select
+                value={materiaSeleccionada?.ID ?? ''}
+                onChange={(e) => {
+                    const id = Number(e.target.value)
+                    const materia = materias.find((m) => m.ID === id) || null
+                    setMateriaSeleccionada(materia)
+                    setMensaje('')
+                }}
+            >
+                <option value=''>Seleccione una materia</option>
+                {materias.map((m) => (
+                    <option key={m.ID} value={m.ID}>
+                        {m.nombre} ({m.codMateria})
+                    </option>
+                ))}
+            </select>
+
+            {materiaSeleccionada && (
+                <div className={styles.formulario}>
+                    <label>Nombre:</label>
+                    <input
+                        type='text'
+                        value={materiaSeleccionada.nombre}
+                        onChange={(e) =>
+                            setMateriaSeleccionada({
+                                ...materiaSeleccionada,
+                                nombre: e.target.value,
+                            })
+                        }
+                    />
+
+                    <label>Código:</label>
+                    <input
+                        type='text'
+                        value={materiaSeleccionada.codMateria}
+                        onChange={(e) =>
+                            setMateriaSeleccionada({
+                                ...materiaSeleccionada,
+                                codMateria: e.target.value,
+                            })
+                        }
+                    />
+
+                    <label>Año:</label>
+                    <input
+                        type='number'
+                        min={1}
+                        max={5}
+                        value={materiaSeleccionada.anio}
+                        onChange={(e) =>
+                            setMateriaSeleccionada({
+                                ...materiaSeleccionada,
+                                anio: Number(e.target.value),
+                            })
+                        }
+                    />
+
+                    <button onClick={handleGuardar}>Guardar cambios</button>
+                </div>
+            )}
+
+            {cargando && <Spinner label='Actualizando materia...' />}
+            {mensaje && <p className={styles.texto}>{mensaje}</p>}
+        </section>
+    )
 }
+
+export default ModificacionMateria

@@ -1,43 +1,155 @@
-import * as React from 'react';
-import styles from './BajaMateria.module.scss';
-import type { IBajaMateriaProps } from './IBajaMateriaProps';
-import { escape } from '@microsoft/sp-lodash-subset';
+// src/webparts/bajaMateria/components/BajaMateria.tsx
+import * as React from 'react'
+import type { IBajaMateriaProps } from './IBajaMateriaProps'
+import styles from './BajaMateria.module.scss'
+import { getSP } from '../../../pnpjsConfig'
+import { Dialog, DialogType, DialogFooter } from '@fluentui/react/lib/Dialog'
+import { DefaultButton, PrimaryButton, Spinner } from '@fluentui/react'
 
-export default class BajaMateria extends React.Component<IBajaMateriaProps> {
-  public render(): React.ReactElement<IBajaMateriaProps> {
-    const {
-      description,
-      isDarkTheme,
-      environmentMessage,
-      hasTeamsContext,
-      userDisplayName
-    } = this.props;
+interface Materia {
+    ID: number
+    codMateria: string
+    nombre: string
+}
+
+const BajaMateria: React.FC<IBajaMateriaProps> = ({ context }) => {
+    const sp = getSP(context)
+
+    const [materias, setMaterias] = React.useState<Materia[]>([])
+    const [idSeleccionado, setIdSeleccionado] = React.useState<number | null>(
+        null
+    )
+    const [mostrarModal, setMostrarModal] = React.useState(false)
+    const [mensaje, setMensaje] = React.useState('')
+    const [cargando, setCargando] = React.useState(false)
+
+    React.useEffect(() => {
+        const fetchMaterias = async (): Promise<void> => {
+            try {
+                const result: Materia[] = await sp.web.lists
+                    .getByTitle('Materia')
+                    .items.select('ID', 'codMateria', 'nombre')()
+                setMaterias(result)
+            } catch (error) {
+                console.error('Error al cargar materias:', error)
+            }
+        }
+
+        fetchMaterias().catch(console.error)
+    }, [])
+
+    const materiaSeleccionada = materias.find((m) => m.ID === idSeleccionado)
+
+    const eliminarMateria = async (): Promise<void> => {
+        if (!materiaSeleccionada) return
+
+        setCargando(true)
+        setMensaje('')
+
+        try {
+            const { ID, codMateria } = materiaSeleccionada
+
+            // 1. Eliminar relaciones en MateriaCarrera
+            const relaciones: { ID: number }[] = await sp.web.lists
+                .getByTitle('MateriaCarrera')
+                .items.filter(`CodMateria/codMateria eq '${codMateria}'`)
+                .select('ID')()
+
+            for (const rel of relaciones) {
+                await sp.web.lists
+                    .getByTitle('MateriaCarrera')
+                    .items.getById(rel.ID)
+                    .delete()
+            }
+
+            // 2. Eliminar correlativas donde esta materia es base
+            const correlativas: { ID: number }[] = await sp.web.lists
+                .getByTitle('Correlativa')
+                .items.filter(`codMateriaId eq ${ID}`)
+                .select('ID')()
+
+            for (const corr of correlativas) {
+                await sp.web.lists
+                    .getByTitle('Correlativa')
+                    .items.getById(corr.ID)
+                    .delete()
+            }
+
+            // 3. Eliminar la materia
+            await sp.web.lists.getByTitle('Materia').items.getById(ID).delete()
+
+            setMensaje('✅ Materia eliminada correctamente.')
+            setIdSeleccionado(null)
+
+            const nuevasMaterias: Materia[] = await sp.web.lists
+                .getByTitle('Materia')
+                .items.select('ID', 'codMateria', 'nombre')()
+            setMaterias(nuevasMaterias)
+        } catch (error: unknown) {
+            const mensajeError =
+                error instanceof Error ? error.message : 'Error desconocido'
+            console.error('Error al eliminar materia:', error)
+            setMensaje(`❌ Error: ${mensajeError}`)
+        } finally {
+            setCargando(false)
+            setMostrarModal(false)
+        }
+    }
 
     return (
-      <section className={`${styles.bajaMateria} ${hasTeamsContext ? styles.teams : ''}`}>
-        <div className={styles.welcome}>
-          <img alt="" src={isDarkTheme ? require('../assets/welcome-dark.png') : require('../assets/welcome-light.png')} className={styles.welcomeImage} />
-          <h2>Well done, {escape(userDisplayName)}!</h2>
-          <div>{environmentMessage}</div>
-          <div>Web part property value: <strong>{escape(description)}</strong></div>
-        </div>
-        <div>
-          <h3>Welcome to SharePoint Framework!</h3>
-          <p>
-            The SharePoint Framework (SPFx) is a extensibility model for Microsoft Viva, Microsoft Teams and SharePoint. It&#39;s the easiest way to extend Microsoft 365 with automatic Single Sign On, automatic hosting and industry standard tooling.
-          </p>
-          <h4>Learn more about SPFx development:</h4>
-          <ul className={styles.links}>
-            <li><a href="https://aka.ms/spfx" target="_blank" rel="noreferrer">SharePoint Framework Overview</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-graph" target="_blank" rel="noreferrer">Use Microsoft Graph in your solution</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-teams" target="_blank" rel="noreferrer">Build for Microsoft Teams using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-viva" target="_blank" rel="noreferrer">Build for Microsoft Viva Connections using SharePoint Framework</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-store" target="_blank" rel="noreferrer">Publish SharePoint Framework applications to the marketplace</a></li>
-            <li><a href="https://aka.ms/spfx-yeoman-api" target="_blank" rel="noreferrer">SharePoint Framework API reference</a></li>
-            <li><a href="https://aka.ms/m365pnp" target="_blank" rel="noreferrer">Microsoft 365 Developer Community</a></li>
-          </ul>
-        </div>
-      </section>
-    );
-  }
+        <section className={styles.bajaMateria}>
+            <h3 className={styles.titulo}>Baja de Materia</h3>
+
+            <label>Seleccionar materia a eliminar:</label>
+            <select
+                value={idSeleccionado ?? ''}
+                onChange={(e) => {
+                    setIdSeleccionado(Number(e.target.value))
+                    setMensaje('')
+                }}
+            >
+                <option value=''>Seleccione una materia</option>
+                {materias.map((m) => (
+                    <option key={m.ID} value={m.ID}>
+                        {m.nombre} ({m.codMateria})
+                    </option>
+                ))}
+            </select>
+
+            {idSeleccionado && (
+                <button
+                    className={styles.botonEliminar}
+                    onClick={() => setMostrarModal(true)}
+                >
+                    Eliminar materia
+                </button>
+            )}
+
+            {mensaje && <p className={styles.texto}>{mensaje}</p>}
+            {cargando && <Spinner label='Eliminando materia...' />}
+
+            <Dialog
+                hidden={!mostrarModal}
+                dialogContentProps={{
+                    type: DialogType.normal,
+                    title: 'Confirmar eliminación',
+                    subText: `¿Está seguro de que desea eliminar la materia "${materiaSeleccionada?.nombre}" y todas sus relaciones? Esta acción no se puede deshacer.`,
+                }}
+                onDismiss={() => setMostrarModal(false)}
+            >
+                <DialogFooter>
+                    <PrimaryButton
+                        onClick={eliminarMateria}
+                        text='Sí, eliminar'
+                    />
+                    <DefaultButton
+                        onClick={() => setMostrarModal(false)}
+                        text='Cancelar'
+                    />
+                </DialogFooter>
+            </Dialog>
+        </section>
+    )
 }
+
+export default BajaMateria

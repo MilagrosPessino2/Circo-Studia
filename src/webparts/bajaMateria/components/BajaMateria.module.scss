@@ -1,34 +1,53 @@
-@import '~@fluentui/react/dist/sass/References.scss';
-
 .bajaMateria {
-  overflow: hidden;
-  padding: 1em;
-  color: "[theme:bodyText, default: #323130]";
-  color: var(--bodyText);
-  &.teams {
-    font-family: $ms-font-family-fallbacks;
-  }
+  padding: 24px;
+  background-color: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
 }
 
-.welcome {
-  text-align: center;
+.titulo {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1fb286;
+  margin-bottom: 20px;
 }
 
-.welcomeImage {
+label {
+  font-weight: 600;
+  margin-bottom: 8px;
+  display: block;
+  color: #333;
+}
+
+select {
+  padding: 10px;
   width: 100%;
-  max-width: 420px;
+  max-width: 400px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 16px;
 }
 
-.links {
-  a {
-    text-decoration: none;
-    color: "[theme:link, default:#03787c]";
-    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
+.botonEliminar {
+  padding: 10px 20px;
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
 
-    &:hover {
-      text-decoration: underline;
-      color: "[theme:linkHovered, default: #014446]";
-      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
-    }
-  }
+.botonEliminar:hover {
+  background-color: #e03131;
+}
+
+.texto {
+  margin-top: 16px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #555;
 }
