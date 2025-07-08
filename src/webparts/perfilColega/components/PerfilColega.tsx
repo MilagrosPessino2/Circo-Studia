@@ -20,10 +20,11 @@ const PerfilColega: React.FC<IPerfilColegaProps> = ({ context }) => {
       if (!id) return;
 
       const estudiante = await sp.web.lists
-        .getByTitle('Estudiante')
-        .items.getById(Number(id))
-        .select('ID', 'usuario/Id', 'usuario/Title', 'usuario/Name', 'usuario/EMail')
-        .expand('usuario')();
+      .getByTitle('Estudiante')
+      .items.getById(Number(id))
+      .select('ID', 'emailPersonal', 'usuario/Id', 'usuario/Title', 'usuario/Name', 'usuario/EMail')
+      .expand('usuario')();
+
 
       const inscripciones = await sp.web.lists
         .getByTitle('Inscripto')
@@ -105,11 +106,18 @@ const materiasFinal = materiasCursando.map(e => {
     {Email && (
   <div className={styles.popup}>
     <p>Podés contactar a este usuario por email:</p>
-    <strong>{colega.usuario?.EMail}</strong>
+    <strong>{colega.emailPersonal || colega.usuario?.EMail}</strong>
+    {colega.emailPersonal && (
+      <>
+        <br />
+        <strong>{colega.usuario?.EMail}</strong>
+      </>
+    )}
     <br />
     <button onClick={() => setEmail(false)}>Cerrar</button>
-    </div>
-  )}
+  </div>
+)}
+
 
 
     {materias.length === 0 ? (
