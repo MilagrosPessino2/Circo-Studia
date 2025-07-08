@@ -37,6 +37,12 @@ interface IMateriaCarreraItem {
     }
 }
 
+interface ICorrelativaItem {
+  codMateria: { ID: number }
+  codMateriaRequerida: { ID: number }
+}
+
+
 const runAsync = (fn: () => Promise<void>): void => {
     fn().catch(console.error)
 }
@@ -96,9 +102,37 @@ const CargarMateriaRegularizada: React.FC<ICargarMateriaRegularizadaProps> = ({
 
                 const items: IMateriaCarreraItem[] = await sp.web.lists.getByTitle('MateriaCarrera').items.filter(`codCarreraId eq ${carreraId}`).select('ID', 'CodMateria/ID', 'CodMateria/nombre').expand('CodMateria')()
 
+                // Obtener correlatividades
+                    const correlativasItems: ICorrelativaItem[] = await sp.web.lists
+                    .getByTitle('Correlativa')
+                    .items.select('codMateria/ID', 'codMateriaRequerida/ID')
+                    .expand('codMateria', 'codMateriaRequerida')()
+
+                    // Armar mapa de correlativas requeridas por materia
+                    const mapaCorrelativas: Record<number, number[]> = {}
+                    correlativasItems.forEach(item => {
+                    const materiaID = item.codMateria?.ID
+                    const correlativaID = item.codMateriaRequerida?.ID
+                    if (materiaID && correlativaID) {
+                        if (!mapaCorrelativas[materiaID]) mapaCorrelativas[materiaID] = []
+                        mapaCorrelativas[materiaID].push(correlativaID)
+                    }
+                    })
+
                 const materiasFormateadas: IMateria[] = items
-                    .filter(item => item.CodMateria && !idsAprobadas.includes(item.CodMateria.ID))
-                    .map(item => ({ id: item.CodMateria.ID, nombre: item.CodMateria.nombre, checked: false }))
+                .filter(item => {
+                    const idMateria = item.CodMateria?.ID
+                    if (!idMateria || idsAprobadas.includes(idMateria)) return false
+
+                    const correlativasReq = mapaCorrelativas[idMateria] || []
+                    return correlativasReq.every(correlativaId => idsAprobadas.includes(correlativaId))
+                })
+                .map(item => ({
+                    id: item.CodMateria.ID,
+                    nombre: item.CodMateria.nombre,
+                    checked: false
+                }))
+
 
                 setMaterias(materiasFormateadas)
             } catch (error) {
