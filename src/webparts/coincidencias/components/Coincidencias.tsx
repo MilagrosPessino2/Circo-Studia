@@ -171,13 +171,13 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
             className={`${styles.tabButton} ${modoVista === 'carrera' ? styles.activo : ''}`}
             onClick={() => setModoVista('carrera')}
           >
-            Coincidencias por carrera
+            Estudiantes por carrera
           </button>
           <button
             className={`${styles.tabButton} ${modoVista === 'materia' ? styles.activo : ''}`}
             onClick={() => setModoVista('materia')}
           >
-            Coincidencias por materia
+            Estudiantes por materia
           </button>
         </div>
 
