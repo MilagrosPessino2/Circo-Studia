@@ -1,0 +1,44 @@
+.altaMateria {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  color: #333;
+}
+
+.controls {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.controls input,
+.controls select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 14px;
+}
+
+.botonCargar {
+  padding: 12px;
+  background-color: #1fb286;
+  color: white;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.botonCargar:hover {
+  background-color: #0fa276;
+}
+
+.mensaje {
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+.loader {
+  margin-top: 16px;
+}
