@@ -11,6 +11,9 @@ interface IMateria {
   id: number
   nombre: string
   checked: boolean
+  disabled: boolean
+  autoMarkedBy?: number[]
+
 }
 
 interface IEstudiante {
@@ -35,14 +38,34 @@ const runAsync = (fn: () => Promise<void>): void => {
   fn().catch(console.error)
 }
 
+// 🔁 Función para obtener todas las correlativas requeridas recursivamente
+const getCorrelativasRequeridas = (id: number, mapa: Record<number, number[]>): Set<number> => {
+  const visitados = new Set<number>()
+  const stack = [id]
+
+  while (stack.length > 0) {
+    const actual = stack.pop()!
+    const requisitos = mapa[actual] || []
+
+    requisitos.forEach(req => {
+      if (!visitados.has(req)) {
+        visitados.add(req)
+        stack.push(req)
+      }
+    })
+  }
+
+  return visitados
+}
+
 const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialProps> = ({ context }) => {
   const sp = getSP(context)
   const navigate = useNavigate()
   const { setIsPreset } = useContext(UserPresetContext)
 
-  const [carreraSeleccionada, setCarreraSeleccionada] = useState<string>('')
   const [carreraId, setCarreraId] = useState<number | null>(null)
   const [materias, setMaterias] = useState<IMateria[]>([])
+  const [correlatividades, setCorrelatividades] = useState<Record<number, number[]>>({})
   const [mensaje, setMensaje] = useState<string | null>(null)
   const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null)
   const [eliminando, setEliminando] = useState(false)
@@ -64,9 +87,6 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
 
         const idCarrera = inscripciones[0].idCarreraId
         setCarreraId(idCarrera)
-
-        const carreraItem = await sp.web.lists.getByTitle('Carrera').items.getById(idCarrera).select('nombre')()
-        setCarreraSeleccionada(carreraItem.nombre)
       } catch (error) {
         console.error('Error al obtener la carrera:', error)
       }
@@ -76,28 +96,100 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
   }, [])
 
   useEffect(() => {
-    const fetchMaterias = async () => {
+    const fetchMateriasYCorrelativas = async () => {
       if (!carreraId) return
 
       try {
-        const items = await sp.web.lists.getByTitle('MateriaCarrera').items.filter(`codCarreraId eq ${carreraId}`).select('ID', 'CodMateria/ID', 'CodMateria/nombre').expand('CodMateria')()
+        // Materias de la carrera
+        const items = await sp.web.lists.getByTitle('MateriaCarrera').items
+          .filter(`codCarreraId eq ${carreraId}`)
+          .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
+          .expand('CodMateria')()
+
         const materiasFormateadas: IMateria[] = items.filter(item => item.CodMateria).map(item => ({
-          id: item.CodMateria.ID,
-          nombre: item.CodMateria.nombre,
-          checked: false
-        }))
+        id: item.CodMateria.ID,
+        nombre: item.CodMateria.nombre,
+        checked: false,
+        disabled: false,
+        autoMarkedBy: []
+      }))
         setMaterias(materiasFormateadas)
+
+        // Correlativas de esas materias
+        const correlativasItems = await sp.web.lists.getByTitle('Correlativa').items
+        .select('codMateria/ID', 'codMateriaRequerida/ID')
+        .expand('codMateria', 'codMateriaRequerida')()
+
+
+        const mapa: Record<number, number[]> = {}
+
+      correlativasItems.forEach(item => {
+        const materiaID = item.codMateria?.ID
+        const correlativaID = item.codMateriaRequerida?.ID
+
+        if (materiaID && correlativaID) {
+          if (!mapa[materiaID]) mapa[materiaID] = []
+          mapa[materiaID].push(correlativaID)
+        }
+      })
+
+      setCorrelatividades(mapa)
+      console.log('Mapa de correlatividades:', mapa)
+
       } catch (error) {
-        console.error('Error al obtener materias:', error)
+        console.error('Error al obtener materias o correlativas:', error)
       }
     }
 
-    runAsync(fetchMaterias)
+    runAsync(fetchMateriasYCorrelativas)
   }, [carreraId])
 
-  const handleCheckboxChange = (id: number): void => {
-    setMaterias(prev => prev.map(m => m.id === id ? { ...m, checked: !m.checked } : m))
-  }
+ const handleCheckboxChange = (id: number): void => {
+  setMaterias(prev => {
+    const seleccionada = prev.find(m => m.id === id)
+    if (!seleccionada) return prev
+
+    // Si está deshabilitada (es una correlativa requerida), no permitir cambios
+    if (seleccionada.disabled) return prev
+
+    const correlativas = Array.from(getCorrelativasRequeridas(id, correlatividades))
+
+  if (!seleccionada.checked) {
+  return prev.map(m => {
+    if (m.id === id) {
+      return { ...m, checked: true }
+    } else if (correlativas.includes(m.id)) {
+      const nuevasMarcas = [...(m.autoMarkedBy || []), id]
+      return {
+        ...m,
+        checked: true,
+        disabled: true,
+        autoMarkedBy: nuevasMarcas
+      }
+    }
+    return m
+  })
+}
+ else {
+  return prev.map(m => {
+    if (m.id === id) {
+      return { ...m, checked: false }
+    } else if (m.autoMarkedBy?.includes(id)) {
+      const nuevasMarcas = m.autoMarkedBy.filter(x => x !== id)
+      return {
+        ...m,
+        checked: nuevasMarcas.length > 0,
+        disabled: nuevasMarcas.length > 0,
+        autoMarkedBy: nuevasMarcas
+      }
+    }
+    return m
+  })
+}
+
+  })
+}
+
 
   const handleVolver = async (): Promise<void> => {
     try {
@@ -155,17 +247,8 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
     }
   }
 
-  // const renderTitulo = (): string => {
-  const nombre = carreraSeleccionada.trim().toLowerCase()
-  console.log('Nombre de la carrera:', nombre)
-  //   if (nombre.includes('web')) return 'Materias de la Tecnicatura Web'
-  //   if (nombre.includes('ingenier')) return 'Materias de la Ingeniería Informática'
-  //   return 'Materias disponibles'
-  // }
-
   return (
     <div style={{ padding: 24 }}>
-
       <h2 className={styles.titulo}>Seleccionar Materias Aprobadas</h2>
 
       {mensaje && (
@@ -190,10 +273,10 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
                   <input
                     type="checkbox"
                     checked={m.checked}
+                    disabled={m.disabled}
                     onChange={() => handleCheckboxChange(m.id)}
                   />
                 </td>
-                
               </tr>
             ))}
           </tbody>
