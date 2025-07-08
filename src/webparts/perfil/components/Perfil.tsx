@@ -10,23 +10,59 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
   const [nombre, setNombre] = useState<string>('Estudiante');
   const [email, setEmail] = useState<string>('Estudiante');
   const [foto, setFoto] = useState<string>('');
+  const [emailPersonal, setEmailPersonal] = useState<string>('');
+  const [mensaje, setMensaje] = useState<string | null>(null);
+  const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null);
 
   useEffect(() => {
-    const datosPerfil = async (): Promise<void> => {
+    const cargarDatosPerfil = async (): Promise<void> => {
       try {
         const user = await sp.web.currentUser();
         setNombre(user.Title);
         setEmail(user.Email);
+        const imagen = `/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(user.LoginName)}&size=M`;
+        setFoto(imagen);
 
-        const imagenSharePoint = `/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(user.LoginName)}&size=M`;
-        setFoto(imagenSharePoint);
+        const estudiantes = await sp.web.lists.getByTitle('Estudiante').items
+          .select('ID', 'usuario/Id', 'emailPersonal')
+          .expand('usuario')();
+
+        const estudiante = estudiantes.find(e => e.usuario?.Id === user.Id);
+        if (estudiante) {
+          setEmailPersonal(estudiante.emailPersonal || '');
+        }
       } catch (error) {
         console.error('Error cargando datos del perfil:', error);
+        setMensaje('Error al cargar el perfil.');
+        setTipoMensaje('error');
       }
     };
 
-    datosPerfil().catch(console.error);
+    cargarDatosPerfil().catch(console.error);
   }, [context]);
+
+  const guardarEmail = async (): Promise<void> => {
+    try {
+      const user = await sp.web.currentUser();
+      const estudiantes = await sp.web.lists.getByTitle('Estudiante').items
+        .select('ID', 'usuario/Id')
+        .expand('usuario')();
+
+      const estudiante = estudiantes.find(e => e.usuario?.Id === user.Id);
+      if (!estudiante) throw new Error('Estudiante no encontrado');
+
+      await sp.web.lists.getByTitle('Estudiante').items.getById(estudiante.ID).update({
+        emailPersonal: emailPersonal
+      });
+
+      setMensaje('Email personal guardado correctamente.');
+      setTipoMensaje('exito');
+    } catch (error) {
+      console.error('Error al guardar el email:', error);
+      setMensaje('Error al guardar el email personal.');
+      setTipoMensaje('error');
+    }
+  };
 
   return (
     <div className={styles.perfilContainer}>
@@ -42,6 +78,24 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
             <div className={styles.nombre}>{nombre}</div>
             <div className={styles.email}>{email}</div>
           </div>
+        </div>
+
+        <div className={styles.formulario}>
+          <h3>📬 Email Personal</h3>
+          <input
+            type="email"
+            placeholder="Ingresá tu email personal"
+            value={emailPersonal}
+            onChange={(e) => setEmailPersonal(e.target.value)}
+            className={styles.inputMail}
+          />
+          <button onClick={guardarEmail} className={styles.botonGuardar}>
+            Guardar Email
+          </button>
+
+          {mensaje && (
+            <p style={{ color: tipoMensaje === 'exito' ? 'green' : 'red' }}>{mensaje}</p>
+          )}
         </div>
       </main>
     </div>
