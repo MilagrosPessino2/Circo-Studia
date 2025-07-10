@@ -14,21 +14,47 @@ const Menu: FC<MenuProps> = ({ context }): JSX.Element => {
     const [isAdmin, setIsAdmin] = useState<boolean>(false)
 
     useEffect(() => {
-        const checkAdmin = async (): Promise<void> => {
+        const verificarRolUsuario = async (): Promise<void> => {
             try {
-                const user = await sp.web.currentUser()
-                const email = user.Email.toLowerCase()
-                const adminEmails = [
-                    'fvignardel@circostudio.com',
-                    'mpessimo@circostudio.com',
-                ]
-                setIsAdmin(adminEmails.includes(email))
-            } catch (err) {
-                console.error('Error obteniendo el usuario actual:', err)
+                // 1. Obtener usuario actual
+                const usuario = await sp.web.currentUser()
+                const emailUsuario = usuario.Email?.toLowerCase()
+
+                // 2. Buscar el estudiante correspondiente al email
+                const estudiantes = await sp.web.lists
+                    .getByTitle('Estudiante')
+                    .items.select('ID', 'usuario/EMail')
+                    .expand('usuario')
+                    .filter(`usuario/EMail eq '${emailUsuario}'`)()
+
+                if (estudiantes.length === 0) {
+                    console.warn('No se encontró un estudiante con ese email')
+                    return
+                }
+
+                const idEstudiante = estudiantes[0].ID
+
+                // 3. Buscar el rol asignado en la lista AsignadoA
+                const asignaciones = await sp.web.lists
+                    .getByTitle('AsignadoA')
+                    .items.select('idRol')
+                    .filter(`idEstudiante eq ${idEstudiante}`)()
+
+                if (asignaciones.length === 0) {
+                    console.warn('El estudiante no tiene un rol asignado')
+                    return
+                }
+
+                const idRol = asignaciones[0].idRol
+
+                // 4. Verificar si es admin (rol 1)
+                setIsAdmin(idRol === 1)
+            } catch (error) {
+                console.error('❌ Error verificando rol del usuario:', error)
             }
         }
 
-        checkAdmin().catch((err) => console.error('Error en checkAdmin:', err))
+        verificarRolUsuario().catch(console.error)
     }, [])
 
     return (
