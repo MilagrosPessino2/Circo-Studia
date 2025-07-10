@@ -1,5 +1,13 @@
+.layout {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+}
+
 .estudiantes {
   padding: 16px;
+  flex-grow: 1;
+  padding: 1.5rem;
 }
 
 .titulo {

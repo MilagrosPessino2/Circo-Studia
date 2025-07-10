@@ -145,7 +145,7 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
 
   return (
     <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', minHeight: '100vh' }}>
-      <Menu />
+      <Menu context={context} />
       <main style={{ padding: 24 }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
           <h2 className={styles.titulo}>Bienvenido {nombre}, actualmente estás cursando</h2>
