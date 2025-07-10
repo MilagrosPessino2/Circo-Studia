@@ -18,6 +18,8 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
   const [condiciones, setCondiciones] = useState<{ [materiaId: number]: string }>({});
   const [loading, setLoading] = useState(true);
   const [materiasAsignadas, setMateriasAsignadas] = useState<Set<number>>(new Set());
+  const [materiasBloqueadas, setMateriasBloqueadas] = useState<Set<number>>(new Set());
+  const [mapaCorrelativasInverso, setMapaCorrelativasInverso] = useState<Record<number, number[]>>({});
 
   useEffect(() => {
     const cargarMateriasDeCarrera = async () => {
@@ -51,20 +53,34 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
           nombre: r.CodMateria.nombre,
         }));
 
-        // Obtener todas las materias con estado (C, A o R)
         const estados = await sp.web.lists
           .getByTitle('Estado')
-          .items
-          .filter(`idEstudianteId eq ${estudiante.ID}`)
+          .items.filter(`idEstudianteId eq ${estudiante.ID}`)
           .select('codMateria/Id')
           .expand('codMateria')();
 
         const idsAsignados = new Set(estados.map(e => e.codMateria?.Id));
         setMateriasAsignadas(idsAsignados);
 
-        // Filtrar las que no están en Estado
         const materiasNoAsignadas = todasLasMaterias.filter(m => !idsAsignados.has(m.Id));
         setMaterias(materiasNoAsignadas);
+
+        const correlativas = await sp.web.lists
+          .getByTitle('Correlativa')
+          .items.select('codMateria/ID', 'codMateriaRequerida/ID')
+          .expand('codMateria', 'codMateriaRequerida')();
+
+        const mapa: Record<number, number[]> = {};
+        correlativas.forEach(c => {
+          const materia = c.codMateria?.ID;
+          const requerida = c.codMateriaRequerida?.ID;
+          if (materia && requerida) {
+            if (!mapa[materia]) mapa[materia] = [];
+            mapa[materia].push(requerida);
+          }
+        });
+
+        setMapaCorrelativasInverso(mapa);
       } catch (err) {
         console.error('Error al cargar materias:', err);
       } finally {
@@ -75,9 +91,63 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
     cargarMateriasDeCarrera().catch(console.error);
   }, [context]);
 
-  const handleCondicionChange = (materiaId: number, value: string) => {
-    setCondiciones(prev => ({ ...prev, [materiaId]: value }));
+  const obtenerCorrelativasRecursivas = (
+    id: number,
+    mapa: Record<number, number[]>,
+    visitados: Set<number> = new Set()
+  ): number[] => {
+    if (visitados.has(id)) return [];
+    visitados.add(id);
+
+    const requeridas = mapa[id] || [];
+    const resultado = [...requeridas];
+
+    for (const req of requeridas) {
+      resultado.push(...obtenerCorrelativasRecursivas(req, mapa, visitados));
+    }
+
+    return Array.from(new Set(resultado));
   };
+
+  const handleCondicionChange = (materiaId: number, value: string) => {
+  setCondiciones(prev => {
+    const nuevasCondiciones = { ...prev, [materiaId]: value };
+    const nuevasBloqueadas = new Set(materiasBloqueadas);
+
+    // Si se selecciona "Aprobada"
+    if (value === 'A') {
+      const correlativas = obtenerCorrelativasRecursivas(
+        materiaId,
+        mapaCorrelativasInverso
+      );
+
+      for (const correlativaId of correlativas) {
+        if (materias.find((m) => m.Id === correlativaId)) {
+          nuevasCondiciones[correlativaId] = 'A';
+          nuevasBloqueadas.add(correlativaId);
+        }
+      }
+    } else {
+      // Si se cambia de "Aprobada" a otro estado
+      const correlativas = obtenerCorrelativasRecursivas(
+        materiaId,
+        mapaCorrelativasInverso
+      );
+
+      for (const correlativaId of correlativas) {
+        // Solo desbloquea y limpia si fue asignada automáticamente
+        if (materiasBloqueadas.has(correlativaId)) {
+          delete nuevasCondiciones[correlativaId];
+          nuevasBloqueadas.delete(correlativaId);
+        }
+      }
+    }
+
+    setMateriasBloqueadas(nuevasBloqueadas);
+    return nuevasCondiciones;
+  });
+};
+
 
   const guardarCondiciones = async () => {
     try {
@@ -89,8 +159,6 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
       for (const materia of materias) {
         const condicion = condiciones[materia.Id];
         if (!condicion) continue;
-
-        // Doble chequeo en caso de que la materia haya sido asignada mientras se completaba el formulario
         if (materiasAsignadas.has(materia.Id)) continue;
 
         await sp.web.lists.getByTitle('Estado').items.add({
@@ -101,7 +169,7 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
       }
 
       alert('Estados guardados correctamente.');
-      window.location.reload(); // recargar para reflejar cambios
+      window.location.reload();
     } catch (err) {
       console.error('Error al guardar estados:', err);
       alert('Error al guardar estados.');
@@ -136,6 +204,7 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
                       <select
                         value={condiciones[m.Id] || ''}
                         onChange={e => handleCondicionChange(m.Id, e.target.value)}
+                        disabled={materiasBloqueadas.has(m.Id)}
                       >
                         <option value="">-</option>
                         <option value="C">Cursando</option>
