@@ -6,7 +6,6 @@ import { useEffect, useState } from 'react'
 import { Spinner } from '@fluentui/react'
 import styles from '../../inicio/components/Inicio.module.scss'
 
-
 interface IOfertaDeMaterias {
     Id: number
     codMateria?: {
@@ -161,14 +160,14 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
                 minHeight: '100vh',
             }}
         >
-            <Menu />
+            <Menu context={context} />
             <main style={{ padding: 24 }}>
-                <h1  className={styles.titulo} >Oferta de Materias</h1>
+                <h1 className={styles.titulo}>Oferta de Materias</h1>
 
                 {error && <p style={{ color: 'red' }}>{error}</p>}
 
                 <h3>filtrar por carrera:</h3>
-                <label htmlFor='carrera-select'></label>
+                <label htmlFor='carrera-select' />
                 <select
                     id='carrera-select'
                     className={styles.seleccionar}
@@ -185,8 +184,7 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
                 {loading ? (
                     <Spinner label='Cargando oferta...' />
                 ) : (
-                    <table  className={styles.tabla}>
-
+                    <table className={styles.tabla}>
                         <thead>
                             <tr>
                                 <th>Cód. Materia</th>

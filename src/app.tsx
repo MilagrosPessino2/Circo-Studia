@@ -21,6 +21,8 @@ import Oferta from './webparts/oferta/components/Oferta'
 import Formulario from './webparts/formulario/components/Formulario'
 import Perfil from './webparts/perfil/components/Perfil'
 import PerfilColega from './webparts/perfilColega/components/PerfilColega'
+import Estudiantes from './webparts/estudiantes/components/Estudiantes'
+import GestionarPlanDeEstudios from './webparts/gestionarPlanDeEstudios/components/GestionarPlanDeEstudios'
 
 export const UserPresetContext = createContext<{
     isPreset: boolean
@@ -56,32 +58,25 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
                 path='/preset/select-materias-en-curso'
                 element={<SeleccionarMateriasEnCurso {...props} />}
             />
-            <Route
-                path='/mis-materias'
-                element={<MisMaterias {...props} />}
-            />
+            <Route path='/mis-materias' element={<MisMaterias {...props} />} />
             <Route
                 path='/coincidencias'
                 element={<Coincidencias {...props} />}
             />
-              <Route
-                path='/oferta'
-                element={<Oferta {...props} />}
-            />
-              <Route
-                path='/formulario'
-                element={<Formulario {...props} />}
-            />
-              <Route
-                path='/perfil'
-                element={<Perfil {...props} />}
-            />
-           <Route
-            path="/perfilColega/:id"
-            element={<PerfilColega {...props} />}
+            <Route path='/oferta' element={<Oferta {...props} />} />
+            <Route path='/formulario' element={<Formulario {...props} />} />
+            <Route path='/perfil' element={<Perfil {...props} />} />
+            <Route
+                path='/perfilColega/:id'
+                element={<PerfilColega {...props} />}
             />
 
             <Route path='/inicio' element={<Inicio {...props} />} />
+            <Route path='/estudiantes' element={<Estudiantes {...props} />} />
+            <Route
+                path='/gestionar-plan'
+                element={<GestionarPlanDeEstudios {...props} />}
+            />
         </Routes>
     )
 }

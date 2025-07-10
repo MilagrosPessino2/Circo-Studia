@@ -1,3 +1,9 @@
+.layout {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+}
+
 .container {
   padding: 24px;
   background-color: #fff;
@@ -5,6 +11,8 @@
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
   max-width: 800px;
   margin: 0 auto;
+  flex-grow: 1;
+  padding: 1.5rem;
 }
 
 .titulo {
