@@ -5,6 +5,7 @@ import { getSP } from '../../../pnpjsConfig'
 import styles from './Estudiantes.module.scss'
 import type { IEstudiantesProps } from './IEstudiantesProps'
 import Menu from '../../menu/components/Menu'
+import { useNavigate } from 'react-router-dom'
 
 interface IEstudiante {
     Id: number
@@ -17,13 +18,21 @@ interface IEstudiante {
 
 const Estudiantes: React.FC<IEstudiantesProps> = ({ context }): JSX.Element => {
     const sp = getSP(context)
+    const navigate = useNavigate()
     const [estudiantes, setEstudiantes] = useState<IEstudiante[]>([])
     const [filtro, setFiltro] = useState<string>('')
     const [loading, setLoading] = useState<boolean>(true)
 
+    // 🔒 Control de acceso por rol
+    useEffect(() => {
+        const rol = localStorage.getItem('rol')
+        if (rol !== '1') {
+            navigate('/inicio') // Redirige si no es admin
+        }
+    }, [navigate])
+
     useEffect(() => {
         const cargarEstudiantes = async (): Promise<void> => {
-            console.log('🔄 Iniciando carga de estudiantes...')
             try {
                 const items: IEstudiante[] = await sp.web.lists
                     .getByTitle('Estudiante')
@@ -32,11 +41,10 @@ const Estudiantes: React.FC<IEstudiantesProps> = ({ context }): JSX.Element => {
                         'usuario/Title',
                         'usuario/EMail',
                         'usuario/Name'
-                    ) // Name = LoginName
+                    )
                     .expand('usuario')
                     .top(4999)()
 
-                console.log('✅ Estudiantes obtenidos de SharePoint:', items)
                 setEstudiantes(items)
             } catch (error) {
                 console.error('❌ Error cargando estudiantes:', error)

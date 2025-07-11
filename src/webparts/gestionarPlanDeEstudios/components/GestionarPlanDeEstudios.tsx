@@ -5,13 +5,22 @@ import AltaMateria from '../../altaMateria/components/AltaMateria'
 import BajaMateria from '../../bajaMateria/components/BajaMateria'
 import ModificacionMateria from '../../modificacionMateria/components/ModificacionMateria'
 import Menu from '../../menu/components/Menu'
+import { useNavigate } from 'react-router-dom'
 
 const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = ({
     context,
 }) => {
+    const navigate = useNavigate()
     const [vistaActiva, setVistaActiva] = React.useState<
         'alta' | 'baja' | 'modificacion'
     >('alta')
+
+    React.useEffect(() => {
+        const rol = localStorage.getItem('rol')
+        if (rol !== '1') {
+            navigate('/inicio') // Redirige si no es admin
+        }
+    }, [navigate])
 
     const renderContenido = (): JSX.Element => {
         switch (vistaActiva) {
@@ -74,7 +83,9 @@ const GestionarPlanDeEstudios: React.FC<IGestionarPlanDeEstudiosProps> = ({
                     </button>
                     <button
                         className={
-                            vistaActiva === 'modificacion' ? styles.active : ''
+                            vistaActiva === 'modificacion'
+                                ? styles.active
+                                : ''
                         }
                         onClick={() => setVistaActiva('modificacion')}
                     >
