@@ -10,19 +10,131 @@
         }
       ]
     },
-    "oferta-materias-ing-inf-web-part": {
+    "seleccionar-carrera-web-part": {
       "components": [
         {
-          "entrypoint": "./lib/webparts/ofertaMateriasIngInf/OfertaMateriasIngInfWebPart.js",
-          "manifest": "./src/webparts/ofertaMateriasIngInf/OfertaMateriasIngInfWebPart.manifest.json"
+          "entrypoint": "./lib/webparts/seleccionarCarrera/SeleccionarCarreraWebPart.js",
+          "manifest": "./src/webparts/seleccionarCarrera/SeleccionarCarreraWebPart.manifest.json"
         }
       ]
     },
-    "plan-de-estudio-ing-inf-web-part": {
+    "cargar-materias-aprobadas-inicial-web-part": {
       "components": [
         {
-          "entrypoint": "./lib/webparts/planDeEstudioIngInf/PlanDeEstudioIngInfWebPart.js",
-          "manifest": "./src/webparts/planDeEstudioIngInf/PlanDeEstudioIngInfWebPart.manifest.json"
+          "entrypoint": "./lib/webparts/cargarMateriasAprobadasInicial/CargarMateriasAprobadasInicialWebPart.js",
+          "manifest": "./src/webparts/cargarMateriasAprobadasInicial/CargarMateriasAprobadasInicialWebPart.manifest.json"
+        }
+      ]
+    },
+    "seleccionar-materias-en-curso-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/seleccionarMateriasEnCurso/SeleccionarMateriasEnCursoWebPart.js",
+          "manifest": "./src/webparts/seleccionarMateriasEnCurso/SeleccionarMateriasEnCursoWebPart.manifest.json"
+        }
+      ]
+    },
+    "cargar-materia-regularizada-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/cargarMateriaRegularizada/CargarMateriaRegularizadaWebPart.js",
+          "manifest": "./src/webparts/cargarMateriaRegularizada/CargarMateriaRegularizadaWebPart.manifest.json"
+        }
+      ]
+    },
+    "inicio-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/inicio/InicioWebPart.js",
+          "manifest": "./src/webparts/inicio/InicioWebPart.manifest.json"
+        }
+      ]
+    },
+    "mis-materias-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/misMaterias/MisMateriasWebPart.js",
+          "manifest": "./src/webparts/misMaterias/MisMateriasWebPart.manifest.json"
+        }
+      ]
+    },
+    "coincidencias-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/coincidencias/CoincidenciasWebPart.js",
+          "manifest": "./src/webparts/coincidencias/CoincidenciasWebPart.manifest.json"
+        }
+      ]
+    },
+    "oferta-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/oferta/OfertaWebPart.js",
+          "manifest": "./src/webparts/oferta/OfertaWebPart.manifest.json"
+        }
+      ]
+    },
+    "menu-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/menu/MenuWebPart.js",
+          "manifest": "./src/webparts/menu/MenuWebPart.manifest.json"
+        }
+      ]
+    },
+    "formulario-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/formulario/FormularioWebPart.js",
+          "manifest": "./src/webparts/formulario/FormularioWebPart.manifest.json"
+        }
+      ]
+    },
+    "perfil-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/perfil/PerfilWebPart.js",
+          "manifest": "./src/webparts/perfil/PerfilWebPart.manifest.json"
+        }
+      ]
+    },
+    "perfil-colega-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/perfilColega/PerfilColegaWebPart.js",
+          "manifest": "./src/webparts/perfilColega/PerfilColegaWebPart.manifest.json"
+        }
+      ]
+    },
+    "gestionar-plan-de-estudios-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/gestionarPlanDeEstudios/GestionarPlanDeEstudiosWebPart.js",
+          "manifest": "./src/webparts/gestionarPlanDeEstudios/GestionarPlanDeEstudiosWebPart.manifest.json"
+        }
+      ]
+    },
+    "alta-materia-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/altaMateria/AltaMateriaWebPart.js",
+          "manifest": "./src/webparts/altaMateria/AltaMateriaWebPart.manifest.json"
+        }
+      ]
+    },
+    "baja-materia-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/bajaMateria/BajaMateriaWebPart.js",
+          "manifest": "./src/webparts/bajaMateria/BajaMateriaWebPart.manifest.json"
+        }
+      ]
+    },
+    "modificacion-materia-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/modificacionMateria/ModificacionMateriaWebPart.js",
+          "manifest": "./src/webparts/modificacionMateria/ModificacionMateriaWebPart.manifest.json"
         }
       ]
     }
@@ -30,7 +142,21 @@
   "externals": {},
   "localizedResources": {
     "CircoStudiaWebPartStrings": "lib/webparts/circoStudia/loc/{locale}.js",
-    "OfertaMateriasIngInfWebPartStrings": "lib/webparts/ofertaMateriasIngInf/loc/{locale}.js",
-    "PlanDeEstudioIngInfWebPartStrings": "lib/webparts/planDeEstudioIngInf/loc/{locale}.js"
+    "SeleccionarCarreraWebPartStrings": "lib/webparts/seleccionarCarrera/loc/{locale}.js",
+    "CargarMateriasAprobadasInicialWebPartStrings": "lib/webparts/cargarMateriasAprobadasInicial/loc/{locale}.js",
+    "SeleccionarMateriasEnCursoWebPartStrings": "lib/webparts/seleccionarMateriasEnCurso/loc/{locale}.js",
+    "CargarMateriaRegularizadaWebPartStrings": "lib/webparts/cargarMateriaRegularizada/loc/{locale}.js",
+    "InicioWebPartStrings": "lib/webparts/inicio/loc/{locale}.js",
+    "MisMateriasWebPartStrings": "lib/webparts/misMaterias/loc/{locale}.js",
+    "CoincidenciasWebPartStrings": "lib/webparts/coincidencias/loc/{locale}.js",
+    "OfertaWebPartStrings": "lib/webparts/oferta/loc/{locale}.js",
+    "MenuWebPartStrings": "lib/webparts/menu/loc/{locale}.js",
+    "FormularioWebPartStrings": "lib/webparts/formulario/loc/{locale}.js",
+    "PerfilWebPartStrings": "lib/webparts/perfil/loc/{locale}.js",
+    "PerfilColegaWebPartStrings": "lib/webparts/perfilColega/loc/{locale}.js",
+    "GestionarPlanDeEstudiosWebPartStrings": "lib/webparts/gestionarPlanDeEstudios/loc/{locale}.js",
+    "AltaMateriaWebPartStrings": "lib/webparts/altaMateria/loc/{locale}.js",
+    "BajaMateriaWebPartStrings": "lib/webparts/bajaMateria/loc/{locale}.js",
+    "ModificacionMateriaWebPartStrings": "lib/webparts/modificacionMateria/loc/{locale}.js"
   }
 }

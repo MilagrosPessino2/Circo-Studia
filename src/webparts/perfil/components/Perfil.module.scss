@@ -1,0 +1,76 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+
+.perfilContainer {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 100vh;
+}
+
+.mainContent {
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.perfilInfo {
+  display: flex;
+  align-items: center;
+  padding: 24px 32px;
+  border-radius: 12px;
+
+}
+
+.foto {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 2px solid #1fb286;
+  object-fit: cover;
+  margin-right: 24px;
+}
+
+.textos {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.nombre {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.email {
+  font-size: 14px;
+  color: #555;
+}
+
+.formulario {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.inputMail {
+  padding: 8px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.botonGuardar {
+  background-color: #1fb286;
+  color: white;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.botonGuardar:hover {
+  background-color: #17a174;
+}

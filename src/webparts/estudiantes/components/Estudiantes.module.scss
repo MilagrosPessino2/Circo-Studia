@@ -1,0 +1,52 @@
+.layout {
+  display: flex;
+  flex-direction: row;
+  min-height: 100vh;
+}
+
+.estudiantes {
+  padding: 16px;
+  flex-grow: 1;
+  padding: 1.5rem;
+}
+
+.titulo {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1fb286;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  margin-bottom: 20px;
+
+  th {
+    background-color: #1fb286;
+    color: white;
+    padding: 10px;
+    border: 1px solid #ccc;
+  }
+
+  td {
+    padding: 10px;
+    border: 1px solid #ccc;
+  }
+
+  .fotoColumna {
+    text-align: center; // ✅ solo afecta la celda de foto
+
+    img {
+      display: block;
+      margin: 0 auto;
+      border-radius: 50%;
+    }
+  }
+
+  tr:hover {
+    background-color: #f3fdf9;
+  }
+}

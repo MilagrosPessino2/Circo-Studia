@@ -1,0 +1,50 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+
+.menu {
+  overflow: hidden;
+  padding: 1.5em;
+  background-color: #1fb286;
+  color: #ffffff;
+  min-height: 100vh;
+
+  &.teams {
+    font-family: $ms-font-family-fallbacks;
+  }
+}
+
+.titulo {
+  font-size: 28px;
+  font-weight: bold;
+  color: #ffffff;
+  margin-bottom: 1em;
+  text-align: center;
+}
+
+.buttonNav {
+  background-color: #009266;
+  padding: 12px;
+  color: #ffffff;
+  border: none;
+  border-radius: 6px;
+  font-weight: 500;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+  transition: background-color 0.2s ease;
+}
+
+.buttonNav:hover {
+  background-color: #0fa276;
+}
+
+.links {
+  a {
+    text-decoration: none;
+    color: var(--link);
+
+    &:hover {
+      text-decoration: underline;
+      color: var(--linkHovered);
+    }
+  }
+}

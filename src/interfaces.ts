@@ -10,24 +10,27 @@ export interface ICircoStudia{
     field_5: string;
     context: WebPartContext;
 }
-export interface IOfertaMateriasIngInf {
-    Id: number;
-    Title: string;
-    field_1: string;
-    field_2: string;
-    field_3: string;
-    field_4: string;
-    field_5: string;
-    field_6: number;
-    field_7: number;
-    context: WebPartContext;
+
+export interface ICarreraItem {
+    Id: number
+    nombre: string
 }
 
-export interface IPlanDeEstudioIngInf {
-  Id: number;
-  Title: string;       // Código de la materia
-  field_1: string;      // Descripción
-    field_2: string;      // Correlativas
-        context: WebPartContext;
-
+export interface IMateriaEnCurso {
+  codigo: number;
+  nombre: string;
+  comision: string;
+  horario: string;
+  aula: string;
+  modalidad: string;
+  idOferta: number;
+}
+export interface IInscriptoItem {
+    Id: number;
+    idEstudianteId: number;
+    idCarrera?: {
+        Id: number;
+        codCarrera?: number;
+        nombre?: string;
+    };
 }

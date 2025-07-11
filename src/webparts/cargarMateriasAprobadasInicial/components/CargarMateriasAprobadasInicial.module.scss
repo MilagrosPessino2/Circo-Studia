@@ -1,0 +1,40 @@
+.titulo {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1fb286;
+  margin-bottom: 16px;
+}
+
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  margin-bottom: 20px;
+
+  th {
+    background-color: #1fb286;
+    color: white;
+    padding: 10px;
+    border: 1px solid #ccc;
+  }
+
+  td {
+    padding: 10px;
+    border: 1px solid #ccc;
+  }
+}
+
+.btnAccion {
+  background-color: #009266;
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  margin: 0 8px;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+
+  &:hover {
+    background-color: #0fa276;
+  }
+}
