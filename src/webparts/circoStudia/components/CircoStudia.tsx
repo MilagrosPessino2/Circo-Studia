@@ -13,7 +13,7 @@ export default class CircoStudiaWebPart extends BaseClientSideWebPart<ICircoStud
     }
 
     protected onDispose(): void {
-        ReactDom.unmountComponentAtNode(this.domElement) // 🔥 Esto soluciona la advertencia
+        ReactDom.unmountComponentAtNode(this.domElement) 
     }
 
     protected get dataVersion(): Version {
