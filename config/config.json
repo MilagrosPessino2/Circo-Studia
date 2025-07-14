@@ -137,6 +137,14 @@
           "manifest": "./src/webparts/modificacionMateria/ModificacionMateriaWebPart.manifest.json"
         }
       ]
+    },
+    "cargar-oferta-de-materias-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/cargarOfertaDeMaterias/CargarOfertaDeMateriasWebPart.js",
+          "manifest": "./src/webparts/cargarOfertaDeMaterias/CargarOfertaDeMateriasWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -157,6 +165,7 @@
     "GestionarPlanDeEstudiosWebPartStrings": "lib/webparts/gestionarPlanDeEstudios/loc/{locale}.js",
     "AltaMateriaWebPartStrings": "lib/webparts/altaMateria/loc/{locale}.js",
     "BajaMateriaWebPartStrings": "lib/webparts/bajaMateria/loc/{locale}.js",
-    "ModificacionMateriaWebPartStrings": "lib/webparts/modificacionMateria/loc/{locale}.js"
+    "ModificacionMateriaWebPartStrings": "lib/webparts/modificacionMateria/loc/{locale}.js",
+    "CargarOfertaDeMateriasWebPartStrings": "lib/webparts/cargarOfertaDeMaterias/loc/{locale}.js"
   }
 }
