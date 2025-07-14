@@ -26,8 +26,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
     const [materias, setMaterias] = useState<IMateria[]>([])
     const [correlativasInversas, setCorrelativasInversas] = useState<
         Record<number, number[]>
-    >({}) // clave: correlativaRequerida, valor: materias que la requieren
-
+    >({}) 
     const fetchMaterias = async (): Promise<void> => {
         setLoading(true)
         try {
@@ -41,7 +40,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
             )
             if (!estudiante) return
 
-            // 1. Materias aprobadas
+            //  Materias aprobadas
             const aprobadas = await sp.web.lists
                 .getByTitle('Estado')
                 .items.filter(
@@ -51,7 +50,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 .expand('codMateria')()
             const idsAprobadas = aprobadas.map((m) => m.codMateria.ID)
 
-            // 2. Correlativas
+            //  Correlativas
             const correlativas = await sp.web.lists
                 .getByTitle('Correlativa')
                 .items.select('codMateria/ID', 'codMateriaRequerida/ID')
@@ -74,7 +73,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
             })
             setCorrelativasInversas(inverso)
 
-            // 3. Obtener materias según estado seleccionado
+            //  Obtener materias según estado seleccionado
             const estado = await sp.web.lists
                 .getByTitle('Estado')
                 .items.filter(
@@ -89,7 +88,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 )
                 .expand('codMateria')()
 
-            // 4. Materias bloqueadas (correlativas de aprobadas)
+            //  Materias bloqueadas (correlativas de aprobadas)
             const idsBloqueadas = new Set<number>()
             for (const [materiaID, correlativas] of Object.entries(
                 mapaCorrelativas
@@ -183,6 +182,31 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
             console.error('Error eliminando materia:', error)
         }
     }
+const eliminarMaterias = async (estadoAEliminar: string): Promise<void> => {
+  const materiasAEliminar = materias.filter((m) => m.estado === estadoAEliminar);
+
+  if (materiasAEliminar.length === 0) {
+    alert(`No hay materias en estado "${estadoAEliminar}" para eliminar.`);
+    return;
+  }
+
+  const confirmar = window.confirm(
+    `Vas a eliminar ${materiasAEliminar.length} materias en estado "${estadoAEliminar}".\n¿Estás seguro?`
+  );
+
+  if (!confirmar) return;
+
+  try {
+    for (const materia of materiasAEliminar) {
+      await sp.web.lists.getByTitle('Estado').items.getById(materia.id).recycle();
+    }
+
+    await fetchMaterias(); 
+  } catch (error) {
+    console.error('Error eliminando materias:', error);
+  }
+};
+
 
     return (
         <div
@@ -272,6 +296,18 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
 
                     <Link to='/formulario'>
                         <button className={styles.boton}>Añadir</button>
+                        <button
+                            onClick={() => eliminarMaterias(
+                                estadoFiltro === 'C' ? 'En curso' :
+                                estadoFiltro === 'R' ? 'En final' :
+                                'Aprobada'
+                            )}
+                            className={styles.boton}
+                            style={{marginLeft: 20}}
+                            >
+                            Eliminar todas
+                            </button>
+
                     </Link>
                 </main>
             </div>
