@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { PrimaryButton, Dropdown, IDropdownOption } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import { ICargarOfertaDeMateriasProps } from './ICargarOfertaDeMateriasProps'
+import Menu from '../../menu/components/Menu'
+import styles from './CargarOfertaDeMaterias.module.scss'
 
 interface RowData {
     codMateria: string
@@ -180,64 +182,78 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
     }
 
     return (
-        <div style={{ padding: 20 }}>
-            <h2>Cargar Oferta de Materias</h2>
-            <input type='file' accept='.csv' onChange={handleFileUpload} />
-            <p>test 2</p>
-            <Dropdown
-                label='Seleccionar cuatrimestre'
-                options={cuatrimestres}
-                selectedKey={cuatrimestre}
-                onChange={(_, option) => setCuatrimestre(option?.key as number)}
-                styles={{
-                    dropdown: { width: 300, marginTop: 10, marginBottom: 10 },
-                }}
-            />
-
-            {datos.length > 0 && (
-                <>
-                    <h3>Vista previa</h3>
-                    <table
-                        style={{
-                            width: '100%',
-                            marginBottom: 20,
-                            border: '1px solid gray',
-                            borderCollapse: 'collapse',
-                        }}
-                    >
-                        <thead>
-                            <tr>
-                                <th>codMateria</th>
-                                <th>codComision</th>
-                                <th>modalidad</th>
-                                <th>turno</th>
-                                <th>días</th>
-                                <th>descripción</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {datos.map((d, i) => (
-                                <tr key={i}>
-                                    <td>{d.codMateria}</td>
-                                    <td>{d.codComision}</td>
-                                    <td>{d.modalidad}</td>
-                                    <td>{d.turno}</td>
-                                    <td>{d.dias}</td>
-                                    <td>{d.descripcion}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-
-                    <PrimaryButton
-                        text='Cargar Oferta'
-                        onClick={handleCargarOferta}
-                        style={{ marginBottom: '1rem' }}
+        <div className={styles.layout}>
+            <Menu context={context} />
+            <section className={styles.container}>
+                <div style={{ padding: 20 }}>
+                    <h2>Cargar Oferta de Materias</h2>
+                    <input
+                        type='file'
+                        accept='.csv'
+                        onChange={handleFileUpload}
                     />
-                </>
-            )}
+                    <Dropdown
+                        label='Seleccionar cuatrimestre'
+                        options={cuatrimestres}
+                        selectedKey={cuatrimestre}
+                        onChange={(_, option) =>
+                            setCuatrimestre(option?.key as number)
+                        }
+                        styles={{
+                            dropdown: {
+                                width: 300,
+                                marginTop: 10,
+                                marginBottom: 10,
+                            },
+                        }}
+                    />
 
-            {status && <p>{status}</p>}
+                    {datos.length > 0 && (
+                        <>
+                            <h3>Vista previa</h3>
+                            <table
+                                style={{
+                                    width: '100%',
+                                    marginBottom: 20,
+                                    border: '1px solid gray',
+                                    borderCollapse: 'collapse',
+                                }}
+                            >
+                                <thead>
+                                    <tr>
+                                        <th>codMateria</th>
+                                        <th>codComision</th>
+                                        <th>modalidad</th>
+                                        <th>turno</th>
+                                        <th>días</th>
+                                        <th>descripción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {datos.map((d, i) => (
+                                        <tr key={i}>
+                                            <td>{d.codMateria}</td>
+                                            <td>{d.codComision}</td>
+                                            <td>{d.modalidad}</td>
+                                            <td>{d.turno}</td>
+                                            <td>{d.dias}</td>
+                                            <td>{d.descripcion}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+
+                            <PrimaryButton
+                                text='Cargar Oferta'
+                                onClick={handleCargarOferta}
+                                style={{ marginBottom: '1rem' }}
+                            />
+                        </>
+                    )}
+
+                    {status && <p>{status}</p>}
+                </div>
+            </section>
         </div>
     )
 }
