@@ -1,32 +1,29 @@
-.container {
-  padding: 1rem;
-  background-color: #f7f7f7;
-  border-radius: 6px;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-  font-family: sans-serif;
+.layout {
+  display: flex;
 }
 
-.title {
-  font-size: 1.5rem;
-  margin-bottom: 0.5rem;
-  color: #333;
+.container {
+  flex: 1;
+  padding: 2rem;
+  background-color: #ffffff;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.titulo {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 1.5rem;
 }
 
 .fileInput {
-  margin: 1rem 0;
-  padding: 0.5rem;
-}
-
-.previewContainer {
-  margin-top: 1rem;
-  border-top: 1px solid #ccc;
-  padding-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 .previewTable {
   width: 100%;
   border-collapse: collapse;
-  margin-top: 1rem;
+  margin-bottom: 1rem;
 }
 
 .previewTable th,
@@ -37,27 +34,16 @@
 }
 
 .submitButton {
-  margin-top: 1rem;
-  padding: 0.6rem 1.2rem;
   background-color: #0078d4;
-  color: #fff;
-  font-weight: bold;
-  border: none;
+  color: white;
+  padding: 0.6rem 1.2rem;
   border-radius: 4px;
+  font-weight: 600;
   cursor: pointer;
+  border: none;
 }
 
-.submitButton:disabled {
-  background-color: #a6a6a6;
-  cursor: not-allowed;
-}
-
-.error {
-  color: red;
+.status {
   margin-top: 1rem;
-}
-
-.success {
-  color: green;
-  margin-top: 1rem;
+  font-weight: bold;
 }
