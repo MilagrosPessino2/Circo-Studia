@@ -106,13 +106,16 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
           .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
           .expand('CodMateria')()
 
-        const materiasFormateadas: IMateria[] = items.filter(item => item.CodMateria).map(item => ({
-        id: item.CodMateria.ID,
-        nombre: item.CodMateria.nombre,
-        checked: false,
-        disabled: false,
-        autoMarkedBy: []
-      }))
+        const materiasFormateadas: IMateria[] = items
+        .filter(item => item.CodMateria && item.CodMateria.nombre)
+        .map(item => ({
+          id: item.CodMateria.ID,
+          nombre: item.CodMateria.nombre,
+          checked: false,
+          disabled: false,
+          autoMarkedBy: []
+        }))
+
         setMaterias(materiasFormateadas)
 
         // Correlativas de esas materias
