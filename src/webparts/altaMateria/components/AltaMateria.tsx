@@ -52,7 +52,7 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
             return
         }
 
-        if (!/^[0-9]{4}$/.test(cod)) {
+        if (!/^[0-9]{3,4}$/.test(cod)) {
             setMensaje('El código de materia debe ser un número de 4 dígitos.')
             setCargando(false)
             return
