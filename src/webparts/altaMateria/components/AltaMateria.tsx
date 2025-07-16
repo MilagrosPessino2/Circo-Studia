@@ -52,7 +52,7 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
             return
         }
 
-        if (!/^[0-9]{4}$/.test(cod)) {
+        if (!/^[0-9]{3,4}$/.test(cod)) {
             setMensaje('El código de materia debe ser un número de 4 dígitos.')
             setCargando(false)
             return
@@ -126,7 +126,7 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
             }
 
             const codsCorrelativas = correlativasInput
-                .split(',')
+                .split('/')
                 .map((c) => c.trim())
                 .filter((c) => c)
 
@@ -209,7 +209,7 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                     type='text'
                     value={correlativasInput}
                     onChange={(e) => setCorrelativasInput(e.target.value)}
-                    placeholder='Ej: 3621,3623'
+                    placeholder='Ej: 3621/3623'
                 />
 
                 <label>Año:</label>

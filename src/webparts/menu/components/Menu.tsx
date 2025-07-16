@@ -36,11 +36,10 @@ const Menu: FC<MenuProps> = ({ context }): JSX.Element => {
 
                 // 3. Buscar el rol asignado en la lista AsignadoA
                 const asignaciones = await sp.web.lists
-                .getByTitle('AsignadoA')
-                .items.select('idRol/ID')  
-                .expand('idRol')
-                .filter(`idEstudiante eq ${idEstudiante}`)()
-
+                    .getByTitle('AsignadoA')
+                    .items.select('idRol/ID')
+                    .expand('idRol')
+                    .filter(`idEstudiante eq ${idEstudiante}`)()
 
                 if (asignaciones.length === 0) {
                     console.warn('El estudiante no tiene un rol asignado')
@@ -50,7 +49,6 @@ const Menu: FC<MenuProps> = ({ context }): JSX.Element => {
                 const idRol = asignaciones[0].idRol?.ID
                 setIsAdmin(idRol === 1)
                 localStorage.setItem('rol', idRol?.toString() ?? '')
-
             } catch (error) {
                 console.error('❌ Error verificando rol del usuario:', error)
             }
@@ -93,6 +91,11 @@ const Menu: FC<MenuProps> = ({ context }): JSX.Element => {
                         <Link to='/gestionar-plan'>
                             <button className={menuStyles.buttonNav}>
                                 Gestionar Plan de Estudios
+                            </button>
+                        </Link>
+                        <Link to='/cargar-oferta'>
+                            <button className={menuStyles.buttonNav}>
+                                Cargar Oferta de Materias
                             </button>
                         </Link>
                     </>
