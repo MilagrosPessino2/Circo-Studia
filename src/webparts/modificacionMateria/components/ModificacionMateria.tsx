@@ -21,18 +21,14 @@ const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
     const [mensaje, setMensaje] = React.useState('')
     const [cargando, setCargando] = React.useState(false)
 
-    React.useEffect(() => {
-        const fetchMaterias = async (): Promise<void> => {
-            try {
-                const result = await sp.web.lists
-                    .getByTitle('Materia')
-                    .items.select('ID', 'codMateria', 'nombre', 'anio')()
-                setMaterias(result)
-            } catch (error) {
-                console.error('Error al cargar materias:', error)
-            }
-        }
+    const fetchMaterias = async (): Promise<void> => {
+        const result = await sp.web.lists
+            .getByTitle('Materia')
+            .items.select('ID', 'codMateria', 'nombre', 'anio')()
+        setMaterias(result)
+    }
 
+    React.useEffect(() => {
         fetchMaterias().catch(console.error)
     }, [])
 
@@ -48,7 +44,7 @@ const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
             return
         }
 
-        if (!/^[0-9]{4}$/.test(cod)) {
+        if (!/^[0-9]{3,4}$/.test(cod)) {
             setMensaje('El código debe ser un número de 4 dígitos.')
             return
         }
@@ -110,6 +106,34 @@ const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
             }
         } finally {
             setCargando(false) // 🔧 IMPORTANTE: desactiva el spinner siempre
+        }
+    }
+    const convertirNombresAMayuscula = async (): Promise<void> => {
+        setCargando(true)
+        setMensaje('')
+        try {
+            const items = await sp.web.lists
+                .getByTitle('Materia')
+                .items.top(5000)()
+            for (const item of items) {
+                if (
+                    typeof item.nombre === 'string' &&
+                    item.nombre !== item.nombre.toUpperCase()
+                ) {
+                    await sp.web.lists
+                        .getByTitle('Materia')
+                        .items.getById(item.ID)
+                        .update({ nombre: item.nombre.toUpperCase() })
+                }
+            }
+
+            setMensaje('✅ Todos los nombres fueron pasados a mayúscula.')
+            await fetchMaterias()
+        } catch (error: unknown) {
+            console.error('Error al convertir a mayúscula:', error)
+            setMensaje('❌ Error al convertir nombres a mayúscula.')
+        } finally {
+            setCargando(false)
         }
     }
 
@@ -178,6 +202,13 @@ const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
                     <button onClick={handleGuardar}>Guardar cambios</button>
                 </div>
             )}
+
+            <button
+                onClick={convertirNombresAMayuscula}
+                style={{ marginTop: '1rem' }}
+            >
+                Pasar a mayúscula
+            </button>
 
             {cargando && <Spinner label='Actualizando materia...' />}
             {mensaje && <p className={styles.texto}>{mensaje}</p>}

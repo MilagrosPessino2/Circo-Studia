@@ -126,7 +126,7 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
             }
 
             const codsCorrelativas = correlativasInput
-                .split(',')
+                .split('/')
                 .map((c) => c.trim())
                 .filter((c) => c)
 
@@ -209,7 +209,7 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                     type='text'
                     value={correlativasInput}
                     onChange={(e) => setCorrelativasInput(e.target.value)}
-                    placeholder='Ej: 3621,3623'
+                    placeholder='Ej: 3621/3623'
                 />
 
                 <label>Año:</label>
