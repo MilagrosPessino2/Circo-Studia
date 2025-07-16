@@ -4,6 +4,7 @@ import Menu from '../../menu/components/Menu'
 import { getSP } from '../../../pnpjsConfig'
 import { useEffect, useState } from 'react'
 import styles from './Perfil.module.scss'
+import Mensaje from '../../../utils/mensaje/mensaje'
 
 const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     const sp = getSP(context)
@@ -12,9 +13,7 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     const [foto, setFoto] = useState<string>('')
     const [emailPersonal, setEmailPersonal] = useState<string>('')
     const [mensaje, setMensaje] = useState<string | null>(null)
-    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(
-        null
-    )
+    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null)
 
     useEffect(() => {
         const cargarDatosPerfil = async (): Promise<void> => {
@@ -49,6 +48,14 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     }, [context])
 
     const guardarEmail = async (): Promise<void> => {
+        // ✅ Validar formato de email antes de enviar
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if (!emailRegex.test(emailPersonal.trim())) {
+            setMensaje('El email ingresado no tiene un formato válido.')
+            setTipoMensaje('error')
+            return
+        }
+
         try {
             const user = await sp.web.currentUser()
             const estudiantes = await sp.web.lists
@@ -67,7 +74,7 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
                 .update({
                     emailPersonal: emailPersonal,
                 })
-
+            
             setMensaje('Email personal guardado correctamente.')
             setTipoMensaje('exito')
         } catch (error) {
@@ -112,15 +119,12 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
                         Guardar Email
                     </button>
 
-                    {mensaje && (
-                        <p
-                            style={{
-                                color:
-                                    tipoMensaje === 'exito' ? 'green' : 'red',
-                            }}
-                        >
-                            {mensaje}
-                        </p>
+                    {mensaje && tipoMensaje && (
+                        <Mensaje
+                            texto={mensaje}
+                            tipo={tipoMensaje}
+                            onCerrar={() => setMensaje(null)}
+                        />
                     )}
                 </div>
             </main>
