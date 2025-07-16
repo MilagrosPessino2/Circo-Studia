@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import styles from './Perfil.module.scss'
 import Mensaje from '../../../utils/mensaje/mensaje'
 
+
 const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     const sp = getSP(context)
     const [nombre, setNombre] = useState<string>('Estudiante')
@@ -48,7 +49,6 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     }, [context])
 
     const guardarEmail = async (): Promise<void> => {
-        // ✅ Validar formato de email antes de enviar
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
         if (!emailRegex.test(emailPersonal.trim())) {
             setMensaje('El email ingresado no tiene un formato válido.')

@@ -5,6 +5,9 @@ import { getSP } from '../../../pnpjsConfig'
 import type { IFormularioProps } from './IFormularioProps'
 import Menu from '../../menu/components/Menu'
 import styles from './Formulario.module.scss'
+import TablaMaterias from '../../../utils/tablaMaterias/TablaMaterias'
+import Mensaje from '../../../utils/mensaje/mensaje'
+
 
 interface IMateria {
     Id: number
@@ -28,6 +31,8 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
     const [mapaCorrelativasInverso, setMapaCorrelativasInverso] = useState<
         Record<number, number[]>
     >({})
+    const [mensaje, setMensaje] = useState<string | null>(null)
+    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null)
 
     useEffect(() => {
         const cargarMateriasDeCarrera = async (): Promise<void> => {
@@ -191,12 +196,14 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
                     condicion,
                 })
             }
-
-            alert('Estados guardados correctamente.')
+            
+            setMensaje('Estados guardados correctamente.')
+            setTipoMensaje('exito')
             window.location.reload()
         } catch (err) {
             console.error('Error al guardar estados:', err)
-            alert('Error al guardar estados.')
+            setMensaje('Error al guardar estados.')
+            setTipoMensaje('error')
         }
     }
 
@@ -207,52 +214,24 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
             <Menu context={context} />
             <div className={styles.principal}>
                 <h2 className={styles.titulo}>Asignar estado a materias</h2>
+                {mensaje && tipoMensaje && (
+                        <Mensaje
+                            texto={mensaje}
+                            tipo={tipoMensaje}
+                            onCerrar={() => setMensaje(null)}
+                        />
+                    )}
+
                 {materias.length === 0 ? (
                     <p>No hay materias disponibles para asignar.</p>
                 ) : (
                     <>
-                        <table className={styles.tabla}>
-                            <thead>
-                                <tr>
-                                    <th>Código</th>
-                                    <th>Materia</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {materias.map((m) => (
-                                    <tr key={m.Id}>
-                                        <td>{m.codMateria}</td>
-                                        <td>{m.nombre}</td>
-                                        <td>
-                                            <select
-                                                value={condiciones[m.Id] || ''}
-                                                onChange={(e) =>
-                                                    handleCondicionChange(
-                                                        m.Id,
-                                                        e.target.value
-                                                    )
-                                                }
-                                                disabled={materiasBloqueadas.has(
-                                                    m.Id
-                                                )}
-                                            >
-                                                <option value=''>-</option>
-                                                <option value='C'>
-                                                    Cursando
-                                                </option>
-                                                <option value='A'>
-                                                    Aprobada
-                                                </option>
-                                                <option value='R'>
-                                                    Regularizada
-                                                </option>
-                                            </select>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                       <TablaMaterias
+                            materias={materias}
+                            condiciones={condiciones}
+                            materiasBloqueadas={materiasBloqueadas}
+                            onCondicionChange={handleCondicionChange}
+                            />
 
                         <button
                             className={styles.botonGuardar}
