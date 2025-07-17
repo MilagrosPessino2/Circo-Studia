@@ -71,7 +71,7 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
   const [eliminando, setEliminando] = useState(false)
 
   useEffect(() => {
-    const fetchCarrera = async () => {
+    const fetchCarrera = async () : Promise<void> => {
       try {
         const user = await sp.web.currentUser()
         const currentUserId = user.Id
@@ -96,7 +96,7 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
   }, [])
 
   useEffect(() => {
-    const fetchMateriasYCorrelativas = async () => {
+    const fetchMateriasYCorrelativas = async () : Promise<void> => {
       if (!carreraId) return
 
       try {

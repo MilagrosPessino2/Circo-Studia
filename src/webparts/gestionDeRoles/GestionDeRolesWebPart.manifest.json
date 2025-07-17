@@ -1,0 +1,23 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx/client-side-web-part-manifest.schema.json",
+  "id": "21b215d1-31f7-4e7e-a7df-3ef2a284ebb8",
+  "alias": "GestionDeRolesWebPart",
+  "componentType": "WebPart",
+  "version": "*",
+  "manifestVersion": 2,
+
+  "requiresCustomScript": false,
+  "supportedHosts": ["SharePointWebPart", "TeamsPersonalApp", "TeamsTab", "SharePointFullPage"],
+  "supportsThemeVariants": true,
+
+  "preconfiguredEntries": [{
+    "groupId": "5c03119e-3074-46fd-976b-c60198311f70",
+    "group": { "default": "Advanced" },
+    "title": { "default": "GestionDeRoles" },
+    "description": { "default": "GestionDeRoles description" },
+    "officeFabricIconFontName": "Page",
+    "properties": {
+      "description": "GestionDeRoles"
+    }
+  }]
+}
