@@ -270,20 +270,23 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                             </table>
                         </div>
                     ))}
-                            <div style={{ marginTop: 20 }}>
-                                <Link to="/preset/select-materias-en-curso">
-                                    <button className={styles.boton}>Añadir</button>
-                                </Link>
-                                <button
-                                    onClick={() =>
-                                        eliminarMaterias('En curso')
-                                    }
-                                    className={styles.boton}
-                                    style={{ marginLeft: 20 }}
-                                >
-                                    Eliminar todas
-                                </button>
-                            </div>
+                            
+                        <div style={{ marginTop: 20 }}>
+                        <Link to={modoVista === 'curso' ? '/formularioCursando' : '/formulario'}>
+                            <button className={styles.boton}>Añadir</button>
+                        </Link>
+
+                        {modoVista === 'curso' && (
+                            <button
+                            onClick={() => eliminarMaterias('En curso')}
+                            className={styles.boton}
+                            style={{ marginLeft: 20 }}
+                            >
+                            Eliminar todas
+                            </button>
+                        )}
+                        </div>
+
                     
                     </>
                 )}
