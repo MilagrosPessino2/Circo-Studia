@@ -137,3 +137,29 @@
   object-fit: cover;
   border: 1px solid #ccc;
 }
+
+.vistaHeader {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.tabButton {
+  padding: 0.5rem 1.2rem;
+  border: 2px solid #1fb286;
+  background: white;
+  color: #1fb286;
+  border-radius: 10px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s;
+}
+
+.tabButton:hover {
+  background: #e3f9f3;
+}
+
+.tabButton.activo {
+  background: #1fb286;
+  color: white;
+}
