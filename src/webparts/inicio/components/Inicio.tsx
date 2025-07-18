@@ -14,74 +14,88 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
   const [loading, setLoading] = useState<boolean>(true);
   const [coincidencias, setCoincidencias] = useState<Record<string, { nombre: string; fotoUrl: string }[]>>({});
 
-  useEffect(() => {
-    const fetchHorarioEnCurso = async (): Promise<void> => {
-      try {
-        const user = await sp.web.currentUser();
-        setNombre(user.Title);
 
-        const estudiantes = await sp.web.lists
-          .getByTitle('Estudiante')
-          .items.select('ID', 'usuario/Id')
-          .expand('usuario')();
+  // Cargar horario en curso (tabla)
+const fetchHorarioEnCurso = async (): Promise<void> => {
+  try {
+    const user = await sp.web.currentUser();
+    setNombre(user.Title);
 
-        const estudiante = estudiantes.find((e) => e.usuario?.Id === user.Id);
-        if (!estudiante) return;
+    const estudiantes = await sp.web.lists
+      .getByTitle('Estudiante')
+      .items.select('ID', 'usuario/Id')
+      .expand('usuario')();
 
-        const estado = await sp.web.lists
-          .getByTitle('Estado')
-          .items.filter(`idEstudianteId eq ${estudiante.ID} and condicion eq 'C'`)
-          .select('codMateria/ID', 'codMateria/codMateria', 'codMateria/nombre')
-          .expand('codMateria')();
+    const estudiante = estudiantes.find((e) => e.usuario?.Id === user.Id);
+    if (!estudiante) return;
 
-        const materiasCursando = estado.map((e) => ({
-          id: e.codMateria?.ID,
-          cod: e.codMateria?.codMateria,
-          nombre: e.codMateria?.nombre,
-        }));
+    const cursaEnItems = await sp.web.lists
+      .getByTitle('CursaEn')
+      .items
+      .filter(`idEstudianteId eq ${estudiante.ID}`)
+      .select('Id', 'idOferta/Id')
+      .expand('idOferta')();
 
-        const oferta = await sp.web.lists
-          .getByTitle('OfertaDeMaterias')
-          .items.select('codMateria/codMateria', 'codMateria/Id', 'codComision/codComision', 'codComision/Id')
-          .expand('codMateria', 'codComision')();
+    const ofertaIds = cursaEnItems.map(item => item.idOferta?.Id).filter(id => id != null);
+    if (ofertaIds.length === 0) {
+      setHorario([['08:00 a 12 hs', '', '', '', '', '', ''], ['14:00 a 18 hs', '', '', '', '', '', ''], ['19:00 a 23 hs', '', '', '', '', '', '']]);
+      return;
+    }
 
-        const comisiones = await sp.web.lists
-          .getByTitle('Comision')
-          .items.select('codComision', 'diaSemana', 'turno')();
+    const filterString = ofertaIds.map(id => `Id eq ${id}`).join(' or ');
 
-        const franjas = ['08:00 a 12 hs', '14:00 a 18 hs', '19:00 a 23 hs'];
-        const dias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
-        const tabla: string[][] = franjas.map((f) => [f, '', '', '', '', '', '']);
+    const ofertas = await sp.web.lists
+      .getByTitle('OfertaDeMaterias')
+      .items
+      .filter(filterString)
+      .select('Id', 'codMateria/nombre', 'codComision/codComision', 'codComision/diaSemana', 'codComision/turno')
+      .expand('codMateria', 'codComision')();
 
-        materiasCursando.forEach((m) => {
-          const ofertas = oferta.filter((o) => `${o.codMateria?.codMateria}` === `${m.cod}`);
+    const cursaConDetalles = cursaEnItems.map(cursa => {
+      const oferta = ofertas.find(o => o.Id === cursa.idOferta?.Id);
+      return {
+        ...cursa,
+        codMateria: oferta?.codMateria?.nombre,
+        codComision: oferta?.codComision?.codComision,
+        diaSemana: oferta?.codComision?.diaSemana,
+        turno: oferta?.codComision?.turno,
+      };
+    });
 
-          ofertas.forEach((of) => {
-            const com = comisiones.find((c) => c.codComision === of.codComision?.codComision);
-            const col = dias.findIndex((d) => d.toLowerCase() === com.diaSemana.toLowerCase());
-            const row = com.turno === 'M' ? 0 : com.turno === 'T' ? 1 : com.turno === 'N' ? 2 : -1;
+    const franjas = ['08:00 a 12 hs', '14:00 a 18 hs', '19:00 a 23 hs'];
+    const dias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
+    const tabla: string[][] = franjas.map((f) => [f, '', '', '', '', '', '']);
 
-            if (col >= 0 && row >= 0) {
-              if (!tabla[row][col + 1]) {
-                tabla[row][col + 1] = m.nombre;
-              } else {
-                tabla[row][col + 1] += ` / ${m.nombre}`;
-              }
-            }
-          });
-        });
+    cursaConDetalles.forEach((c) => {
+      const { codMateria, codComision, diaSemana, turno } = c;
 
-        setHorario(tabla);
-      } catch (error) {
-        console.error('Error cargando datos:', error);
-      } finally {
-        setLoading(false);
+      const col = dias.findIndex((d) => d.toLowerCase() === diaSemana?.toLowerCase());
+      const row = turno === 'M' ? 0 : turno === 'T' ? 1 : turno === 'N' ? 2 : -1;
+
+      if (col >= 0 && row >= 0 && codMateria && codComision) {
+        if (!tabla[row][col + 1]) {
+          tabla[row][col + 1] = `${codMateria} (${codComision})`;
+        } else {
+          tabla[row][col + 1] += ` / ${codMateria} (${codComision})`;
+        }
       }
-    };
+    });
 
+    setHorario(tabla);
+  } catch (error) {
+    console.error('Error cargando horario desde CursaEn:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+  useEffect(() => {
     fetchHorarioEnCurso().catch(console.error);
-  }, [context]);
+  }, []);
 
+
+  
+
+  // Cargar coincidencias de estudiantes
   useEffect(() => {
     const cargarCoincidencias = async (): Promise<void> => {
       try {
