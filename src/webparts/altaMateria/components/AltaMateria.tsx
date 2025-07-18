@@ -23,6 +23,11 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
     const [correlativasInput, setCorrelativasInput] = React.useState('')
     const [mensaje, setMensaje] = React.useState('')
     const [cargando, setCargando] = React.useState(false)
+    const [errores, setErrores] = React.useState({
+        codMateria: false,
+        nombreMateria: false,
+        correlativas: false,
+    })
 
     React.useEffect((): void => {
         const fetchCarreras = async (): Promise<void> => {
@@ -45,18 +50,51 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
 
         const cod = codMateria.trim()
         const nom = nombreMateria.trim()
+        const codsCorrelativas = correlativasInput
+            .split('/')
+            .map((c) => c.trim())
+            .filter((c) => c)
 
-        if (!selectedCarreraId || !cod || !nom || !anio) {
-            setMensaje('Por favor, complete todos los campos.')
+        const nuevosErrores = {
+            codMateria: !/^\d{3,4}$/.test(cod),
+            nombreMateria: !nom,
+            correlativas:
+                correlativasInput.trim() !== '' &&
+                codsCorrelativas.some((c) => !/^\d{3,4}$/.test(c)),
+        }
+
+        if (
+            !selectedCarreraId ||
+            !cod ||
+            !nom ||
+            !anio ||
+            Object.values(nuevosErrores).some(Boolean)
+        ) {
+            setErrores(nuevosErrores)
+
+            if (nuevosErrores.codMateria) {
+                setMensaje(
+                    'El código de materia debe ser un número de 3 o 4 dígitos.'
+                )
+            } else if (nuevosErrores.nombreMateria) {
+                setMensaje('Por favor, completá el nombre de la materia.')
+            } else if (nuevosErrores.correlativas) {
+                setMensaje(
+                    'Error: Se ingresaron códigos de correlativas no válidos. Usá solo números de 3 o 4 dígitos separados por "/".'
+                )
+            } else {
+                setMensaje('Por favor, completá todos los campos.')
+            }
+
             setCargando(false)
             return
         }
 
-        if (!/^[0-9]{3,4}$/.test(cod)) {
-            setMensaje('El código de materia debe ser un número de 4 dígitos.')
-            setCargando(false)
-            return
-        }
+        setErrores({
+            codMateria: false,
+            nombreMateria: false,
+            correlativas: false,
+        })
 
         try {
             const codigoExiste = await sp.web.lists
@@ -125,11 +163,6 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                 })
             }
 
-            const codsCorrelativas = correlativasInput
-                .split('/')
-                .map((c) => c.trim())
-                .filter((c) => c)
-
             for (const codCorrelativa of codsCorrelativas) {
                 const correlativa = await sp.web.lists
                     .getByTitle('Materia')
@@ -193,21 +226,31 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                 <label>Código de materia:</label>
                 <input
                     type='text'
+                    inputMode='numeric'
+                    pattern='\d*'
                     value={codMateria}
-                    onChange={(e) => setCodMateria(e.target.value)}
+                    className={errores.codMateria ? styles.errorInput : ''}
+                    onChange={(e) => {
+                        const onlyDigits = e.target.value.replace(/\D/g, '')
+                        setCodMateria(onlyDigits)
+                    }}
                 />
 
                 <label>Nombre de la materia:</label>
                 <input
                     type='text'
                     value={nombreMateria}
-                    onChange={(e) => setNombreMateria(e.target.value)}
+                    className={errores.nombreMateria ? styles.errorInput : ''}
+                    onChange={(e) =>
+                        setNombreMateria(e.target.value.toUpperCase())
+                    }
                 />
 
-                <label>Correlativas (códigos separados por coma):</label>
+                <label>Correlativas (códigos separados por barra /):</label>
                 <input
                     type='text'
                     value={correlativasInput}
+                    className={errores.correlativas ? styles.errorInput : ''}
                     onChange={(e) => setCorrelativasInput(e.target.value)}
                     placeholder='Ej: 3621/3623'
                 />
@@ -232,7 +275,25 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                 </div>
             )}
 
-            {mensaje && <p className={styles.mensaje}>{mensaje}</p>}
+            {mensaje && (
+                <div
+                    style={{
+                        marginTop: '20px',
+                        padding: '12px',
+                        borderRadius: '4px',
+                        fontWeight: 'bold',
+                        color: mensaje.startsWith('✅') ? '#0f5132' : '#842029',
+                        backgroundColor: mensaje.startsWith('✅')
+                            ? '#d1e7dd'
+                            : '#f8d7da',
+                        border: `1px solid ${
+                            mensaje.startsWith('✅') ? '#badbcc' : '#f5c2c7'
+                        }`,
+                    }}
+                >
+                    {mensaje}
+                </div>
+            )}
         </section>
     )
 }
