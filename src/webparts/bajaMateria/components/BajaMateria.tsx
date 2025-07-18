@@ -3,42 +3,116 @@ import * as React from 'react'
 import type { IBajaMateriaProps } from './IBajaMateriaProps'
 import styles from './BajaMateria.module.scss'
 import { getSP } from '../../../pnpjsConfig'
-import { Dialog, DialogType, DialogFooter } from '@fluentui/react/lib/Dialog'
-import { DefaultButton, PrimaryButton, Spinner } from '@fluentui/react'
+import {
+    Dialog,
+    DialogType,
+    DialogFooter,
+    DefaultButton,
+    PrimaryButton,
+    Spinner,
+    Dropdown,
+    ComboBox,
+} from '@fluentui/react'
 
-interface Materia {
+interface MateriaExpandida {
     ID: number
     codMateria: string
     nombre: string
+    codCarrera: string
+}
+
+interface Carrera {
+    ID: number
+    nombre: string
+    codigoCarrera: string
+}
+
+interface MateriaCarreraItem {
+    ID: number
+    codCarrera: {
+        codigoCarrera: string
+    }
+    CodMateria: {
+        ID: number
+        codMateria: string
+        nombre: string
+    }
 }
 
 const BajaMateria: React.FC<IBajaMateriaProps> = ({ context }) => {
     const sp = getSP(context)
 
-    const [materias, setMaterias] = React.useState<Materia[]>([])
-    const [idSeleccionado, setIdSeleccionado] = React.useState<number | null>(
-        null
-    )
+    const [todasLasMaterias, setTodasLasMaterias] = React.useState<
+        MateriaExpandida[]
+    >([])
+    const [carreras, setCarreras] = React.useState<Carrera[]>([])
     const [mostrarModal, setMostrarModal] = React.useState(false)
     const [mensaje, setMensaje] = React.useState('')
     const [cargando, setCargando] = React.useState(false)
+    const [filtroCarreraId, setFiltroCarreraId] = React.useState<number | null>(
+        null
+    )
+    const [textoSeleccionado, setTextoSeleccionado] = React.useState<
+        string | undefined
+    >(undefined)
+    const [idSeleccionado, setIdSeleccionado] = React.useState<
+        number | undefined
+    >(undefined)
 
     React.useEffect(() => {
-        const fetchMaterias = async (): Promise<void> => {
+        const fetchData = async (): Promise<void> => {
             try {
-                const result: Materia[] = await sp.web.lists
-                    .getByTitle('Materia')
-                    .items.select('ID', 'codMateria', 'nombre')()
-                setMaterias(result)
+                const carrerasRes: Carrera[] = await sp.web.lists
+                    .getByTitle('Carrera')
+                    .items.select('ID', 'nombre', 'codigoCarrera')()
+                setCarreras(carrerasRes)
+
+                const materiasCarreraRes: MateriaCarreraItem[] =
+                    await sp.web.lists
+                        .getByTitle('MateriaCarrera')
+                        .items.select(
+                            'ID',
+                            'CodMateria/ID',
+                            'CodMateria/codMateria',
+                            'CodMateria/nombre',
+                            'codCarrera/codigoCarrera'
+                        )
+                        .expand('CodMateria', 'codCarrera')()
+
+                const materiasMapeadas: MateriaExpandida[] = materiasCarreraRes
+                    .map((item) => ({
+                        ID: item.CodMateria.ID,
+                        codMateria: item.CodMateria.codMateria,
+                        nombre: item.CodMateria.nombre,
+                        codCarrera: item.codCarrera.codigoCarrera,
+                    }))
+                    .filter(
+                        (m) => m.ID && m.codMateria && m.nombre && m.codCarrera
+                    )
+
+                setTodasLasMaterias(materiasMapeadas)
             } catch (error) {
-                console.error('Error al cargar materias:', error)
+                console.error('Error al cargar datos:', error)
             }
         }
 
-        fetchMaterias().catch(console.error)
+        fetchData().catch(console.error)
     }, [])
 
-    const materiaSeleccionada = materias.find((m) => m.ID === idSeleccionado)
+    const materiasFiltradas = React.useMemo(() => {
+        if (!filtroCarreraId) return []
+
+        const carrera = carreras.find((c) => c.ID === filtroCarreraId)
+        if (!carrera) return []
+
+        return todasLasMaterias.filter(
+            (m) => m.codCarrera === carrera.codigoCarrera
+        )
+    }, [todasLasMaterias, filtroCarreraId, carreras])
+
+    const materiaSeleccionada = materiasFiltradas.find(
+        (m) => m.ID === idSeleccionado
+    )
 
     const eliminarMateria = async (): Promise<void> => {
         if (!materiaSeleccionada) return
@@ -49,7 +123,6 @@ const BajaMateria: React.FC<IBajaMateriaProps> = ({ context }) => {
         try {
             const { ID, codMateria } = materiaSeleccionada
 
-            // 1. Eliminar relaciones en MateriaCarrera
             const relaciones: { ID: number }[] = await sp.web.lists
                 .getByTitle('MateriaCarrera')
                 .items.filter(`CodMateria/codMateria eq '${codMateria}'`)
@@ -62,7 +135,6 @@ const BajaMateria: React.FC<IBajaMateriaProps> = ({ context }) => {
                     .delete()
             }
 
-            // 2. Eliminar correlativas donde esta materia es base
             const correlativas: { ID: number }[] = await sp.web.lists
                 .getByTitle('Correlativa')
                 .items.filter(`codMateriaId eq ${ID}`)
@@ -75,16 +147,12 @@ const BajaMateria: React.FC<IBajaMateriaProps> = ({ context }) => {
                     .delete()
             }
 
-            // 3. Eliminar la materia
             await sp.web.lists.getByTitle('Materia').items.getById(ID).delete()
 
             setMensaje('✅ Materia eliminada correctamente.')
-            setIdSeleccionado(null)
-
-            const nuevasMaterias: Materia[] = await sp.web.lists
-                .getByTitle('Materia')
-                .items.select('ID', 'codMateria', 'nombre')()
-            setMaterias(nuevasMaterias)
+            setIdSeleccionado(undefined)
+            setTextoSeleccionado(undefined)
+            setTodasLasMaterias((prev) => prev.filter((m) => m.ID !== ID))
         } catch (error: unknown) {
             const mensajeError =
                 error instanceof Error ? error.message : 'Error desconocido'
@@ -100,32 +168,87 @@ const BajaMateria: React.FC<IBajaMateriaProps> = ({ context }) => {
         <section className={styles.bajaMateria}>
             <h3 className={styles.titulo}>Baja de Materia</h3>
 
-            <label>Seleccionar materia a eliminar:</label>
-            <select
-                value={idSeleccionado ?? ''}
-                onChange={(e) => {
-                    setIdSeleccionado(Number(e.target.value))
+            <Dropdown
+                placeholder='Filtrar por carrera'
+                options={carreras.map((c) => ({
+                    key: c.ID,
+                    text: `${c.nombre} (${c.codigoCarrera})`,
+                }))}
+                onChange={(_, option) =>
+                    setFiltroCarreraId(option ? Number(option.key) : null)
+                }
+                selectedKey={filtroCarreraId ?? undefined}
+                styles={{ root: { maxWidth: 300, marginBottom: 10 } }}
+            />
+
+            <ComboBox
+                placeholder='Buscar y seleccionar materia'
+                options={materiasFiltradas.map((m) => ({
+                    key: m.ID,
+                    text: `${m.nombre.toUpperCase()} (${m.codMateria.toUpperCase()})`,
+                }))}
+                text={textoSeleccionado}
+                autoComplete='on'
+                allowFreeform
+                onChange={(_, option, __, value) => {
+                    const texto = (value ?? option?.text ?? '')
+                        .trim()
+                        .toUpperCase()
+                    setTextoSeleccionado(texto)
+
+                    const materia = materiasFiltradas.find((m) => {
+                        const nombre = m.nombre.toUpperCase()
+                        const codigo = m.codMateria.toUpperCase()
+                        return (
+                            nombre.includes(texto) ||
+                            codigo.includes(texto) ||
+                            `${nombre} (${codigo})` === texto
+                        )
+                    })
+
+                    setIdSeleccionado(materia?.ID ?? undefined)
                     setMensaje('')
                 }}
-            >
-                <option value=''>Seleccione una materia</option>
-                {materias.map((m) => (
-                    <option key={m.ID} value={m.ID}>
-                        {m.nombre} ({m.codMateria})
-                    </option>
-                ))}
-            </select>
+                styles={{ root: { maxWidth: 400, marginBottom: 10 } }}
+            />
 
             {idSeleccionado && (
-                <button
-                    className={styles.botonEliminar}
+                <PrimaryButton
+                    text='Eliminar materia'
                     onClick={() => setMostrarModal(true)}
-                >
-                    Eliminar materia
-                </button>
+                    styles={{
+                        root: {
+                            backgroundColor: '#ff4d4d',
+                            borderColor: '#ff4d4d',
+                        },
+                        rootHovered: {
+                            backgroundColor: '#e04343',
+                            borderColor: '#e04343',
+                        },
+                    }}
+                />
             )}
 
-            {mensaje && <p className={styles.texto}>{mensaje}</p>}
+            {mensaje && (
+                <div
+                    style={{
+                        marginTop: '20px',
+                        padding: '12px',
+                        borderRadius: '4px',
+                        fontWeight: 'bold',
+                        color: mensaje.startsWith('✅') ? '#0f5132' : '#842029',
+                        backgroundColor: mensaje.startsWith('✅')
+                            ? '#d1e7dd'
+                            : '#f8d7da',
+                        border: `1px solid ${
+                            mensaje.startsWith('✅') ? '#badbcc' : '#f5c2c7'
+                        }`,
+                    }}
+                >
+                    {mensaje}
+                </div>
+            )}
+
             {cargando && <Spinner label='Eliminando materia...' />}
 
             <Dialog

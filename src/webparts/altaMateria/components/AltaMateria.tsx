@@ -1,6 +1,12 @@
 import * as React from 'react'
 import styles from './AltaMateria.module.scss'
-import { Spinner } from '@fluentui/react'
+import {
+    Spinner,
+    TextField,
+    Dropdown,
+    IDropdownOption,
+    PrimaryButton,
+} from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import type { IAltaMateriaProps } from './IAltaMateriaProps'
 
@@ -29,7 +35,7 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
         correlativas: false,
     })
 
-    React.useEffect((): void => {
+    React.useEffect(() => {
         const fetchCarreras = async (): Promise<void> => {
             try {
                 const result: Carrera[] = await sp.web.lists
@@ -71,7 +77,6 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
             Object.values(nuevosErrores).some(Boolean)
         ) {
             setErrores(nuevosErrores)
-
             if (nuevosErrores.codMateria) {
                 setMensaje(
                     'El código de materia debe ser un número de 3 o 4 dígitos.'
@@ -80,12 +85,11 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                 setMensaje('Por favor, completá el nombre de la materia.')
             } else if (nuevosErrores.correlativas) {
                 setMensaje(
-                    'Error: Se ingresaron códigos de correlativas no válidos. Usá solo números de 3 o 4 dígitos separados por "/".'
+                    'Error: Se ingresaron códigos de correlativas no válidos.'
                 )
             } else {
                 setMensaje('Por favor, completá todos los campos.')
             }
-
             setCargando(false)
             return
         }
@@ -117,16 +121,12 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                 return
             }
 
-            await sp.web.lists.getByTitle('Materia').items.add({
-                codMateria: cod,
-                nombre: nom,
-                anio,
-            })
+            await sp.web.lists
+                .getByTitle('Materia')
+                .items.add({ codMateria: cod, nombre: nom, anio })
 
             let nuevaMateriaId: number | null = null
-            const maxIntentos = 5
-
-            for (let i = 0; i < maxIntentos; i++) {
+            for (let i = 0; i < 5; i++) {
                 const nuevaMateria = await sp.web.lists
                     .getByTitle('Materia')
                     .items.filter(
@@ -143,11 +143,10 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                 await new Promise((resolve) => setTimeout(resolve, 1000))
             }
 
-            if (!nuevaMateriaId) {
+            if (!nuevaMateriaId)
                 throw new Error(
                     'No se pudo confirmar la creación de la materia.'
                 )
-            }
 
             const relacionExiste = await sp.web.lists
                 .getByTitle('MateriaCarrera')
@@ -155,7 +154,6 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                     `CodMateriaId eq ${nuevaMateriaId} and codCarreraId eq ${selectedCarreraId}`
                 )
                 .top(1)()
-
             if (relacionExiste.length === 0) {
                 await sp.web.lists.getByTitle('MateriaCarrera').items.add({
                     CodMateriaId: nuevaMateriaId,
@@ -168,7 +166,6 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                     .getByTitle('Materia')
                     .items.filter(`codMateria eq '${codCorrelativa}'`)
                     .top(1)()
-
                 if (correlativa.length > 0) {
                     await sp.web.lists.getByTitle('Correlativa').items.add({
                         codMateriaId: nuevaMateriaId,
@@ -203,70 +200,86 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
         }
     }
 
+    const opcionesCarrera: IDropdownOption[] = carreras.map((c) => ({
+        key: c.ID,
+        text: `${c.nombre} (${c.codigoCarrera})`,
+    }))
+
     return (
         <section className={styles.altaMateria}>
-            <h3>Alta de Materia</h3>
+            <h3 className={styles.titulo}>Alta de Materia</h3>
+            
 
             <div className={styles.controls}>
-                <label>Carrera:</label>
-                <select
-                    value={selectedCarreraId ?? ''}
-                    onChange={(e) =>
-                        setSelectedCarreraId(Number(e.target.value))
+                <Dropdown
+                    label='Carrera'
+                    placeholder='Seleccionar carrera'
+                    options={opcionesCarrera}
+                    selectedKey={selectedCarreraId ?? undefined}
+                    onChange={(_, option) =>
+                        setSelectedCarreraId(Number(option?.key))
                     }
-                >
-                    <option value=''>Seleccione una carrera</option>
-                    {carreras.map((c) => (
-                        <option key={c.ID} value={c.ID}>
-                            {c.nombre} ({c.codigoCarrera})
-                        </option>
-                    ))}
-                </select>
+                />
 
-                <label>Código de materia:</label>
-                <input
-                    type='text'
-                    inputMode='numeric'
-                    pattern='\d*'
+                <TextField
+                    label='Código de materia'
                     value={codMateria}
-                    className={errores.codMateria ? styles.errorInput : ''}
-                    onChange={(e) => {
-                        const onlyDigits = e.target.value.replace(/\D/g, '')
-                        setCodMateria(onlyDigits)
-                    }}
-                />
-
-                <label>Nombre de la materia:</label>
-                <input
-                    type='text'
-                    value={nombreMateria}
-                    className={errores.nombreMateria ? styles.errorInput : ''}
-                    onChange={(e) =>
-                        setNombreMateria(e.target.value.toUpperCase())
+                    onChange={(_, newValue) =>
+                        setCodMateria((newValue ?? '').replace(/\D/g, ''))
+                    }
+                    errorMessage={
+                        errores.codMateria
+                            ? 'Debe ser un número de 3 o 4 dígitos.'
+                            : undefined
                     }
                 />
 
-                <label>Correlativas (códigos separados por barra /):</label>
-                <input
-                    type='text'
-                    value={correlativasInput}
-                    className={errores.correlativas ? styles.errorInput : ''}
-                    onChange={(e) => setCorrelativasInput(e.target.value)}
-                    placeholder='Ej: 3621/3623'
+                <TextField
+                    label='Nombre de la materia'
+                    value={nombreMateria}
+                    onChange={(_, newValue) =>
+                        setNombreMateria((newValue ?? '').toUpperCase())
+                    }
+                    errorMessage={
+                        errores.nombreMateria ? 'Campo requerido' : undefined
+                    }
                 />
 
-                <label>Año:</label>
-                <input
+                <TextField
+                    label='Correlativas (códigos separados por /)'
+                    value={correlativasInput}
+                    onChange={(_, newValue) =>
+                        setCorrelativasInput(newValue ?? '')
+                    }
+                    placeholder='Ej: 3621/3623'
+                    errorMessage={
+                        errores.correlativas ? 'Formato inválido' : undefined
+                    }
+                />
+
+                <TextField
+                    label='Año'
                     type='number'
+                    value={anio.toString()}
                     min={1}
                     max={5}
-                    value={anio}
-                    onChange={(e) => setAnio(Number(e.target.value))}
+                    onChange={(_, newValue) => setAnio(Number(newValue))}
                 />
 
-                <button className={styles.botonCargar} onClick={handleSubmit}>
-                    Cargar materia
-                </button>
+                <PrimaryButton
+                    text='Cargar materia'
+                    onClick={handleSubmit}
+                    styles={{
+                        root: {
+                            backgroundColor: '#1fb286',
+                            borderColor: '#1fb286',
+                        },
+                        rootHovered: {
+                            backgroundColor: '#17a076',
+                            borderColor: '#17a076',
+                        },
+                    }}
+                />
             </div>
 
             {cargando && (

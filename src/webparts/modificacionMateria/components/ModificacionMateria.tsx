@@ -1,36 +1,109 @@
-// src/webparts/modificacionMateria/components/ModificacionMateria.tsx
 import * as React from 'react'
 import styles from './ModificacionMateria.module.scss'
 import type { IModificacionMateriaProps } from './IModificacionMateriaProps'
 import { getSP } from '../../../pnpjsConfig'
-import { Spinner } from '@fluentui/react'
+import {
+    Dropdown,
+    ComboBox,
+    Spinner,
+    PrimaryButton,
+    TextField,
+} from '@fluentui/react'
 
-interface Materia {
+interface MateriaExpandida {
     ID: number
     codMateria: string
     nombre: string
+    codCarrera: string
     anio: number
+}
+
+interface Carrera {
+    ID: number
+    nombre: string
+    codigoCarrera: string
+}
+
+interface MateriaCarreraItem {
+    ID: number
+    codCarrera: {
+        codigoCarrera: string
+    }
+    CodMateria: {
+        ID: number
+        codMateria: string
+        nombre: string
+        anio: number
+    }
 }
 
 const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
     const sp = getSP(props.context)
 
-    const [materias, setMaterias] = React.useState<Materia[]>([])
+    const [carreras, setCarreras] = React.useState<Carrera[]>([])
+    const [todasLasMaterias, setTodasLasMaterias] = React.useState<
+        MateriaExpandida[]
+    >([])
+    const [filtroCarreraId, setFiltroCarreraId] = React.useState<number | null>(
+        null
+    )
     const [materiaSeleccionada, setMateriaSeleccionada] =
-        React.useState<Materia | null>(null)
+        React.useState<MateriaExpandida | null>(null)
+    const [textoSeleccionado, setTextoSeleccionado] = React.useState<
+        string | undefined
+    >(undefined)
     const [mensaje, setMensaje] = React.useState('')
     const [cargando, setCargando] = React.useState(false)
 
-    const fetchMaterias = async (): Promise<void> => {
-        const result = await sp.web.lists
-            .getByTitle('Materia')
-            .items.select('ID', 'codMateria', 'nombre', 'anio')()
-        setMaterias(result)
-    }
-
     React.useEffect(() => {
-        fetchMaterias().catch(console.error)
+        const fetchData = async (): Promise<void> => {
+            try {
+                const carrerasRes: Carrera[] = await sp.web.lists
+                    .getByTitle('Carrera')
+                    .items.select('ID', 'nombre', 'codigoCarrera')()
+                setCarreras(carrerasRes)
+
+                const materiasCarreraRes: MateriaCarreraItem[] =
+                    await sp.web.lists
+                        .getByTitle('MateriaCarrera')
+                        .items.select(
+                            'ID',
+                            'CodMateria/ID',
+                            'CodMateria/codMateria',
+                            'CodMateria/nombre',
+                            'CodMateria/anio',
+                            'codCarrera/codigoCarrera'
+                        )
+                        .expand('CodMateria', 'codCarrera')()
+
+                const materiasMapeadas: MateriaExpandida[] =
+                    materiasCarreraRes.map((item) => ({
+                        ID: item.CodMateria.ID,
+                        codMateria: item.CodMateria.codMateria,
+                        nombre: item.CodMateria.nombre,
+                        codCarrera: item.codCarrera.codigoCarrera,
+                        anio: item.CodMateria.anio,
+                    }))
+
+                setTodasLasMaterias(materiasMapeadas)
+            } catch (error) {
+                console.error('Error al cargar datos:', error)
+            }
+        }
+
+        fetchData().catch(console.error)
     }, [])
+
+    const materiasFiltradas = React.useMemo(() => {
+        if (!filtroCarreraId) return []
+
+        const carrera = carreras.find((c) => c.ID === filtroCarreraId)
+        if (!carrera) return []
+
+        return todasLasMaterias.filter(
+            (m) => m.codCarrera === carrera.codigoCarrera
+        )
+    }, [todasLasMaterias, filtroCarreraId, carreras])
 
     const handleGuardar = async (): Promise<void> => {
         if (!materiaSeleccionada) return
@@ -53,7 +126,6 @@ const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
         setMensaje('')
 
         try {
-            // Verificar si otro registro ya tiene ese código
             const codigoExistente = await sp.web.lists
                 .getByTitle('Materia')
                 .items.filter(
@@ -66,7 +138,6 @@ const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
                 return
             }
 
-            // Verificar si otro registro ya tiene ese nombre
             const nombreExistente = await sp.web.lists
                 .getByTitle('Materia')
                 .items.filter(
@@ -91,12 +162,6 @@ const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
                 })
 
             setMensaje('✅ Materia actualizada correctamente.')
-
-            // Refrescar lista de materias
-            const nuevasMaterias = await sp.web.lists
-                .getByTitle('Materia')
-                .items.select('ID', 'codMateria', 'nombre', 'anio')()
-            setMaterias(nuevasMaterias)
         } catch (error: unknown) {
             console.error('Error al actualizar materia:', error)
             if (error instanceof Error) {
@@ -104,34 +169,6 @@ const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
             } else {
                 setMensaje('❌ Error desconocido')
             }
-        } finally {
-            setCargando(false) // 🔧 IMPORTANTE: desactiva el spinner siempre
-        }
-    }
-    const convertirNombresAMayuscula = async (): Promise<void> => {
-        setCargando(true)
-        setMensaje('')
-        try {
-            const items = await sp.web.lists
-                .getByTitle('Materia')
-                .items.top(5000)()
-            for (const item of items) {
-                if (
-                    typeof item.nombre === 'string' &&
-                    item.nombre !== item.nombre.toUpperCase()
-                ) {
-                    await sp.web.lists
-                        .getByTitle('Materia')
-                        .items.getById(item.ID)
-                        .update({ nombre: item.nombre.toUpperCase() })
-                }
-            }
-
-            setMensaje('✅ Todos los nombres fueron pasados a mayúscula.')
-            await fetchMaterias()
-        } catch (error: unknown) {
-            console.error('Error al convertir a mayúscula:', error)
-            setMensaje('❌ Error al convertir nombres a mayúscula.')
         } finally {
             setCargando(false)
         }
@@ -141,74 +178,103 @@ const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
         <section className={styles.modificacionMateria}>
             <h3 className={styles.titulo}>Modificación de Materia</h3>
 
-            <label>Seleccionar materia:</label>
-            <select
-                value={materiaSeleccionada?.ID ?? ''}
-                onChange={(e) => {
-                    const id = Number(e.target.value)
-                    const materia = materias.find((m) => m.ID === id) || null
-                    setMateriaSeleccionada(materia)
+            <Dropdown
+                placeholder='Seleccionar carrera'
+                options={carreras.map((c) => ({
+                    key: c.ID,
+                    text: `${c.nombre} (${c.codigoCarrera})`,
+                }))}
+                onChange={(_, option) =>
+                    setFiltroCarreraId(option ? Number(option.key) : null)
+                }
+                selectedKey={filtroCarreraId ?? undefined}
+                styles={{ root: { marginBottom: 10 } }}
+            />
+
+            <ComboBox
+                placeholder='Buscar y seleccionar materia'
+                options={materiasFiltradas.map((m) => ({
+                    key: m.ID,
+                    text: `${m.nombre.toUpperCase()} (${m.codMateria.toUpperCase()})`,
+                }))}
+                text={textoSeleccionado}
+                autoComplete='on'
+                allowFreeform
+                onChange={(_, option, __, value) => {
+                    const texto = (value ?? option?.text ?? '')
+                        .trim()
+                        .toUpperCase()
+                    setTextoSeleccionado(texto)
+
+                    const materia = materiasFiltradas.find((m) => {
+                        const nombre = m.nombre.toUpperCase()
+                        const codigo = m.codMateria.toUpperCase()
+                        return (
+                            nombre.includes(texto) ||
+                            codigo.includes(texto) ||
+                            `${nombre} (${codigo})` === texto
+                        )
+                    })
+
+                    setMateriaSeleccionada(materia ?? null)
                     setMensaje('')
                 }}
-            >
-                <option value=''>Seleccione una materia</option>
-                {materias.map((m) => (
-                    <option key={m.ID} value={m.ID}>
-                        {m.nombre} ({m.codMateria})
-                    </option>
-                ))}
-            </select>
+                styles={{ root: { marginBottom: 10 } }}
+            />
 
             {materiaSeleccionada && (
                 <div className={styles.formulario}>
-                    <label>Nombre:</label>
-                    <input
-                        type='text'
+                    <TextField
+                        label='Nombre'
                         value={materiaSeleccionada.nombre}
-                        onChange={(e) =>
+                        onChange={(_, newValue) =>
                             setMateriaSeleccionada({
                                 ...materiaSeleccionada,
-                                nombre: e.target.value,
+                                nombre: newValue ?? '',
                             })
                         }
                     />
 
-                    <label>Código:</label>
-                    <input
-                        type='text'
+                    <TextField
+                        label='Código'
                         value={materiaSeleccionada.codMateria}
-                        onChange={(e) =>
+                        onChange={(_, newValue) =>
                             setMateriaSeleccionada({
                                 ...materiaSeleccionada,
-                                codMateria: e.target.value,
+                                codMateria: newValue ?? '',
                             })
                         }
                     />
 
-                    <label>Año:</label>
-                    <input
+                    <TextField
+                        label='Año'
                         type='number'
-                        min={1}
-                        max={5}
-                        value={materiaSeleccionada.anio}
-                        onChange={(e) =>
+                        value={materiaSeleccionada.anio.toString()}
+                        onChange={(_, newValue) =>
                             setMateriaSeleccionada({
                                 ...materiaSeleccionada,
-                                anio: Number(e.target.value),
+                                anio: Number(newValue),
                             })
                         }
                     />
 
-                    <button onClick={handleGuardar}>Guardar cambios</button>
+                    <PrimaryButton
+                        text='Guardar cambios'
+                        onClick={handleGuardar}
+                        styles={{
+                            root: {
+                                backgroundColor: '#ffd900ff',
+                                borderColor: '#ffd900ff',
+                                color: 'black',
+                            },
+                            rootHovered: {
+                                backgroundColor: '#ffd900ff',
+                                borderColor: '#ffd900ff',
+                            },
+                        }}
+                    />
                 </div>
             )}
-
-            <button
-                onClick={convertirNombresAMayuscula}
-                style={{ marginTop: '1rem' }}
-            >
-                Pasar a mayúscula
-            </button>
 
             {cargando && <Spinner label='Actualizando materia...' />}
             {mensaje && <p className={styles.texto}>{mensaje}</p>}
