@@ -235,8 +235,7 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
 
                         <button
                             className={styles.botonGuardar}
-                            onClick={guardarCondiciones}
-                        >
+                            onClick={guardarCondiciones}>
                             Guardar estados
                         </button>
                     </>

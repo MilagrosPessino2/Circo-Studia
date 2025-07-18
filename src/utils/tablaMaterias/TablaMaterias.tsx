@@ -41,7 +41,6 @@ const TablaMaterias: React.FC<TablaMateriasProps> = ({
                 disabled={materiasBloqueadas.has(m.Id)}
               >
                 <option value=''>-</option>
-                <option value='C'>Cursando</option>
                 <option value='A'>Aprobada</option>
                 <option value='R'>Regularizada</option>
               </select>

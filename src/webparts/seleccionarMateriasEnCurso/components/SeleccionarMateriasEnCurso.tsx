@@ -5,6 +5,7 @@ import { getSP } from '../../../pnpjsConfig';
 import { ISeleccionarCarreraProps } from '../../seleccionarCarrera/components/ISeleccionarCarreraProps';
 import { useNavigate } from 'react-router-dom';
 import styles from './SeleccionarMateriasEnCurso.module.scss';
+import TablaMateriasEnCurso from '../../../utils/tablaMateriasCursando/TablaMateriasCursando';
 
 interface IMateriaConComisiones {
   materiaId: number;
@@ -243,56 +244,52 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({ contex
 
 }
 
-  return loading ? (
-    <Spinner label="Cargando..." />
-  ) : (
-    <div style={{ padding: 20 }}>
-      <h2 className={styles.titulo}>Seleccionar Materias en Curso</h2>
-      <p>Carrera: <strong>{selectedCarrera}</strong></p>
+const comisionesSeleccionadas: { [materiaId: number]: number } = {};
+materiasConComisiones.forEach(m => {
+  if (m.comisionSeleccionada !== undefined) {
+    comisionesSeleccionadas[m.materiaId] = m.comisionSeleccionada;
+  }
+});
 
-      {mensaje && (
-        <p style={{ color: tipoMensaje === 'exito' ? 'green' : 'red' }}>{mensaje}</p>
-      )}
 
-      {materiasConComisiones.length > 0 ? (
-        <table className={styles.tabla}>
-          <thead>
-            <tr>
-              <th>Materia</th>
-              <th>Comisión</th>
-            </tr>
-          </thead>
-          <tbody>
-            {materiasConComisiones.map(m => (
-              <tr key={m.materiaId}>
-                <td>[{m.codMateria}] {m.nombreMateria}</td>
-                <td>
-                  <select
-                    value={m.comisionSeleccionada ?? ''}
-                    onChange={e => handleSeleccionComision(m.materiaId, Number(e.target.value))}
-                  >
-                    <option value="">Seleccione comisión</option>
-                    {m.comisiones.map(c => (
-                      <option key={c.comisionId} value={c.comisionId}>
-                        {c.codComision}: {c.descripcion}
-                      </option>
-                    ))}
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <p>No hay materias disponibles.</p>
-      )}
+ return loading ? (
+  <Spinner label="Cargando..." />
+) : (
+  <div style={{ padding: 20 }}>
+    <h2 className={styles.titulo}>Seleccionar Materias en Curso</h2>
+    <p>Carrera: <strong>{selectedCarrera}</strong></p>
 
-      <div style={{ marginTop: 16 }}>
-        <button className={styles.btnAccion} onClick={handleVolver}>Volver</button>
-        <button className={styles.btnAccion} onClick={handleGuardar}>Guardar</button>
-      </div>
+    {mensaje && (
+      <p style={{ color: tipoMensaje === 'exito' ? 'green' : 'red' }}>{mensaje}</p>
+    )}
+
+    {materiasConComisiones.length > 0 ? (
+      <TablaMateriasEnCurso
+        materias={materiasConComisiones.map(m => ({
+          Id: m.materiaId,
+          codMateria: m.codMateria,
+          nombre: m.nombreMateria,
+          comisiones: m.comisiones.map(c => ({
+            id: c.comisionId,
+            nombre: c.codComision,
+            horario: c.descripcion ?? '-',
+          })),
+        }))}
+        comisionesSeleccionadas={comisionesSeleccionadas}
+        materiasBloqueadas={new Set()}
+        onComisionChange={handleSeleccionComision}
+      />
+    ) : (
+      <p>No hay materias disponibles.</p>
+    )}
+
+    <div style={{ marginTop: 16 }}>
+      <button className={styles.btnAccion} onClick={handleVolver}>Volver</button>
+      <button className={styles.btnAccion} onClick={handleGuardar}>Guardar</button>
     </div>
-  );
+  </div>
+);
+
 };
 
 export default SeleccionarMateriasEnCurso;
