@@ -1,6 +1,6 @@
 import * as React from 'react'
 import { useEffect, useState } from 'react'
-import { Dropdown, Spinner } from '@fluentui/react'
+import { Dropdown, Spinner, TextField } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import styles from './GestionDeRoles.module.scss'
 import type { IGestionDeRolesProps } from './IGestionDeRolesProps'
@@ -36,6 +36,7 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
     const [asignaciones, setAsignaciones] = useState<IAsignadoA[]>([])
     const [loading, setLoading] = useState(true)
     const [usuarioActual, setUsuarioActual] = useState<string>('')
+    const [filtro, setFiltro] = useState<string>('')
 
     useEffect(() => {
         const rol = localStorage.getItem('rol')
@@ -97,12 +98,6 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
             )
 
             if (existente) {
-                console.log(
-                    '🟡 Registro existente para estudiante:',
-                    estudianteId,
-                    existente
-                )
-
                 await sp.web.lists
                     .getByTitle('AsignadoA')
                     .items.getById(existente.Id)
@@ -116,11 +111,6 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
                     )
                 )
             } else {
-                console.log(
-                    '🔵 Creando nueva asignación para estudiante:',
-                    estudianteId
-                )
-
                 const nuevo = await sp.web.lists
                     .getByTitle('AsignadoA')
                     .items.add({
@@ -142,15 +132,29 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
         }
     }
 
-    const estudiantesFiltrados = estudiantes.filter(
-        (e) => e.usuario?.EMail?.toLowerCase() !== usuarioActual
-    )
+    const estudiantesFiltrados = estudiantes
+        .filter((e) => e.usuario?.EMail?.toLowerCase() !== usuarioActual)
+        .filter(
+            (e) =>
+                e.usuario?.Title?.toLowerCase().includes(
+                    filtro.toLowerCase()
+                ) ||
+                e.usuario?.EMail?.toLowerCase().includes(filtro.toLowerCase())
+        )
 
     return (
         <div className={styles.layout}>
             <Menu context={context} />
             <div className={styles.estudiantes}>
                 <h2 className={styles.titulo}>Gestión de Roles</h2>
+
+                <TextField
+                    label='Buscar por nombre o email'
+                    placeholder='Ej: Juan Pérez o juan@email.com'
+                    onChange={(_, value) => setFiltro(value || '')}
+                    styles={{ root: { marginBottom: 16 } }}
+                />
+
                 {loading ? (
                     <Spinner label='Cargando estudiantes y roles...' />
                 ) : (
@@ -174,27 +178,6 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
                                 const asignacion = asignaciones.find(
                                     (a) => a.idEstudiante?.Id === e.Id
                                 )
-
-                                if (asignacion) {
-                                    console.log(
-                                        '🧩 Asignación encontrada:',
-                                        asignacion
-                                    )
-                                    const rolRelacionado = roles.find(
-                                        (r) => r.Id === asignacion.idRol?.Id
-                                    )
-                                    if (rolRelacionado) {
-                                        console.log(
-                                            '✅ Rol vinculado:',
-                                            rolRelacionado.nombreRol
-                                        )
-                                    }
-                                } else {
-                                    console.log(
-                                        '🆕 No se encontró asignación para',
-                                        e.usuario?.Title
-                                    )
-                                }
 
                                 const rolAsignado = asignacion?.idRol?.Id ?? ''
 
