@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useEffect, useState,useContext} from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { Spinner } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import { ICargarMateriasAprobadasInicialProps } from './ICargarMateriasAprobadasInicialProps'
@@ -12,7 +12,7 @@ interface IMateria {
   nombre: string
   condicion: string
   disabled: boolean
-  autoMarkedBy: number[] 
+  autoMarkedBy: number[]
 }
 
 interface IEstudiante {
@@ -58,59 +58,83 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
   const [eliminando, setEliminando] = useState(false)
   const { setIsPreset } = useContext(UserPresetContext)
 
-  // Obtener carrera
   useEffect(() => {
-    const run = async () => {
-      const user = await sp.web.currentUser()
-      const estudiantes: IEstudiante[] = await sp.web.lists.getByTitle('Estudiante').items.select('ID', 'usuario/Id').expand('usuario')()
-      const estudiante = estudiantes.find(e => e.usuario?.Id === user.Id)
-      if (!estudiante) return
+    const fetchCarrera = async (): Promise<void> => {
+      try {
+        const user = await sp.web.currentUser()
+        const currentUserId = user.Id
 
-      const inscripciones: IInscripcion[] = await sp.web.lists.getByTitle('Inscripto').items
-        .filter(`idEstudianteId eq ${estudiante.ID}`).select('ID', 'idCarreraId')()
-      setCarreraId(inscripciones[0]?.idCarreraId || null)
+        const estudiantes: IEstudiante[] = await sp.web.lists
+          .getByTitle('Estudiante')
+          .items.select('ID', 'usuario/Id')
+          .expand('usuario')()
+
+        const coincidencia = estudiantes.find(e => e.usuario?.Id === currentUserId)
+        if (!coincidencia) return
+
+        const estudianteID = coincidencia.ID
+
+        const inscripciones: IInscripcion[] = await sp.web.lists
+          .getByTitle('Inscripto')
+          .items.filter(`idEstudianteId eq ${estudianteID}`)
+          .select('ID', 'idCarreraId')()
+
+        if (inscripciones.length === 0 || !inscripciones[0].idCarreraId) return
+
+        setCarreraId(inscripciones[0].idCarreraId)
+      } catch (error) {
+        console.error(error)
+      }
     }
 
-    run().catch(console.error)
+    fetchCarrera().catch(console.error)
   }, [])
 
-  // Obtener materias y correlativas
   useEffect(() => {
-    if (!carreraId) return
-    const run = async () => {
-      const materiasRaw = await sp.web.lists.getByTitle('MateriaCarrera').items
-        .filter(`codCarreraId eq ${carreraId}`)
-        .select('CodMateria/ID', 'CodMateria/nombre')
-        .expand('CodMateria')()
+    const fetchMateriasYCorrelativas = async (): Promise<void> => {
+      if (!carreraId) return
 
-      const materias: IMateria[] = materiasRaw.map(item => ({
-        id: item.CodMateria.ID,
-        nombre: item.CodMateria.nombre,
-        condicion: '',
-        disabled: false,
-        autoMarkedBy: []
-      }))
+      try {
+        const items = await sp.web.lists
+          .getByTitle('MateriaCarrera')
+          .items.filter(`codCarreraId eq ${carreraId}`)
+          .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
+          .expand('CodMateria')()
 
-      setMaterias(materias)
+        const materiasFormateadas: IMateria[] = items
+          .filter(item => item.CodMateria)
+          .map(item => ({
+            id: item.CodMateria.ID,
+            nombre: item.CodMateria.nombre,
+            condicion: '',
+            disabled: false,
+            autoMarkedBy: [],
+          }))
 
-      const correlativasRaw = await sp.web.lists.getByTitle('Correlativa').items
-        .select('codMateria/ID', 'codMateriaRequerida/ID')
-        .expand('codMateria', 'codMateriaRequerida')()
+        setMaterias(materiasFormateadas)
 
-      const mapa: Record<number, number[]> = {}
-      correlativasRaw.forEach(c => {
-        const m = c.codMateria?.ID
-        const r = c.codMateriaRequerida?.ID
-        if (m && r) {
-          if (!mapa[m]) mapa[m] = []
-          mapa[m].push(r)
-        }
-      })
+        const correlativasRaw = await sp.web.lists
+          .getByTitle('Correlativa')
+          .items.select('codMateria/ID', 'codMateriaRequerida/ID')
+          .expand('codMateria', 'codMateriaRequerida')()
 
-      setCorrelatividades(mapa)
+        const mapa: Record<number, number[]> = {}
+        correlativasRaw.forEach(c => {
+          const m = c.codMateria?.ID
+          const r = c.codMateriaRequerida?.ID
+          if (m && r) {
+            if (!mapa[m]) mapa[m] = []
+            mapa[m].push(r)
+          }
+        })
+
+        setCorrelatividades(mapa)
+      } catch (error) {
+        console.error(error)
+      }
     }
 
-    run().catch(console.error)
+    fetchMateriasYCorrelativas().catch(console.error)
   }, [carreraId])
 
   const handleCondicionChange = (id: number, valor: string): void => {
@@ -132,7 +156,6 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
           }
         }
       } else if (actual.condicion === 'A') {
-        // si antes estaba aprobada y ahora no
         const correlativas = getCorrelativasRequeridasRec(id, correlatividades)
 
         for (const corrId of correlativas) {
@@ -147,7 +170,6 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
         }
       }
 
-      // Actualizamos la materia principal
       const index = nuevas.findIndex(m => m.id === id)
       nuevas[index] = { ...actual, condicion: valor }
 
@@ -156,29 +178,29 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
   }
 
   const handleVolver = async (): Promise<void> => {
-  try {
-    setEliminando(true)
-    const user = await sp.web.currentUser()
-    const estudiantes: IEstudiante[] = await sp.web.lists.getByTitle('Estudiante').items.select('ID', 'usuario/Id').expand('usuario')()
-    const estudiante = estudiantes.find(e => e.usuario?.Id === user.Id)
-    if (!estudiante) return
+    try {
+      setEliminando(true)
+      const user = await sp.web.currentUser()
+      const estudiantes: IEstudiante[] = await sp.web.lists.getByTitle('Estudiante').items.select('ID', 'usuario/Id').expand('usuario')()
+      const estudiante = estudiantes.find(e => e.usuario?.Id === user.Id)
+      if (!estudiante) return
 
-    const inscripciones = await sp.web.lists.getByTitle('Inscripto').items
-      .filter(`idEstudianteId eq ${estudiante.ID}`).select('Id')()
+      const inscripciones = await sp.web.lists.getByTitle('Inscripto').items
+        .filter(`idEstudianteId eq ${estudiante.ID}`).select('Id')()
 
-    await Promise.all(inscripciones.map(item =>
-      sp.web.lists.getByTitle('Inscripto').items.getById(item.Id).recycle()
-    ))
+      await Promise.all(inscripciones.map(item =>
+        sp.web.lists.getByTitle('Inscripto').items.getById(item.Id).recycle()
+      ))
 
-    setIsPreset(false)
-    localStorage.setItem('userPreset', 'false')
-    navigate('/preset/select-carrera')
-  } catch (error) {
-    console.error('Error al eliminar inscripción:', error)
-  } finally {
-    setEliminando(false)
+      setIsPreset(false)
+      localStorage.setItem('userPreset', 'false')
+      navigate('/preset/select-carrera')
+    } catch (error) {
+      console.error('Error al eliminar inscripción:', error)
+    } finally {
+      setEliminando(false)
+    }
   }
-}
 
   const handleGuardar = async () => {
     try {
@@ -211,8 +233,6 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
       setTipoMensaje('error')
     }
   }
-
-  
 
   return (
     <div style={{ padding: 24 }}>
@@ -255,7 +275,7 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
         <Spinner label="Cargando materias..." />
       )}
 
-     {eliminando ? (
+      {eliminando ? (
         <Spinner label="Eliminando inscripción..." />
       ) : (
         <div style={{ marginTop: 20 }}>
@@ -263,7 +283,6 @@ const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialPr
           <button className={styles.btnAccion} onClick={handleGuardar}>Continuar</button>
         </div>
       )}
-
     </div>
   )
 }

@@ -153,6 +153,14 @@
           "manifest": "./src/webparts/formularioCursando/FormularioCursandoWebPart.manifest.json"
         }
       ]
+    },
+    "gestion-de-roles-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/gestionDeRoles/GestionDeRolesWebPart.js",
+          "manifest": "./src/webparts/gestionDeRoles/GestionDeRolesWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -175,6 +183,7 @@
     "BajaMateriaWebPartStrings": "lib/webparts/bajaMateria/loc/{locale}.js",
     "ModificacionMateriaWebPartStrings": "lib/webparts/modificacionMateria/loc/{locale}.js",
     "CargarOfertaDeMateriasWebPartStrings": "lib/webparts/cargarOfertaDeMaterias/loc/{locale}.js",
-    "FormularioCursandoWebPartStrings": "lib/webparts/formularioCursando/loc/{locale}.js"
+    "FormularioCursandoWebPartStrings": "lib/webparts/formularioCursando/loc/{locale}.js",
+    "GestionDeRolesWebPartStrings": "lib/webparts/gestionDeRoles/loc/{locale}.js"
   }
 }

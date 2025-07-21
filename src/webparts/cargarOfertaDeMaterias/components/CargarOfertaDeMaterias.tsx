@@ -5,6 +5,12 @@ import { getSP } from '../../../pnpjsConfig'
 import { ICargarOfertaDeMateriasProps } from './ICargarOfertaDeMateriasProps'
 import Menu from '../../menu/components/Menu'
 import styles from './CargarOfertaDeMaterias.module.scss'
+import {
+    DefaultButton,
+    Dialog,
+    DialogFooter,
+    DialogType,
+} from '@fluentui/react'
 
 interface RowData {
     codMateria: string
@@ -28,6 +34,8 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
     const [datos, setDatos] = useState<RowData[]>([])
     const [status, setStatus] = useState<string>('')
     const [cuatrimestre, setCuatrimestre] = useState<number>(1)
+    const [mostrarDialogo, setMostrarDialogo] = useState(false)
+    const [eliminando, setEliminando] = useState(false)
 
     const parseCSV = (text: string): void => {
         const lines = text.split(/\r\n|\n/).filter((line) => line.trim() !== '')
@@ -62,7 +70,31 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
         console.log('CSV parseado:', resultado)
         setDatos(resultado)
     }
+    const vaciarOfertaCuatrimestre = async (): Promise<void> => {
+        setEliminando(true)
+        setStatus('Eliminando registros del cuatrimestre...')
+        try {
+            const itemsAEliminar = await sp.web.lists
+                .getByTitle('OfertaDeMaterias')
+                .items.filter(`Cuatrimestre eq '${cuatrimestre.toString()}'`)
+                .top(4999)()
 
+            for (const item of itemsAEliminar) {
+                await sp.web.lists
+                    .getByTitle('OfertaDeMaterias')
+                    .items.getById(item.Id)
+                    .recycle()
+            }
+
+            setStatus(`🗑️ Se vació la oferta del cuatrimestre ${cuatrimestre}.`)
+        } catch (error) {
+            console.error('❌ Error al eliminar registros:', error)
+            setStatus('Error al eliminar registros del cuatrimestre.')
+        } finally {
+            setEliminando(false)
+            setMostrarDialogo(false)
+        }
+    }
     const leerArchivo = async (file: File): Promise<void> => {
         const reader = new FileReader()
         reader.onload = (event) => {
@@ -93,7 +125,7 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
             return
         }
 
-        setStatus('Cargando en SharePoint...')
+        setStatus('Cargando nueva oferta en SharePoint...')
         let cargadas = 0
         const errores: Set<string> = new Set()
 
@@ -103,7 +135,6 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                     `🔄 Procesando ${item.codMateria} / ${item.codComision}`
                 )
 
-                // 🔎 Buscar materia
                 const materia = await sp.web.lists
                     .getByTitle('Materia')
                     .items.filter(`codMateria eq '${item.codMateria}'`)
@@ -115,7 +146,6 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                     continue
                 }
 
-                // 🔎 Buscar comisión
                 const comision = await sp.web.lists
                     .getByTitle('Comision')
                     .items.filter(`codComision eq '${item.codComision}'`)
@@ -127,27 +157,25 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                     continue
                 }
 
-                // 🔁 Verificar si ya existe oferta
-                const ofertaExistente = await sp.web.lists
+                // Validación de duplicado
+                const duplicado = await sp.web.lists
                     .getByTitle('OfertaDeMaterias')
-                    .items.select('Id')
-                    .filter(
-                        `codMateriaId eq ${materia[0].Id} and codComisionId eq ${comision[0].Id} and Cuatrimestre eq ${cuatrimestre}`
+                    .items.filter(
+                        `codMateriaId eq ${materia[0].Id} and codComisionId eq ${comision[0].Id} and Cuatrimestre eq '${cuatrimestre}' and modalidad eq '${item.modalidad}'`
                     )
                     .top(1)()
 
-                console.log('📌 Oferta existente:', ofertaExistente)
-
-                if (ofertaExistente.length > 0) {
+                if (duplicado.length > 0) {
+                    // Solo actualizar fecha si ya existe
                     await sp.web.lists
                         .getByTitle('OfertaDeMaterias')
-                        .items.getById(ofertaExistente[0].Id)
+                        .items.getById(duplicado[0].Id)
                         .update({
                             fechaDePublicacion: new Date().toISOString(),
-                            modalidad: item.modalidad,
                         })
-                    console.log('📝 Oferta actualizada.')
+                    console.log('📝 Oferta duplicada actualizada.')
                 } else {
+                    // Insertar nueva
                     await sp.web.lists
                         .getByTitle('OfertaDeMaterias')
                         .items.add({
@@ -157,13 +185,13 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                             Cuatrimestre: cuatrimestre.toString(),
                             modalidad: item.modalidad,
                         })
-                    console.log('🆕 Oferta insertada.')
-                }
 
-                cargadas++
+                    console.log('🆕 Oferta insertada.')
+                    cargadas++
+                }
             } catch (error) {
                 console.error(
-                    `❌ Error al insertar ${item.codMateria} / ${item.codComision}:`,
+                    `❌ Error al procesar ${item.codMateria} / ${item.codComision}:`,
                     error
                 )
                 errores.add(`${item.codMateria} / ${item.codComision}`)
@@ -175,12 +203,9 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                 `Carga parcial. Errores en: ${Array.from(errores).join(', ')}`
             )
         } else {
-            setStatus(
-                `Carga exitosa. Registros insertados o actualizados: ${cargadas}`
-            )
+            setStatus(`Carga exitosa. Registros insertados: ${cargadas}`)
         }
     }
-
     return (
         <div className={styles.layout}>
             <Menu context={context} />
@@ -250,6 +275,38 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                             />
                         </>
                     )}
+                    <DefaultButton
+                        text='Vaciar oferta para cuatrimestre'
+                        onClick={() => setMostrarDialogo(true)}
+                        style={{
+                            marginBottom: '1rem',
+                            marginLeft: '1rem',
+                        }}
+                        disabled={eliminando}
+                    />
+
+                    <Dialog
+                        hidden={!mostrarDialogo}
+                        onDismiss={() => setMostrarDialogo(false)}
+                        dialogContentProps={{
+                            type: DialogType.normal,
+                            title: 'Confirmar eliminación',
+                            subText: `¿Estás seguro que querés eliminar TODA la oferta del cuatrimestre ${cuatrimestre}? Esta acción no se puede deshacer.`,
+                        }}
+                    >
+                        <DialogFooter>
+                            <PrimaryButton
+                                onClick={vaciarOfertaCuatrimestre}
+                                text='Sí, vaciar oferta'
+                                disabled={eliminando}
+                            />
+                            <DefaultButton
+                                onClick={() => setMostrarDialogo(false)}
+                                text='Cancelar'
+                                disabled={eliminando}
+                            />
+                        </DialogFooter>
+                    </Dialog>
 
                     {status && <p>{status}</p>}
                 </div>
