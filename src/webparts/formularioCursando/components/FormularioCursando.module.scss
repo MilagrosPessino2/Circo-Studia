@@ -1,34 +1,82 @@
-@import '~@fluentui/react/dist/sass/References.scss';
+.contenedor {
+  padding: 24px;
+  max-width: 900px;
+  margin: auto;
+  background-color: white;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: row;
+}
+.contenidoFormularioCursando {
+  padding: 16px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.05);
+  margin-top: 16px;
+}
+.titulo {
+  text-align: center;
+  font-size: 24px;
+  color: #119877;
+  margin-bottom: 16px;
+}
 
-.formularioCursando {
-  overflow: hidden;
-  padding: 1em;
-  color: "[theme:bodyText, default: #323130]";
-  color: var(--bodyText);
-  &.teams {
-    font-family: $ms-font-family-fallbacks;
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 16px;
+
+  th {
+    background-color: #119877;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    border: 1px solid #ddd;
+  }
+
+  td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: left;
+
+    &:nth-child(4) {
+      text-align: center; // Centrar columna de horario
+    }
+
+    select {
+      width: 100%;
+      padding: 6px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+  }
+
+  tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+
+  tr:hover {
+    background-color: #eefdf6;
   }
 }
 
-.welcome {
-  text-align: center;
-}
+.botonGuardar {
+  background-color: #119877;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
 
-.welcomeImage {
-  width: 100%;
-  max-width: 420px;
-}
+  &:hover {
+    background-color: darken(#119877, 10%);
+  }
 
-.links {
-  a {
-    text-decoration: none;
-    color: "[theme:link, default:#03787c]";
-    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
-
-    &:hover {
-      text-decoration: underline;
-      color: "[theme:linkHovered, default: #014446]";
-      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
-    }
+  &:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
   }
 }
