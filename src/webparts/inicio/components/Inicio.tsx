@@ -36,7 +36,7 @@ const fetchHorarioEnCurso = async (): Promise<void> => {
       .select('Id', 'idOferta/Id')
       .expand('idOferta')();
 
-    const ofertaIds = cursaEnItems.map(item => item.idOferta?.Id).filter(id => id != null);
+    const ofertaIds = cursaEnItems.map(item => item.idOferta?.Id).filter(id => id !== null);
     if (ofertaIds.length === 0) {
       setHorario([['08:00 a 12 hs', '', '', '', '', '', ''], ['14:00 a 18 hs', '', '', '', '', '', ''], ['19:00 a 23 hs', '', '', '', '', '', '']]);
       return;
