@@ -3,9 +3,9 @@ import { useEffect, useState } from 'react';
 import { Spinner } from '@fluentui/react';
 import { getSP } from '../../../pnpjsConfig';
 import { ISeleccionarCarreraProps } from '../../seleccionarCarrera/components/ISeleccionarCarreraProps';
-import { useNavigate } from 'react-router-dom';
-import styles from './SeleccionarMateriasEnCurso.module.scss';
+import styles from '../../formulario/components/Formulario.module.scss';
 import TablaMateriasEnCurso from '../../../utils/tablaMateriasCursando/TablaMateriasCursando';
+import Menu from '../../menu/components/Menu';
 
 interface IMateriaConComisiones {
   materiaId: number;
@@ -65,9 +65,8 @@ const runAsync = (fn: () => Promise<void>): void => {
   fn().catch(console.error);
 };
 
-const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({ context }) => {
+const formularioCursando: React.FC<ISeleccionarCarreraProps> = ({ context }) => {
   const sp = getSP(context);
-  const navigate = useNavigate();
 
   const [loading, setLoading] = useState(true);
   const [materiasConComisiones, setMateriasConComisiones] = useState<IMateriaConComisiones[]>([]);
@@ -230,7 +229,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({ contex
       console.log('Estado completo materiasConComisiones:', materiasConComisiones,seleccionadas);
       setMensaje(`${seleccionadas.length} materia(s) guardadas.`);
       setTipoMensaje('exito');
-      navigate('/inicio');
+      window.location.reload()
     } catch (err) {
       console.error('Error al guardar:', err);
       setMensaje('Error al guardar.');
@@ -238,11 +237,6 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({ contex
     }
   };
 
-  const handleVolver = async (): Promise<void> => {
-  
-    navigate('/preset/cargar-aprobadas')
-
-}
 
 const comisionesSeleccionadas: { [materiaId: number]: number } = {};
 materiasConComisiones.forEach(m => {
@@ -255,7 +249,8 @@ materiasConComisiones.forEach(m => {
  return loading ? (
   <Spinner label="Cargando..." />
 ) : (
-  <div style={{ padding: 20 }}>
+     <div className={styles.contenedor}>
+      <Menu context={context} />
     <h2 className={styles.titulo}>Seleccionar Materias en Curso</h2>
     <p>Carrera: <strong>{selectedCarrera}</strong></p>
 
@@ -284,12 +279,12 @@ materiasConComisiones.forEach(m => {
     )}
 
     <div style={{ marginTop: 16 }}>
-      <button className={styles.btnAccion} onClick={handleVolver}>Volver</button>
-      <button className={styles.btnAccion} onClick={handleGuardar}>Guardar</button>
+      <button className={styles.botonGuardar} onClick={handleGuardar}>Guardar</button>
     </div>
   </div>
+
 );
 
 };
 
-export default SeleccionarMateriasEnCurso;
+export default formularioCursando;

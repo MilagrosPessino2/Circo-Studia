@@ -13,20 +13,18 @@ interface IMateria {
     nombre: string
     comision: string
     horario: string
-    aula: string
-    modalidad: string
     estado: string
     bloqueada: boolean
 }
 
 const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
     const sp = getSP(context)
-    const [estadoFiltro, setEstadoFiltro] = useState<'C' | 'A' | 'R'>('C')
+    const [modoVista, setModoVista] = useState<'curso' | 'historial'>('curso')
     const [loading, setLoading] = useState(true)
     const [materias, setMaterias] = useState<IMateria[]>([])
-    const [correlativasInversas, setCorrelativasInversas] = useState<
-        Record<number, number[]>
-    >({}) 
+    const [correlativasInversas, setCorrelativasInversas] = useState<Record<number, number[]>>({})
+
+
     const fetchMaterias = async (): Promise<void> => {
         setLoading(true)
         try {
@@ -35,22 +33,18 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 .getByTitle('Estudiante')
                 .items.select('ID', 'usuario/Id')
                 .expand('usuario')()
-            const estudiante = estudiantes.find(
-                (e) => e.usuario?.Id === user.Id
-            )
+
+            const estudiante = estudiantes.find((e) => e.usuario?.Id === user.Id)
             if (!estudiante) return
 
-            //  Materias aprobadas
             const aprobadas = await sp.web.lists
                 .getByTitle('Estado')
-                .items.filter(
-                    `idEstudianteId eq ${estudiante.ID} and condicion eq 'A'`
-                )
+                .items.filter(`idEstudianteId eq ${estudiante.ID} and condicion eq 'A'`)
                 .select('codMateria/ID')
                 .expand('codMateria')()
+
             const idsAprobadas = aprobadas.map((m) => m.codMateria.ID)
 
-            //  Correlativas
             const correlativas = await sp.web.lists
                 .getByTitle('Correlativa')
                 .items.select('codMateria/ID', 'codMateriaRequerida/ID')
@@ -62,44 +56,34 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 const materiaID = item.codMateria?.ID
                 const correlativaID = item.codMateriaRequerida?.ID
                 if (materiaID && correlativaID) {
-                    if (!mapaCorrelativas[materiaID])
-                        mapaCorrelativas[materiaID] = []
+                    if (!mapaCorrelativas[materiaID]) mapaCorrelativas[materiaID] = []
                     mapaCorrelativas[materiaID].push(correlativaID)
 
-                    // construir inverso
                     if (!inverso[correlativaID]) inverso[correlativaID] = []
                     inverso[correlativaID].push(materiaID)
                 }
             })
             setCorrelativasInversas(inverso)
 
-            //  Obtener materias según estado seleccionado
+            const estadoQuery =
+                modoVista === 'curso'
+                    ? `condicion eq 'C'`
+                    : `(condicion eq 'A' or condicion eq 'R')`
+
             const estado = await sp.web.lists
                 .getByTitle('Estado')
-                .items.filter(
-                    `idEstudianteId eq ${estudiante.ID} and condicion eq '${estadoFiltro}'`
-                )
-                .select(
-                    'ID',
-                    'codMateria/ID',
-                    'codMateria/codMateria',
-                    'codMateria/nombre',
-                    'condicion'
-                )
+                .items.filter(`idEstudianteId eq ${estudiante.ID} and ${estadoQuery}`)
+                .select('ID', 'codMateria/ID', 'codMateria/codMateria', 'codMateria/nombre', 'condicion')
                 .expand('codMateria')()
 
-            //  Materias bloqueadas (correlativas de aprobadas)
             const idsBloqueadas = new Set<number>()
-            for (const [materiaID, correlativas] of Object.entries(
-                mapaCorrelativas
-            )) {
+            for (const [materiaID, correlativas] of Object.entries(mapaCorrelativas)) {
                 const id = parseInt(materiaID)
                 if (idsAprobadas.includes(id)) {
                     correlativas.forEach((c) => idsBloqueadas.add(c))
                 }
             }
 
-            // 5. Info extra
             const oferta = await sp.web.lists
                 .getByTitle('OfertaDeMaterias')
                 .items.select('codMateria/Id', 'codComision/Id', 'modalidad')
@@ -107,12 +91,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
 
             const comisiones = await sp.web.lists
                 .getByTitle('Comision')
-                .items.select(
-                    'codComision',
-                    'diaSemana',
-                    'turno',
-                    'descripcion'
-                )()
+                .items.select('codComision', 'diaSemana', 'turno', 'descripcion')()
 
             const datos: IMateria[] = estado
                 .filter((e) => {
@@ -137,9 +116,9 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                         aula: 'Virtual',
                         modalidad: ofertaRelacionada?.modalidad || '-',
                         estado:
-                            estadoFiltro === 'C'
+                            e.condicion === 'C'
                                 ? 'En curso'
-                                : estadoFiltro === 'R'
+                                : e.condicion === 'R'
                                 ? 'En final'
                                 : 'Aprobada',
                         bloqueada: idsBloqueadas.has(e.codMateria.ID),
@@ -156,13 +135,12 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
 
     useEffect(() => {
         fetchMaterias().catch(console.error)
-    }, [estadoFiltro])
+    }, [modoVista])
 
     const eliminarMateria = async (id: number): Promise<void> => {
         const materia = materias.find((m) => m.id === id)
         if (!materia) return
 
-        // advertencia si tiene materias que dependen de ella
         const correlativas = correlativasInversas[materia.id] || []
         if (correlativas.length > 0) {
             const nombresDependientes = materias
@@ -177,139 +155,141 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
 
         try {
             await sp.web.lists.getByTitle('Estado').items.getById(id).recycle()
-            await fetchMaterias() // recargar datos actualizados
+            await fetchMaterias()
         } catch (error) {
             console.error('Error eliminando materia:', error)
         }
     }
-const eliminarMaterias = async (estadoAEliminar: string): Promise<void> => {
-  const materiasAEliminar = materias.filter((m) => m.estado === estadoAEliminar);
 
-  if (materiasAEliminar.length === 0) {
-    alert(`No hay materias en estado "${estadoAEliminar}" para eliminar.`);
-    return;
-  }
+    const eliminarMaterias = async (estadoAEliminar: string): Promise<void> => {
+        const materiasAEliminar = materias.filter((m) => m.estado === estadoAEliminar)
 
-  const confirmar = window.confirm(
-    `Vas a eliminar ${materiasAEliminar.length} materias en estado "${estadoAEliminar}".\n¿Estás seguro?`
-  );
+        if (materiasAEliminar.length === 0) {
+            alert(`No hay materias en estado "${estadoAEliminar}" para eliminar.`)
+            return
+        }
 
-  if (!confirmar) return;
+        const confirmar = window.confirm(
+            `Vas a eliminar ${materiasAEliminar.length} materias en estado "${estadoAEliminar}".\n¿Estás seguro?`
+        )
 
-  try {
-    for (const materia of materiasAEliminar) {
-      await sp.web.lists.getByTitle('Estado').items.getById(materia.id).recycle();
+        if (!confirmar) return
+
+        try {
+            for (const materia of materiasAEliminar) {
+                await sp.web.lists.getByTitle('Estado').items.getById(materia.id).recycle()
+            }
+            await fetchMaterias()
+        } catch (error) {
+            console.error('Error eliminando materias:', error)
+        }
     }
 
-    await fetchMaterias(); 
-  } catch (error) {
-    console.error('Error eliminando materias:', error);
-  }
-};
-
+    const materiasAgrupadas = modoVista === 'historial'
+        ? {
+            Aprobadas: materias.filter(m => m.estado === 'Aprobada'),
+            EnFinal: materias.filter(m => m.estado === 'En final')
+        }
+        : { EnCurso: materias }
 
     return (
-        <div
-            style={{
-                display: 'grid',
-                gridTemplateColumns: '200px 1fr',
-                minHeight: '100vh',
-            }}
-        >
+        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', minHeight: '100vh' }}>
             <Menu context={context} />
-
             <div style={{ padding: 24 }}>
-                <h2 className={styles.titulo}>Mis materias</h2>
+                <div className={styles.vistaHeader}>
+                    <button
+                        className={`${styles.tabButton} ${modoVista === 'curso' ? styles.activo : ''}`}
+                        onClick={() => setModoVista('curso')}
+                    >
+                        Materias en curso
+                    </button>
+                    <button
+                        className={`${styles.tabButton} ${modoVista === 'historial' ? styles.activo : ''}`}
+                        onClick={() => setModoVista('historial')}
+                    >
+                        Historial académico
+                    </button>
+                </div>
 
-                <aside>
-                    <div style={{ marginTop: 16 }}>
-                        <h3>Filtrar materias</h3>
-                        <section>
-                            <select
-                                className={styles.seleccionar}
-                                value={estadoFiltro}
-                                onChange={(e) =>
-                                    setEstadoFiltro(
-                                        e.target.value as 'C' | 'A' | 'R'
-                                    )
-                                }
-                            >
-                                <option value='C'>Materias en curso</option>
-                                <option value='A'>Materias aprobadas</option>
-                                <option value='R'>Materias en final</option>
-                            </select>
-                        </section>
-                    </div>
-                </aside>
+                <h2 className={styles.titulo}>
+                    {modoVista === 'curso' ? 'Materias en curso' : 'Historial de materias'}
+                </h2>
 
-                <main>
-                    {loading ? (
-                        <Spinner label='Cargando materias...' />
-                    ) : (
-                        <table className={styles.tabla}>
-                            <thead>
-                                <tr>
-                                    <th>Código</th>
-                                    <th>Materia</th>
-                                    <th>Comisión</th>
-                                    <th>Horario</th>
-                                    <th>Aula</th>
-                                    <th>Modalidad</th>
-                                    <th>Estado</th>
-                                    <th>Acciones</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {materias.map((m) => (
-                                    <tr key={m.id}>
-                                        <td>{m.codigo}</td>
-                                        <td>{m.nombre}</td>
-                                        <td>{m.comision}</td>
-                                        <td>{m.horario}</td>
-                                        <td>{m.aula}</td>
-                                        <td>{m.modalidad}</td>
-                                        <td>{m.estado}</td>
-                                        <td>
-                                            {!m.bloqueada && (
-                                                <button
-                                                    onClick={() =>
-                                                        eliminarMateria(m.id)
-                                                    }
-                                                    style={{
-                                                        background:
-                                                            'transparent',
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        fontSize: 18,
-                                                    }}
-                                                    title='Eliminar materia'
-                                                >
-                                                    🗑️
-                                                </button>
-                                            )}
-                                        </td>
+                {loading ? (
+                    <Spinner label="Cargando materias..." />
+                ) : (
+                    <>
+                        {Object.entries(materiasAgrupadas).map(([grupo, lista]) => (
+                            <div key={grupo} style={{ marginBottom: 24 }}>
+
+                            {modoVista === 'historial' && <h3>{grupo}</h3>}
+                            <table className={styles.tabla}>
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Materia</th>
+                                        <th>Estado</th>
+                                        {modoVista === 'curso' 
+                                        && <th>Comision</th> }
+                                        {modoVista === 'curso' 
+                                        && <th>Horario</th> }
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
+                                </thead>
+                                <tbody>
+                                    {lista.map((m: IMateria) => (
+                                        <tr key={m.id}>
+                                            <td>{m.codigo}</td>
+                                            <td>{m.nombre}</td>
+                                            <td>{m.estado}</td>
+                                            {modoVista === 'curso' && (
+                                                <>
+                                                    <td>{m.comision}</td>
+                                                    <td>{m.horario}</td>
+                                                </>
+                                            )}      
+                                    
+                                                <td>
+                                                    {!m.bloqueada && (
+                                                        <button
+                                                            onClick={() => eliminarMateria(m.id)}
+                                                            style={{
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                cursor: 'pointer',
+                                                                fontSize: 18,
+                                                            }}
+                                                            title='Eliminar materia'
+                                                        >
+                                                            🗑️
+                                                        </button>
+                                                    )}
+                                                </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    ))}
+                            
+                        <div style={{ marginTop: 20 }}>
+                        <Link to={modoVista === 'curso' ? '/formularioCursando' : '/formulario'}>
+                            <button className={styles.boton}>Añadir</button>
+                        </Link>
 
-                    <Link to='/formulario'>
-                        <button className={styles.boton}>Añadir</button>
-                        <button
-                            onClick={() => eliminarMaterias(
-                                estadoFiltro === 'C' ? 'En curso' :
-                                estadoFiltro === 'R' ? 'En final' :
-                                'Aprobada'
-                            )}
+                        {modoVista === 'curso' && (
+                            <button
+                            onClick={() => eliminarMaterias('En curso')}
                             className={styles.boton}
-                            style={{marginLeft: 20}}
+                            style={{ marginLeft: 20 }}
                             >
                             Eliminar todas
                             </button>
+                        )}
+                        </div>
 
-                    </Link>
-                </main>
+                    
+                    </>
+                )}
             </div>
         </div>
     )

@@ -19,6 +19,7 @@ import MisMaterias from './webparts/misMaterias/components/MisMaterias'
 import Coincidencias from './webparts/coincidencias/components/Coincidencias'
 import Oferta from './webparts/oferta/components/Oferta'
 import Formulario from './webparts/formulario/components/Formulario'
+import FormularioCursando from './webparts/formularioCursando/components/FormularioCursando'
 import Perfil from './webparts/perfil/components/Perfil'
 import PerfilColega from './webparts/perfilColega/components/PerfilColega'
 import Estudiantes from './webparts/estudiantes/components/Estudiantes'
@@ -67,6 +68,7 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
             />
             <Route path='/oferta' element={<Oferta {...props} />} />
             <Route path='/formulario' element={<Formulario {...props} />} />
+            <Route path='/formularioCursando' element={<FormularioCursando {...props} />} />
             <Route path='/perfil' element={<Perfil {...props} />} />
             <Route
                 path='/perfilColega/:id'
