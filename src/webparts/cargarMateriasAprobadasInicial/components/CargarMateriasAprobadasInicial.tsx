@@ -8,283 +8,343 @@ import styles from './CargarMateriasAprobadasInicial.module.scss'
 import { UserPresetContext } from '../../../app'
 
 interface IMateria {
-  id: number
-  nombre: string
-  condicion: string
-  disabled: boolean
-  autoMarkedBy: number[]
+    id: number
+    nombre: string
+    condicion: string
+    disabled: boolean
+    autoMarkedBy: number[]
 }
 
 interface IEstudiante {
-  ID: number
-  usuario: { Id: number }
+    ID: number
+    usuario: { Id: number }
 }
 
 interface IInscripcion {
-  ID: number
-  idCarreraId: number
+    ID: number
+    idCarreraId: number
 }
 
 interface IEstadoItem {
-  codMateria: { ID: number }
+    codMateria: { ID: number }
 }
 
 const getCorrelativasRequeridasRec = (
-  id: number,
-  mapa: Record<number, number[]>,
-  visitados = new Set<number>()
+    id: number,
+    mapa: Record<number, number[]>,
+    visitados = new Set<number>()
 ): number[] => {
-  if (visitados.has(id)) return []
-  visitados.add(id)
+    if (visitados.has(id)) return []
+    visitados.add(id)
 
-  const requeridas = mapa[id] || []
-  let resultado = [...requeridas]
+    const requeridas = mapa[id] || []
+    let resultado = [...requeridas]
 
-  for (const req of requeridas) {
-    resultado = resultado.concat(getCorrelativasRequeridasRec(req, mapa, visitados))
-  }
+    for (const req of requeridas) {
+        resultado = resultado.concat(
+            getCorrelativasRequeridasRec(req, mapa, visitados)
+        )
+    }
 
-  return Array.from(new Set(resultado))
+    return Array.from(new Set(resultado))
 }
 
-const CargarMateriasAprobadasInicial: React.FC<ICargarMateriasAprobadasInicialProps> = ({ context }) => {
-  const sp = getSP(context)
-  const navigate = useNavigate()
-  const [carreraId, setCarreraId] = useState<number | null>(null)
-  const [materias, setMaterias] = useState<IMateria[]>([])
-  const [correlatividades, setCorrelatividades] = useState<Record<number, number[]>>({})
-  const [mensaje, setMensaje] = useState<string | null>(null)
-  const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null)
-  const [eliminando, setEliminando] = useState(false)
-  const { setIsPreset } = useContext(UserPresetContext)
+const CargarMateriasAprobadasInicial: React.FC<
+    ICargarMateriasAprobadasInicialProps
+> = ({ context }) => {
+    const sp = getSP(context)
+    const navigate = useNavigate()
+    const [carreraId, setCarreraId] = useState<number | null>(null)
+    const [materias, setMaterias] = useState<IMateria[]>([])
+    const [correlatividades, setCorrelatividades] = useState<
+        Record<number, number[]>
+    >({})
+    const [mensaje, setMensaje] = useState<string | null>(null)
+    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(
+        null
+    )
+    const [eliminando, setEliminando] = useState(false)
+    const { setIsPreset } = useContext(UserPresetContext)
 
-  useEffect(() => {
-    const fetchCarrera = async (): Promise<void> => {
-      try {
-        const user = await sp.web.currentUser()
-        const currentUserId = user.Id
+    useEffect(() => {
+        const fetchCarrera = async (): Promise<void> => {
+            try {
+                const user = await sp.web.currentUser()
+                const currentUserId = user.Id
 
-        const estudiantes: IEstudiante[] = await sp.web.lists
-          .getByTitle('Estudiante')
-          .items.select('ID', 'usuario/Id')
-          .expand('usuario')()
+                const estudiantes: IEstudiante[] = await sp.web.lists
+                    .getByTitle('Estudiante')
+                    .items.select('ID', 'usuario/Id')
+                    .expand('usuario')()
 
-        const coincidencia = estudiantes.find(e => e.usuario?.Id === currentUserId)
-        if (!coincidencia) return
+                const coincidencia = estudiantes.find(
+                    (e) => e.usuario?.Id === currentUserId
+                )
+                if (!coincidencia) return
 
-        const estudianteID = coincidencia.ID
+                const estudianteID = coincidencia.ID
 
-        const inscripciones: IInscripcion[] = await sp.web.lists
-          .getByTitle('Inscripto')
-          .items.filter(`idEstudianteId eq ${estudianteID}`)
-          .select('ID', 'idCarreraId')()
+                const inscripciones: IInscripcion[] = await sp.web.lists
+                    .getByTitle('Inscripto')
+                    .items.filter(`idEstudianteId eq ${estudianteID}`)
+                    .select('ID', 'idCarreraId')()
 
-        if (inscripciones.length === 0 || !inscripciones[0].idCarreraId) return
+                if (inscripciones.length === 0 || !inscripciones[0].idCarreraId)
+                    return
 
-        setCarreraId(inscripciones[0].idCarreraId)
-      } catch (error) {
-        console.error(error)
-      }
-    }
-
-    fetchCarrera().catch(console.error)
-  }, [])
-
-  useEffect(() => {
-    const fetchMateriasYCorrelativas = async (): Promise<void> => {
-      if (!carreraId) return
-
-      try {
-        const items = await sp.web.lists
-          .getByTitle('MateriaCarrera')
-          .items.filter(`codCarreraId eq ${carreraId}`)
-          .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
-          .expand('CodMateria')()
-
-        const materiasFormateadas: IMateria[] = items
-          .filter(item => item.CodMateria)
-          .map(item => ({
-            id: item.CodMateria.ID,
-            nombre: item.CodMateria.nombre,
-            condicion: '',
-            disabled: false,
-            autoMarkedBy: [],
-          }))
-
-        setMaterias(materiasFormateadas)
-
-        const correlativasRaw = await sp.web.lists
-          .getByTitle('Correlativa')
-          .items.select('codMateria/ID', 'codMateriaRequerida/ID')
-          .expand('codMateria', 'codMateriaRequerida')()
-
-        const mapa: Record<number, number[]> = {}
-        correlativasRaw.forEach(c => {
-          const m = c.codMateria?.ID
-          const r = c.codMateriaRequerida?.ID
-          if (m && r) {
-            if (!mapa[m]) mapa[m] = []
-            mapa[m].push(r)
-          }
-        })
-
-        setCorrelatividades(mapa)
-      } catch (error) {
-        console.error(error)
-      }
-    }
-
-    fetchMateriasYCorrelativas().catch(console.error)
-  }, [carreraId])
-
-  const handleCondicionChange = (id: number, valor: string): void => {
-    setMaterias(prev => {
-      const actual = prev.find(m => m.id === id)
-      if (!actual) return prev
-
-      const nuevas = [...prev]
-
-      if (valor === 'A') {
-        const correlativas = getCorrelativasRequeridasRec(id, correlatividades)
-
-        for (const corrId of correlativas) {
-          const m = nuevas.find(m => m.id === corrId)
-          if (m && m.condicion !== 'A') {
-            m.condicion = 'A'
-            m.disabled = true
-            m.autoMarkedBy.push(id)
-          }
-        }
-      } else if (actual.condicion === 'A') {
-        const correlativas = getCorrelativasRequeridasRec(id, correlatividades)
-
-        for (const corrId of correlativas) {
-          const m = nuevas.find(m => m.id === corrId)
-          if (m && m.autoMarkedBy.includes(id)) {
-            m.autoMarkedBy = m.autoMarkedBy.filter(x => x !== id)
-            if (m.autoMarkedBy.length === 0) {
-              m.condicion = ''
-              m.disabled = false
+                setCarreraId(inscripciones[0].idCarreraId)
+            } catch (error) {
+                console.error(error)
             }
-          }
         }
-      }
 
-      const index = nuevas.findIndex(m => m.id === id)
-      nuevas[index] = { ...actual, condicion: valor }
+        fetchCarrera().catch(console.error)
+    }, [])
 
-      return nuevas
-    })
-  }
+    useEffect(() => {
+        const fetchMateriasYCorrelativas = async (): Promise<void> => {
+            if (!carreraId) return
 
-  const handleVolver = async (): Promise<void> => {
-    try {
-      setEliminando(true)
-      const user = await sp.web.currentUser()
-      const estudiantes: IEstudiante[] = await sp.web.lists.getByTitle('Estudiante').items.select('ID', 'usuario/Id').expand('usuario')()
-      const estudiante = estudiantes.find(e => e.usuario?.Id === user.Id)
-      if (!estudiante) return
+            try {
+                const items = await sp.web.lists
+                    .getByTitle('MateriaCarrera')
+                    .items.filter(`codCarreraId eq ${carreraId}`)
+                    .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
+                    .expand('CodMateria')()
 
-      const inscripciones = await sp.web.lists.getByTitle('Inscripto').items
-        .filter(`idEstudianteId eq ${estudiante.ID}`).select('Id')()
+                const materiasFormateadas: IMateria[] = items
+                    .filter((item) => item.CodMateria)
+                    .map((item) => ({
+                        id: item.CodMateria.ID,
+                        nombre: item.CodMateria.nombre,
+                        condicion: '',
+                        disabled: false,
+                        autoMarkedBy: [],
+                    }))
 
-      await Promise.all(inscripciones.map(item =>
-        sp.web.lists.getByTitle('Inscripto').items.getById(item.Id).recycle()
-      ))
+                setMaterias(materiasFormateadas)
 
-      setIsPreset(false)
-      localStorage.setItem('userPreset', 'false')
-      navigate('/preset/select-carrera')
-    } catch (error) {
-      console.error('Error al eliminar inscripción:', error)
-    } finally {
-      setEliminando(false)
-    }
-  }
+                const correlativasRaw = await sp.web.lists
+                    .getByTitle('Correlativa')
+                    .items.select('codMateria/ID', 'codMateriaRequerida/ID')
+                    .expand('codMateria', 'codMateriaRequerida')()
 
-  const handleGuardar = async () => {
-    try {
-      const user = await sp.web.currentUser()
-      const estudiantes: IEstudiante[] = await sp.web.lists.getByTitle('Estudiante').items.select('ID', 'usuario/Id').expand('usuario')()
-      const estudiante = estudiantes.find(e => e.usuario?.Id === user.Id)
-      if (!estudiante) return
+                const mapa: Record<number, number[]> = {}
+                correlativasRaw.forEach((c) => {
+                    const m = c.codMateria?.ID
+                    const r = c.codMateriaRequerida?.ID
+                    if (m && r) {
+                        if (!mapa[m]) mapa[m] = []
+                        mapa[m].push(r)
+                    }
+                })
 
-      const estados: IEstadoItem[] = await sp.web.lists.getByTitle('Estado').items
-        .filter(`idEstudianteId eq ${estudiante.ID}`).select('codMateria/ID').expand('codMateria')()
+                setCorrelatividades(mapa)
+            } catch (error) {
+                console.error(error)
+            }
+        }
 
-      const yaGuardadas = estados.map(e => e.codMateria.ID)
+        fetchMateriasYCorrelativas().catch(console.error)
+    }, [carreraId])
 
-      const nuevas = materias.filter(m => m.condicion && !yaGuardadas.includes(m.id))
+    const handleCondicionChange = (id: number, valor: string): void => {
+        setMaterias((prev) => {
+            const actual = prev.find((m) => m.id === id)
+            if (!actual) return prev
 
-      await Promise.all(nuevas.map(m =>
-        sp.web.lists.getByTitle('Estado').items.add({
-          idEstudianteId: estudiante.ID,
-          codMateriaId: m.id,
-          condicion: m.condicion
+            const nuevas = [...prev]
+
+            if (valor === 'A') {
+                const correlativas = getCorrelativasRequeridasRec(
+                    id,
+                    correlatividades
+                )
+
+                for (const corrId of correlativas) {
+                    const m = nuevas.find((m) => m.id === corrId)
+                    if (m && m.condicion !== 'A') {
+                        m.condicion = 'A'
+                        m.disabled = true
+                        m.autoMarkedBy.push(id)
+                    }
+                }
+            } else if (actual.condicion === 'A') {
+                const correlativas = getCorrelativasRequeridasRec(
+                    id,
+                    correlatividades
+                )
+
+                for (const corrId of correlativas) {
+                    const m = nuevas.find((m) => m.id === corrId)
+                    if (m && m.autoMarkedBy.includes(id)) {
+                        m.autoMarkedBy = m.autoMarkedBy.filter((x) => x !== id)
+                        if (m.autoMarkedBy.length === 0) {
+                            m.condicion = ''
+                            m.disabled = false
+                        }
+                    }
+                }
+            }
+
+            const index = nuevas.findIndex((m) => m.id === id)
+            nuevas[index] = { ...actual, condicion: valor }
+
+            return nuevas
         })
-      ))
-
-      setMensaje(`${nuevas.length} materia(s) guardadas.`)
-      setTipoMensaje('exito')
-      navigate('/preset/select-materias-en-curso')
-    } catch (err) {
-      console.error(err)
-      setMensaje('Error al guardar materias.')
-      setTipoMensaje('error')
     }
-  }
 
-  return (
-    <div style={{ padding: 24 }}>
-      <h2 className={styles.titulo}>Seleccionar Materias Aprobadas y regularizadas </h2>
+    const handleVolver = async (): Promise<void> => {
+        try {
+            setEliminando(true)
+            const user = await sp.web.currentUser()
+            const estudiantes: IEstudiante[] = await sp.web.lists
+                .getByTitle('Estudiante')
+                .items.select('ID', 'usuario/Id')
+                .expand('usuario')()
+            const estudiante = estudiantes.find(
+                (e) => e.usuario?.Id === user.Id
+            )
+            if (!estudiante) return
 
-      {mensaje && (
-        <p style={{ color: tipoMensaje === 'exito' ? 'green' : 'red', marginTop: 10 }}>
-          {mensaje}
-        </p>
-      )}
+            const inscripciones = await sp.web.lists
+                .getByTitle('Inscripto')
+                .items.filter(`idEstudianteId eq ${estudiante.ID}`)
+                .select('Id')()
 
-      {materias.length > 0 ? (
-        <table className={styles.tabla}>
-          <thead>
-            <tr>
-              <th>Materia</th>
-              <th>Condición</th>
-            </tr>
-          </thead>
-          <tbody>
-            {materias.map(m => (
-              <tr key={m.id}>
-                <td>{m.nombre}</td>
-                <td>
-                  <select
-                    value={m.condicion}
-                    disabled={m.disabled}
-                    onChange={e => handleCondicionChange(m.id, e.target.value)}
-                  >
-                    <option value="">-</option>
-                    <option value="A">Aprobada</option>
-                    <option value="R">Regularizada</option>
-                  </select>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      ) : (
-        <Spinner label="Cargando materias..." />
-      )}
+            await Promise.all(
+                inscripciones.map((item) =>
+                    sp.web.lists
+                        .getByTitle('Inscripto')
+                        .items.getById(item.Id)
+                        .recycle()
+                )
+            )
 
-      {eliminando ? (
-        <Spinner label="Eliminando inscripción..." />
-      ) : (
-        <div style={{ marginTop: 20 }}>
-          <button className={styles.btnAccion} onClick={handleVolver}>Volver</button>
-          <button className={styles.btnAccion} onClick={handleGuardar}>Continuar</button>
+            setIsPreset(false)
+            localStorage.setItem('userPreset', 'false')
+            navigate('/preset/select-carrera')
+        } catch (error) {
+            console.error('Error al eliminar inscripción:', error)
+        } finally {
+            setEliminando(false)
+        }
+    }
+
+    const handleGuardar = async (): Promise<void> => {
+        try {
+            const user = await sp.web.currentUser()
+            const estudiantes: IEstudiante[] = await sp.web.lists
+                .getByTitle('Estudiante')
+                .items.select('ID', 'usuario/Id')
+                .expand('usuario')()
+            const estudiante = estudiantes.find(
+                (e) => e.usuario?.Id === user.Id
+            )
+            if (!estudiante) return
+
+            const estados: IEstadoItem[] = await sp.web.lists
+                .getByTitle('Estado')
+                .items.filter(`idEstudianteId eq ${estudiante.ID}`)
+                .select('codMateria/ID')
+                .expand('codMateria')()
+
+            const yaGuardadas = estados.map((e) => e.codMateria.ID)
+
+            const nuevas = materias.filter(
+                (m) => m.condicion && !yaGuardadas.includes(m.id)
+            )
+
+            await Promise.all(
+                nuevas.map((m) =>
+                    sp.web.lists.getByTitle('Estado').items.add({
+                        idEstudianteId: estudiante.ID,
+                        codMateriaId: m.id,
+                        condicion: m.condicion,
+                    })
+                )
+            )
+
+            setMensaje(`${nuevas.length} materia(s) guardadas.`)
+            setTipoMensaje('exito')
+            navigate('/preset/select-materias-en-curso')
+        } catch (err) {
+            console.error(err)
+            setMensaje('Error al guardar materias.')
+            setTipoMensaje('error')
+        }
+    }
+
+    return (
+        <div style={{ padding: 24 }}>
+            <h2 className={styles.titulo}>
+                Seleccionar Materias Aprobadas y regularizadas{' '}
+            </h2>
+
+            {mensaje && (
+                <p
+                    style={{
+                        color: tipoMensaje === 'exito' ? 'green' : 'red',
+                        marginTop: 10,
+                    }}
+                >
+                    {mensaje}
+                </p>
+            )}
+
+            {materias.length > 0 ? (
+                <table className={styles.tabla}>
+                    <thead>
+                        <tr>
+                            <th>Materia</th>
+                            <th>Condición</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {materias.map((m) => (
+                            <tr key={m.id}>
+                                <td>{m.nombre}</td>
+                                <td>
+                                    <select
+                                        value={m.condicion}
+                                        disabled={m.disabled}
+                                        onChange={(e) =>
+                                            handleCondicionChange(
+                                                m.id,
+                                                e.target.value
+                                            )
+                                        }
+                                    >
+                                        <option value=''>-</option>
+                                        <option value='A'>Aprobada</option>
+                                        <option value='R'>Regularizada</option>
+                                    </select>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            ) : (
+                <Spinner label='Cargando materias...' />
+            )}
+
+            {eliminando ? (
+                <Spinner label='Eliminando inscripción...' />
+            ) : (
+                <div style={{ marginTop: 20 }}>
+                    <button className={styles.btnAccion} onClick={handleVolver}>
+                        Volver
+                    </button>
+                    <button
+                        className={styles.btnAccion}
+                        onClick={handleGuardar}
+                    >
+                        Continuar
+                    </button>
+                </div>
+            )}
         </div>
-      )}
-    </div>
-  )
+    )
 }
 
 export default CargarMateriasAprobadasInicial

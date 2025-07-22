@@ -6,16 +6,35 @@ import Menu from '../../menu/components/Menu'
 import styles from './PerfilColega.module.scss'
 import type { IPerfilColegaProps } from './IPerfilColegaProps'
 
+interface IColega {
+    ID: number
+    emailPersonal?: string
+    usuario: {
+        Id: number
+        Title: string
+        Name: string
+        EMail: string
+    }
+    carreraNombre: string
+}
+
+interface IMateriaCursando {
+    nombre: string
+    comision: string
+    horario: string
+}
+
 const PerfilColega: React.FC<IPerfilColegaProps> = ({ context }) => {
     const { id } = useParams()
     const sp = getSP(context)
 
-    const [colega, setColega] = useState<any>(null)
-    const [materias, setMaterias] = useState<any[]>([])
+    const [colega, setColega] = useState<IColega | null>(null)
+    const [materias, setMaterias] = useState<IMateriaCursando[]>([])
+
     const [Email, setEmail] = useState(false)
 
     useEffect(() => {
-        const cargarPerfil = async () => {
+        const cargarPerfil = async (): Promise<void> => {
             if (!id) return
 
             const estudiante = await sp.web.lists
@@ -100,7 +119,7 @@ const PerfilColega: React.FC<IPerfilColegaProps> = ({ context }) => {
             setMaterias(materiasFinal)
         }
 
-        void cargarPerfil()
+        cargarPerfil().catch(console.error)
     }, [context, id])
 
     if (!colega) return <p>Cargando perfil...</p>

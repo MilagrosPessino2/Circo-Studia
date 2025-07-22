@@ -22,7 +22,7 @@ import Formulario from './webparts/formulario/components/Formulario'
 import FormularioCursando from './webparts/formularioCursando/components/FormularioCursando'
 import Perfil from './webparts/perfil/components/Perfil'
 import PerfilColega from './webparts/perfilColega/components/PerfilColega'
-import Estudiantes from './webparts/estudiantes/components/Estudiantes'
+// import Estudiantes from './webparts/estudiantes/components/Estudiantes'
 import GestionarPlanDeEstudios from './webparts/gestionarPlanDeEstudios/components/GestionarPlanDeEstudios'
 import CargarOfertaDeMaterias from './webparts/cargarOfertaDeMaterias/components/CargarOfertaDeMaterias'
 import GestionDeRoles from './webparts/gestionDeRoles/components/GestionDeRoles'
@@ -68,7 +68,10 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
             />
             <Route path='/oferta' element={<Oferta {...props} />} />
             <Route path='/formulario' element={<Formulario {...props} />} />
-            <Route path='/formularioCursando' element={<FormularioCursando {...props} />} />
+            <Route
+                path='/formularioCursando'
+                element={<FormularioCursando {...props} />}
+            />
             <Route path='/perfil' element={<Perfil {...props} />} />
             <Route
                 path='/perfilColega/:id'
@@ -76,7 +79,7 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
             />
 
             <Route path='/inicio' element={<Inicio {...props} />} />
-            <Route path='/estudiantes' element={<Estudiantes {...props} />} />
+            {/* <Route path='/estudiantes' element={<Estudiantes {...props} />} /> */}
             <Route
                 path='/gestionar-plan'
                 element={<GestionarPlanDeEstudios {...props} />}
