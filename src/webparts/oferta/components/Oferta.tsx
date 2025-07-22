@@ -106,7 +106,8 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
                         'codComision/codComision',
                         'modalidad'
                     )
-                    .expand('codMateria', 'codComision')()
+                    .expand('codMateria', 'codComision')
+                    .top(4999)()
 
                 const ofertasCompletas: IOfertaDeMaterias[] = []
 
