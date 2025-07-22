@@ -114,7 +114,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     .getByTitle('Estado')
                     .items.filter(`idEstudianteId eq ${estudiante.ID}`)
                     .select('codMateria/ID')
-                    .expand('codMateria')()
+                    .expand('codMateria')()//leanelmejor
                 const idsAprobadas = estado.map((e) => e.codMateria.ID)
 
                 const correlativasItems: ICorrelativaItem[] = await sp.web.lists
@@ -146,7 +146,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                         'Cuatrimestre',
                         'modalidad'
                     )
-                    .expand('codMateria', 'codComision')()
+                    .expand('codMateria', 'codComision').top(4999)()
 
                 console.log('Oferta de materias:', ofertaItems)
                 const materiaCarreraItems = await sp.web.lists
@@ -238,7 +238,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
             const ofertaItems: IOfertaDeMaterias[] = await sp.web.lists
                 .getByTitle('OfertaDeMaterias')
                 .items.select('Id', 'codMateria/Id', 'codComision/Id')
-                .expand('codMateria', 'codComision')()
+                .expand('codMateria', 'codComision').top(4999)()
 
             await Promise.all(
                 seleccionadas.map(async (m) => {
