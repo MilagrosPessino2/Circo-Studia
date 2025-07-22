@@ -76,14 +76,10 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
     const navigate = useNavigate()
 
     const [loading, setLoading] = useState(true)
-    const [materiasConComisiones, setMateriasConComisiones] = useState<
-        IMateriaConComisiones[]
-    >([])
+    const [materiasConComisiones, setMateriasConComisiones] = useState<IMateriaConComisiones[]>([])
     const [selectedCarrera, setSelectedCarrera] = useState('')
     const [mensaje, setMensaje] = useState<string | null>(null)
-    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(
-        null
-    )
+    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null)
 
     useEffect(() => {
         const cargarDatos = async (): Promise<void> => {
@@ -108,8 +104,6 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     inscriptos[0]?.idCarrera?.codigoCarrera || ''
                 )
 
-                console.log('Carrera seleccionada:', selectedCarrera)
-
                 const estado: IEstadoItem[] = await sp.web.lists
                     .getByTitle('Estado')
                     .items.filter(`idEstudianteId eq ${estudiante.ID}`)
@@ -117,6 +111,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     .expand('codMateria')()
                 const idsAprobadas = estado.map((e) => e.codMateria.ID)
 
+                //correlativas
                 const correlativasItems: ICorrelativaItem[] = await sp.web.lists
                     .getByTitle('Correlativa')
                     .items.select('codMateria/ID', 'codMateriaRequerida/ID')
@@ -148,7 +143,6 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     )
                     .expand('codMateria', 'codComision')()
 
-                console.log('Oferta de materias:', ofertaItems)
                 const materiaCarreraItems = await sp.web.lists
                     .getByTitle('MateriaCarrera')
                     .items.filter(
@@ -164,6 +158,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
 
                 const agrupadas = new Map<number, IMateriaConComisiones>()
 
+                //agrupa comisiones
                 ofertaItems.forEach((o) => {
                     const mId = o.codMateria?.Id
                     if (!mId || !o.codMateria?.codMateria) return
@@ -194,7 +189,6 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                 })
 
                 setMateriasConComisiones(Array.from(agrupadas.values()))
-                console.log('Materias con comisiones:', materiasConComisiones)
             } catch (error) {
                 console.error('Error cargando datos:', error)
             } finally {
