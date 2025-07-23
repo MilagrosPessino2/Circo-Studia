@@ -205,7 +205,19 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
             datos.map(async (item) => {
                 const materiaId = materiasRef.current.get(item.codMateria)
                 const comisionId = comisionesRef.current.get(item.codComision)
-                if (!materiaId || !comisionId) return
+                if (
+                    materiaId === undefined ||
+                    comisionId === undefined ||
+                    isNaN(materiaId) ||
+                    isNaN(comisionId)
+                ) {
+                    console.warn(
+                        '❌ Registro inválido (lookup no resuelto):',
+                        item
+                    )
+                    errores.add(`${item.codMateria} / ${item.codComision}`)
+                    return
+                }
 
                 const key = `${materiaId}-${comisionId}-${item.modalidad}`
                 const existenteId = existentesMap.get(key)

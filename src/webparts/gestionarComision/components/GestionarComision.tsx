@@ -101,6 +101,11 @@ const GestionarComision: React.FC<IGestionarComisionProps> = ({ context }) => {
                     value={codComision}
                     onChange={(_, val) => setCodComision(val || '')}
                 />
+                <TextField
+                    label='Descripción'
+                    value={descripcion}
+                    onChange={(_, val) => setDescripcion(val || '')}
+                />
                 <Dropdown
                     label='Día de la semana'
                     options={dias}
@@ -113,11 +118,7 @@ const GestionarComision: React.FC<IGestionarComisionProps> = ({ context }) => {
                     selectedKey={turno}
                     onChange={(_, opt) => setTurno(opt?.key as string)}
                 />
-                <TextField
-                    label='Descripción'
-                    value={descripcion}
-                    onChange={(_, val) => setDescripcion(val || '')}
-                />
+
                 <div style={{ marginTop: 20 }}>
                     <PrimaryButton
                         text='Crear Comisión'
