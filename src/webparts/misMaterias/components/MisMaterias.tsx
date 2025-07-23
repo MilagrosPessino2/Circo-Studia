@@ -249,38 +249,69 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
 }
 
 
-
-
-
     const eliminarMaterias = async (estadoAEliminar: string): Promise<void> => {
-        const materiasAEliminar = materias.filter(
-            (m) => m.estado === estadoAEliminar
-        )
+    const materiasAEliminar = materias.filter(
+        (m) => m.estado === estadoAEliminar
+    )
 
-        if (materiasAEliminar.length === 0) {
-            alert(
-                `No hay materias en estado "${estadoAEliminar}" para eliminar.`
-            )
-            return
-        }
-
-        const confirmar = window.confirm(
-            `Vas a eliminar ${materiasAEliminar.length} materias en estado "${estadoAEliminar}".\n¿Estás seguro?`
-        )
-
-        if (!confirmar) return
-
-        try {
-            for (const materia of materiasAEliminar) {
-                await sp.web.lists
-                    .getByTitle('Estado')
-                    .items.getById(materia.id)
-                    .recycle()
-            }
-        } catch (error) {
-            console.error('Error eliminando materias:', error)
-        }
+    if (materiasAEliminar.length === 0) {
+        alert(`No hay materias en estado "${estadoAEliminar}" para eliminar.`)
+        return
     }
+
+    const confirmar = window.confirm(
+        `Vas a eliminar ${materiasAEliminar.length} materias en estado "${estadoAEliminar}".\n¿Estás seguro?`
+    )
+
+    if (!confirmar) return
+
+    try {
+        for (const materia of materiasAEliminar) {
+            if (modoVista === 'historial') {
+                // En modo historial, los ids sí son de la lista 'Estado'
+                if (materia.idHistorial) {
+                    await sp.web.lists
+                        .getByTitle('Estado')
+                        .items.getById(materia.idHistorial)
+                        .recycle()
+                }
+            } else {
+                // En modo curso: primero borrar de Estado si existe
+                if (materia.idHistorial) {
+                    try {
+                        await sp.web.lists
+                            .getByTitle('Estado')
+                            .items.getById(materia.idHistorial)
+                            .recycle()
+                    } catch (error) {
+                        console.warn(
+                            `Error eliminando de Estado (idHistorial: ${materia.idHistorial}):`,
+                            error
+                        )
+                    }
+                }
+
+                // Luego borrar de CursaEn
+                if (materia.idCurso) {
+                    await sp.web.lists
+                        .getByTitle('CursaEn')
+                        .items.getById(materia.idCurso)
+                        .recycle()
+                }
+            }
+        }
+
+        // Refrescar según vista
+        if (modoVista === 'curso') {
+            await fetchMateriasCursando()
+        } else {
+            await fetchMateriasHistorial()
+        }
+    } catch (error) {
+        console.error('Error eliminando materias:', error)
+    }
+}
+
 
     const materiasAgrupadas =
         modoVista === 'historial'
@@ -365,46 +396,46 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                                                     )}
 
                                                    <td>
-                                            {modoVista === 'curso' ? (
-                                                <button
-                                                    onClick={async () => {
-                                                        try {
-                                                            await eliminarMateriaCurso(m.idCurso!, m.idHistorial)
-                                                        } catch (error) {
-                                                            console.error('Error al eliminar:', error)
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        background: 'transparent',
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        fontSize: 18,
-                                                    }}
-                                                    title='Eliminar materia'
-                                                >
-                                                    🗑️
-                                                </button>
-                                            ) : !m.bloqueada && m.idHistorial && (
-                                                <button
-                                                    onClick={async () => {
-                                                        try {
-                                                            await eliminarMateriaHistorial(m.idHistorial!)
-                                                        } catch (error) {
-                                                            console.error('Error al eliminar del historial:', error)
-                                                        }
-                                                    }}
-                                                    style={{
-                                                        background: 'transparent',
-                                                        border: 'none',
-                                                        cursor: 'pointer',
-                                                        fontSize: 18,
-                                                    }}
-                                                    title='Eliminar materia'
-                                                >
-                                                    🗑️
-                                                </button>
-                                            )}
-                                        </td>
+                                        {modoVista === 'curso' ? (
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        await eliminarMateriaCurso(m.idCurso!, m.idHistorial)
+                                                    } catch (error) {
+                                                        console.error('Error al eliminar:', error)
+                                                    }
+                                                }}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    fontSize: 18,
+                                                }}
+                                                title='Eliminar materia'
+                                            >
+                                                🗑️
+                                            </button>
+                                        ) : !m.bloqueada && m.idHistorial && (
+                                            <button
+                                                onClick={async () => {
+                                                    try {
+                                                        await eliminarMateriaHistorial(m.idHistorial!)
+                                                    } catch (error) {
+                                                        console.error('Error al eliminar del historial:', error)
+                                                    }
+                                                }}
+                                                style={{
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    fontSize: 18,
+                                                }}
+                                                title='Eliminar materia'
+                                            >
+                                                🗑️
+                                            </button>
+                                        )}
+                                    </td>
 
                                                 </tr>
                                             ))}
