@@ -8,7 +8,9 @@ import { Link } from 'react-router-dom'
 import styles from '../../inicio/components/Inicio.module.scss'
 
 interface IMateria {
-    id: number
+    id: number 
+    idCurso?: number 
+    idHistorial?: number 
     ofertaId?: number
     codigo: string
     nombre: string
@@ -17,6 +19,7 @@ interface IMateria {
     estado: string
     bloqueada: boolean
 }
+
 
 const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
     const sp = getSP(context)
@@ -77,21 +80,37 @@ const fetchMateriasCursando = async (): Promise<void> => {
             .items
             .select('ID', 'codComision', 'descripcion')()
 
-        const datos: IMateria[] = cursaEnItems.map((item) => {
-            const oferta = ofertas.find((o) => o.Id === item.idOferta?.Id)
-            const com = comisiones.find((c) => c.ID === oferta?.codComision?.Id)
+      const datos: IMateria[] = await Promise.all(
+    cursaEnItems.map(async (item) => {
+        const oferta = ofertas.find((o) => o.Id === item.idOferta?.Id)
+        const com = comisiones.find((c) => c.ID === oferta?.codComision?.Id)
 
-            return {
-                id: item.Id,
-                ofertaId: item.idOferta?.Id,
-                codigo: oferta?.codMateria?.codMateria || '-',
-                nombre: oferta?.codMateria?.nombre || '-',
-                comision: com?.codComision || '-',
-                horario: com?.descripcion || '-',
-                estado: 'En curso',
-                bloqueada: false,
-            }
-        })
+        const codMateriaId = oferta?.codMateria?.ID
+        const estudianteId = estudiante.ID
+
+        // Buscar si existe en Estado
+        const estadoItems = await sp.web.lists
+            .getByTitle('Estado')
+            .items.filter(
+                `idEstudiante/ID eq ${estudianteId} and codMateria/ID eq ${codMateriaId}`
+            )
+            .select('ID')()
+
+        return {
+            id: item.Id, // id de CursaEn
+            idCurso: item.Id,
+            idHistorial: estadoItems.length > 0 ? estadoItems[0].ID : undefined,
+            ofertaId: item.idOferta?.Id,
+            codigo: oferta?.codMateria?.codMateria || '-',
+            nombre: oferta?.codMateria?.nombre || '-',
+            comision: com?.codComision || '-',
+            horario: com?.descripcion || '-',
+            estado: 'En curso',
+            bloqueada: false,
+        }
+    })
+)
+
 
         setMaterias(datos)
     } catch (error) {
@@ -131,6 +150,7 @@ const fetchMateriasHistorial = async (): Promise<void> => {
 
         const datos: IMateria[] = estadoItems.map((item) => ({
             id: item.Id,
+            idHistorial: item.Id,
             codigo: item.codMateria?.codMateria || '-',
             nombre: item.codMateria?.nombre || '-',
             comision: '-',
@@ -143,7 +163,6 @@ const fetchMateriasHistorial = async (): Promise<void> => {
                     : '-',
             bloqueada: false,
         }))
-
 
         setMaterias(datos)
     } catch (error) {
@@ -168,65 +187,67 @@ const fetchMateriasHistorial = async (): Promise<void> => {
 }, [modoVista])
 
     
-    const eliminarMateriaHistorial = async (id: number): Promise<void> => {
-        const materia = materias.find((m) => m.id === id)
-        if (!materia) return
+    const eliminarMateriaHistorial = async (idHistorial: number): Promise<void> => {
+    const materia = materias.find((m) => m.idHistorial === idHistorial)
+    if (!materia) return
 
-        const correlativas = correlativasInversas[materia.id] || []
-        if (correlativas.length > 0) {
-            const nombresDependientes = materias
-                .filter((m) => correlativas.includes(m.id))
-                .map((m) => m.nombre)
-                .join(', ')
-            const confirmar = window.confirm(
-                `La materia "${materia.nombre}" es requisito de: ${nombresDependientes}.\n¿Seguro que querés eliminarla?`
-            )
-            if (!confirmar) return
-        }setCorrelativasInversas(correlativasInversas => ({
-            ...correlativasInversas,
-            [materia.id]: [],
-        }));
-
-        try {
-            await sp.web.lists.getByTitle('Estado').items.getById(id).recycle()
-            await fetchMateriasHistorial()
-        } catch (error) {
-            console.error('Error eliminando materia:', error)
-        }
+    const correlativas = correlativasInversas[idHistorial] || []
+    if (correlativas.length > 0) {
+        const nombresDependientes = materias
+            .filter((m) => correlativas.includes(m.id))
+            .map((m) => m.nombre)
+            .join(', ')
+        const confirmar = window.confirm(
+            `La materia "${materia.nombre}" es requisito de: ${nombresDependientes}.\n¿Seguro que querés eliminarla?`
+        )
+        if (!confirmar) return
     }
 
-const eliminarMateriaCurso = async (id: number): Promise<void> => {
-    const materia = materias.find((m) => m.id === id)
-    if (!materia || !materia.ofertaId) return
+    setCorrelativasInversas((correlativasInversas) => ({
+        ...correlativasInversas,
+        [idHistorial]: [],
+    }))
 
     try {
-        const cursaItem = await sp.web.lists.getByTitle('CursaEn').items.getById(id)
-            .select('idOferta/Id', 'idEstudiante/ID')
-            .expand('idOferta', 'idEstudiante')()
+        await sp.web.lists.getByTitle('Estado').items.getById(idHistorial).recycle()
+        await fetchMateriasHistorial()
+    } catch (error) {
+        if (
+            error.message?.includes('El elemento no existe') ||
+            error.message?.includes('The item does not exist')
+        ) {
+            console.warn('Ya se había eliminado el ítem de Estado')
+        } else {
+            console.error('Error eliminando materia del historial:', error)
+        }
+    }
+}
 
-        const oferta = await sp.web.lists.getByTitle('OfertaDeMaterias').items
-            .getById(cursaItem.idOferta.Id)
-            .select('codMateria/ID')
-            .expand('codMateria')()
 
-        const codMateriaId = oferta.codMateria.ID
-        const idEstudiante = cursaItem.idEstudiante.ID
-
-        const estadoItems = await sp.web.lists.getByTitle('Estado').items
-            .filter(`idEstudiante/ID eq ${idEstudiante} and codMateria/ID eq ${codMateriaId}`)
-            .select('ID')()
-        
-        for (const item of estadoItems) {
-            await sp.web.lists.getByTitle('Estado').items.getById(item.ID).recycle()
+const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Promise<void> => {
+    try {
+        if (idHistorial) {
+            try {
+                await sp.web.lists.getByTitle('Estado').items.getById(idHistorial).recycle()
+            } catch (error) {
+                if (
+                    error.message?.includes('El elemento no existe') ||
+                    error.message?.includes('The item does not exist')
+                ) {
+                    console.warn('Ya se había eliminado el ítem de Estado')
+                } else {
+                    throw error
+                }
+            }
         }
 
-        await sp.web.lists.getByTitle('CursaEn').items.getById(id).recycle()
-
+        await sp.web.lists.getByTitle('CursaEn').items.getById(idCurso).recycle()
         await fetchMateriasCursando()
     } catch (error) {
         console.error('Error eliminando materia de CursaEn y Estado:', error)
     }
 }
+
 
 
 
@@ -343,52 +364,48 @@ const eliminarMateriaCurso = async (id: number): Promise<void> => {
                                                         </>
                                                     )}
 
-                                                    <td>
-                                                  {
-                                                    modoVista === 'curso' ? (
-                                                        <button
-                                                        onClick={async () => {
-                                                            try {
-                                                            await eliminarMateriaCurso(m.id);
-                                                            await eliminarMateriaHistorial(m.id);
-                                                            } catch (error) {
-                                                            console.error('Error al eliminar:', error);
-                                                            }
-                                                        }}
-                                                        style={{
-                                                            background: 'transparent',
-                                                            border: 'none',
-                                                            cursor: 'pointer',
-                                                            fontSize: 18,
-                                                        }}
-                                                        title='Eliminar materia'
-                                                        >
-                                                        🗑️
-                                                        </button>
-                                                    ) : !m.bloqueada && (
-                                                        <button
-                                                        onClick={async () => {
-                                                            try {
-                                                            await eliminarMateriaHistorial(m.id);
-                                                            } catch (error) {
-                                                            console.error('Error al eliminar del historial:', error);
-                                                            }
-                                                        }}
-                                                        style={{
-                                                            background: 'transparent',
-                                                            border: 'none',
-                                                            cursor: 'pointer',
-                                                            fontSize: 18,
-                                                        }}
-                                                        title='Eliminar materia'
-                                                        >
-                                                        🗑️
-                                                        </button>
-                                                    )
-                                                    }
+                                                   <td>
+                                            {modoVista === 'curso' ? (
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            await eliminarMateriaCurso(m.idCurso!, m.idHistorial)
+                                                        } catch (error) {
+                                                            console.error('Error al eliminar:', error)
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        background: 'transparent',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        fontSize: 18,
+                                                    }}
+                                                    title='Eliminar materia'
+                                                >
+                                                    🗑️
+                                                </button>
+                                            ) : !m.bloqueada && m.idHistorial && (
+                                                <button
+                                                    onClick={async () => {
+                                                        try {
+                                                            await eliminarMateriaHistorial(m.idHistorial!)
+                                                        } catch (error) {
+                                                            console.error('Error al eliminar del historial:', error)
+                                                        }
+                                                    }}
+                                                    style={{
+                                                        background: 'transparent',
+                                                        border: 'none',
+                                                        cursor: 'pointer',
+                                                        fontSize: 18,
+                                                    }}
+                                                    title='Eliminar materia'
+                                                >
+                                                    🗑️
+                                                </button>
+                                            )}
+                                        </td>
 
-
-                                                    </td>
                                                 </tr>
                                             ))}
                                         </tbody>
