@@ -200,12 +200,34 @@ const eliminarMateriaCurso = async (id: number): Promise<void> => {
     if (!materia || !materia.ofertaId) return
 
     try {
-        await sp.web.lists.getByTitle('CursaEn').items.getById(materia.id).recycle()
+        const cursaItem = await sp.web.lists.getByTitle('CursaEn').items.getById(id)
+            .select('idOferta/Id', 'idEstudiante/ID')
+            .expand('idOferta', 'idEstudiante')()
+
+        const oferta = await sp.web.lists.getByTitle('OfertaDeMaterias').items
+            .getById(cursaItem.idOferta.Id)
+            .select('codMateria/ID')
+            .expand('codMateria')()
+
+        const codMateriaId = oferta.codMateria.ID
+        const idEstudiante = cursaItem.idEstudiante.ID
+
+        const estadoItems = await sp.web.lists.getByTitle('Estado').items
+            .filter(`idEstudiante/ID eq ${idEstudiante} and codMateria/ID eq ${codMateriaId}`)
+            .select('ID')()
+        
+        for (const item of estadoItems) {
+            await sp.web.lists.getByTitle('Estado').items.getById(item.ID).recycle()
+        }
+
+        await sp.web.lists.getByTitle('CursaEn').items.getById(id).recycle()
+
         await fetchMateriasCursando()
     } catch (error) {
-        console.error('Error eliminando materia:', error)
+        console.error('Error eliminando materia de CursaEn y Estado:', error)
     }
 }
+
 
 
 
