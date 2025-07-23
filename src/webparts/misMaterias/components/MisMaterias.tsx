@@ -9,6 +9,7 @@ import styles from '../../inicio/components/Inicio.module.scss'
 
 interface IMateria {
     id: number
+    ofertaId?: number
     codigo: string
     nombre: string
     comision: string
@@ -23,142 +24,151 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
     const [loading, setLoading] = useState(true)
     const [materias, setMaterias] = useState<IMateria[]>([])
     const [correlativasInversas, setCorrelativasInversas] = useState<
-        Record<number, number[]>
-    >({})
+Record<number, number[]>>({})
 
-    const fetchMaterias = async (): Promise<void> => {
-        setLoading(true)
-        try {
-            const user = await sp.web.currentUser()
-            const estudiantes = await sp.web.lists
-                .getByTitle('Estudiante')
-                .items.select('ID', 'usuario/Id')
-                .expand('usuario')()
 
-            const estudiante = estudiantes.find(
-                (e) => e.usuario?.Id === user.Id
+
+const fetchMateriasCursando = async (): Promise<void> => {
+    setLoading(true)
+    try {
+        const user = await sp.web.currentUser()
+
+        const estudiantes = await sp.web.lists
+            .getByTitle('Estudiante')
+            .items.select('ID', 'usuario/Id')
+            .expand('usuario')()
+
+        const estudiante = estudiantes.find(
+            (e) => e.usuario?.Id === user.Id
+        )
+        if (!estudiante) return
+
+        const cursaEnItems = await sp.web.lists
+            .getByTitle('CursaEn')
+            .items
+            .filter(`idEstudianteId eq ${estudiante.ID}`)
+            .select('Id', 'idOferta/Id')
+            .expand('idOferta')()
+
+        const ofertaIds = cursaEnItems.map(item => item.idOferta?.Id).filter(id => id !== null)
+        if (ofertaIds.length === 0) {
+            setMaterias([])
+            return
+        }
+
+        const filterString = ofertaIds.map(id => `Id eq ${id}`).join(' or ')
+
+        const ofertas = await sp.web.lists
+            .getByTitle('OfertaDeMaterias')
+            .items
+            .filter(filterString)
+            .select(
+                'Id',
+                'codMateria/ID',
+                'codMateria/codMateria',
+                'codMateria/nombre',
+                'codComision/Id',
+                'modalidad'
             )
-            if (!estudiante) return
+            .expand('codMateria', 'codComision')()
 
-            const aprobadas = await sp.web.lists
-                .getByTitle('Estado')
-                .items.filter(
-                    `idEstudianteId eq ${estudiante.ID} and condicion eq 'A'`
-                )
-                .select('codMateria/ID')
-                .expand('codMateria')()
+        const comisiones = await sp.web.lists
+            .getByTitle('Comision')
+            .items
+            .select('ID', 'codComision', 'descripcion')()
 
-            const idsAprobadas = aprobadas.map((m) => m.codMateria.ID)
+        const datos: IMateria[] = cursaEnItems.map((item) => {
+            const oferta = ofertas.find((o) => o.Id === item.idOferta?.Id)
+            const com = comisiones.find((c) => c.ID === oferta?.codComision?.Id)
 
-            const correlativas = await sp.web.lists
-                .getByTitle('Correlativa')
-                .items.select('codMateria/ID', 'codMateriaRequerida/ID')
-                .expand('codMateria', 'codMateriaRequerida')()
-
-            const mapaCorrelativas: Record<number, number[]> = {}
-            const inverso: Record<number, number[]> = {}
-            correlativas.forEach((item) => {
-                const materiaID = item.codMateria?.ID
-                const correlativaID = item.codMateriaRequerida?.ID
-                if (materiaID && correlativaID) {
-                    if (!mapaCorrelativas[materiaID])
-                        mapaCorrelativas[materiaID] = []
-                    mapaCorrelativas[materiaID].push(correlativaID)
-
-                    if (!inverso[correlativaID]) inverso[correlativaID] = []
-                    inverso[correlativaID].push(materiaID)
-                }
-            })
-            setCorrelativasInversas(inverso)
-
-            const estadoQuery =
-                modoVista === 'curso'
-                    ? `condicion eq 'C'`
-                    : `(condicion eq 'A' or condicion eq 'R')`
-
-            const estado = await sp.web.lists
-                .getByTitle('Estado')
-                .items.filter(
-                    `idEstudianteId eq ${estudiante.ID} and ${estadoQuery}`
-                )
-                .select(
-                    'ID',
-                    'codMateria/ID',
-                    'codMateria/codMateria',
-                    'codMateria/nombre',
-                    'condicion'
-                )
-                .expand('codMateria')()
-
-            const idsBloqueadas = new Set<number>()
-            for (const [materiaID, correlativas] of Object.entries(
-                mapaCorrelativas
-            )) {
-                const id = parseInt(materiaID)
-                if (idsAprobadas.includes(id)) {
-                    correlativas.forEach((c) => idsBloqueadas.add(c))
-                }
+            return {
+                id: item.Id,
+                ofertaId: item.idOferta?.Id,
+                codigo: oferta?.codMateria?.codMateria || '-',
+                nombre: oferta?.codMateria?.nombre || '-',
+                comision: com?.codComision || '-',
+                horario: com?.descripcion || '-',
+                estado: 'En curso',
+                bloqueada: false,
             }
+        })
 
-            const oferta = await sp.web.lists
-                .getByTitle('OfertaDeMaterias')
-                .items.select('codMateria/Id', 'codComision/Id', 'modalidad')
-                .expand('codMateria', 'codComision')()
+        setMaterias(datos)
+    } catch (error) {
+        console.error('Error cargando materias EN CURSO:', error)
+    } finally {
+        setLoading(false)
+    }
+}
 
-            const comisiones = await sp.web.lists
-                .getByTitle('Comision')
-                .items.select(
-                    'codComision',
-                    'diaSemana',
-                    'turno',
-                    'descripcion'
-                )()
+const fetchMateriasHistorial = async (): Promise<void> => {
+    setLoading(true)
+    try {
+        const user = await sp.web.currentUser()
 
-            const datos: IMateria[] = estado
-                .filter((e) => {
-                    const correlativas = mapaCorrelativas[e.codMateria.ID] || []
-                    return correlativas.every((c) => idsAprobadas.includes(c))
-                })
-                .map((e) => {
-                    const ofertaRelacionada = oferta.find(
-                        (o) => o.codMateria?.Id === e.codMateria?.ID
-                    )
-                    const com = comisiones.find(
-                        (c) =>
-                            c.codComision === ofertaRelacionada?.codComision?.Id
-                    )
+        const estudiantes = await sp.web.lists
+            .getByTitle('Estudiante')
+            .items.select('ID', 'usuario/Id')
+            .expand('usuario')()
 
-                    return {
-                        id: e.ID,
-                        codigo: e.codMateria?.codMateria,
-                        nombre: e.codMateria?.nombre,
-                        comision: com?.codComision || '-',
-                        horario: com?.descripcion || '-',
-                        aula: 'Virtual',
-                        modalidad: ofertaRelacionada?.modalidad || '-',
-                        estado:
-                            e.condicion === 'C'
-                                ? 'En curso'
-                                : e.condicion === 'R'
-                                ? 'En final'
-                                : 'Aprobada',
-                        bloqueada: idsBloqueadas.has(e.codMateria.ID),
-                    }
-                })
+        const estudiante = estudiantes.find(
+            (e) => e.usuario?.Id === user.Id
+        )
+        if (!estudiante) return
 
-            setMaterias(datos)
-        } catch (error) {
-            console.error('Error cargando materias:', error)
-        } finally {
-            setLoading(false)
+        const estadoItems = await sp.web.lists
+            .getByTitle('Estado')
+            .items
+            .filter(`idEstudianteId eq ${estudiante.ID}`)
+            .select(
+                'Id',
+                'condicion',
+                'codMateria/codMateria',
+                'codMateria/nombre'
+            )
+            .expand('codMateria')()
+
+
+        const datos: IMateria[] = estadoItems.map((item) => ({
+            id: item.Id,
+            codigo: item.codMateria?.codMateria || '-',
+            nombre: item.codMateria?.nombre || '-',
+            comision: '-',
+            horario: '-',
+            estado:
+                item.condicion === 'A'
+                    ? 'Aprobada'
+                    : item.condicion === 'R'
+                    ? 'En final'
+                    : '-',
+            bloqueada: false,
+        }))
+
+
+        setMaterias(datos)
+    } catch (error) {
+        console.error('Error cargando materias HISTORIAL:', error)
+    } finally {
+        setLoading(false)
+    }
+}
+
+   useEffect(() => {
+    const cargarMaterias = async () => {
+        if (modoVista === 'curso') {
+            await fetchMateriasCursando()
+        } else {
+            await fetchMateriasHistorial()
         }
     }
 
-    useEffect(() => {
-        fetchMaterias().catch(console.error)
-    }, [modoVista])
+    cargarMaterias().catch((err) => {
+        console.error('Error al cargar materias:', err)
+    })
+}, [modoVista])
 
-    const eliminarMateria = async (id: number): Promise<void> => {
+    
+    const eliminarMateriaHistorial = async (id: number): Promise<void> => {
         const materia = materias.find((m) => m.id === id)
         if (!materia) return
 
@@ -172,15 +182,32 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 `La materia "${materia.nombre}" es requisito de: ${nombresDependientes}.\n¿Seguro que querés eliminarla?`
             )
             if (!confirmar) return
-        }
+        }setCorrelativasInversas(correlativasInversas => ({
+            ...correlativasInversas,
+            [materia.id]: [],
+        }));
 
         try {
             await sp.web.lists.getByTitle('Estado').items.getById(id).recycle()
-            await fetchMaterias()
+            await fetchMateriasHistorial()
         } catch (error) {
             console.error('Error eliminando materia:', error)
         }
     }
+
+const eliminarMateriaCurso = async (id: number): Promise<void> => {
+    const materia = materias.find((m) => m.id === id)
+    if (!materia || !materia.ofertaId) return
+
+    try {
+        await sp.web.lists.getByTitle('CursaEn').items.getById(materia.id).recycle()
+        await fetchMateriasCursando()
+    } catch (error) {
+        console.error('Error eliminando materia:', error)
+    }
+}
+
+
 
     const eliminarMaterias = async (estadoAEliminar: string): Promise<void> => {
         const materiasAEliminar = materias.filter(
@@ -207,7 +234,6 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                     .items.getById(materia.id)
                     .recycle()
             }
-            await fetchMaterias()
         } catch (error) {
             console.error('Error eliminando materias:', error)
         }
@@ -296,25 +322,50 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                                                     )}
 
                                                     <td>
-                                                        {!m.bloqueada && (
-                                                            <button
-                                                                onClick={() =>
-                                                                    eliminarMateria(
-                                                                        m.id
-                                                                    )
-                                                                }
-                                                                style={{
-                                                                    background:
-                                                                        'transparent',
-                                                                    border: 'none',
-                                                                    cursor: 'pointer',
-                                                                    fontSize: 18,
-                                                                }}
-                                                                title='Eliminar materia'
-                                                            >
-                                                                🗑️
-                                                            </button>
-                                                        )}
+                                                  {
+                                                    modoVista === 'curso' ? (
+                                                        <button
+                                                        onClick={async () => {
+                                                            try {
+                                                            await eliminarMateriaCurso(m.id);
+                                                            await eliminarMateriaHistorial(m.id);
+                                                            } catch (error) {
+                                                            console.error('Error al eliminar:', error);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            fontSize: 18,
+                                                        }}
+                                                        title='Eliminar materia'
+                                                        >
+                                                        🗑️
+                                                        </button>
+                                                    ) : !m.bloqueada && (
+                                                        <button
+                                                        onClick={async () => {
+                                                            try {
+                                                            await eliminarMateriaHistorial(m.id);
+                                                            } catch (error) {
+                                                            console.error('Error al eliminar del historial:', error);
+                                                            }
+                                                        }}
+                                                        style={{
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            fontSize: 18,
+                                                        }}
+                                                        title='Eliminar materia'
+                                                        >
+                                                        🗑️
+                                                        </button>
+                                                    )
+                                                    }
+
+
                                                     </td>
                                                 </tr>
                                             ))}
