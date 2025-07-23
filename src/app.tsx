@@ -26,6 +26,7 @@ import PerfilColega from './webparts/perfilColega/components/PerfilColega'
 import GestionarPlanDeEstudios from './webparts/gestionarPlanDeEstudios/components/GestionarPlanDeEstudios'
 import CargarOfertaDeMaterias from './webparts/cargarOfertaDeMaterias/components/CargarOfertaDeMaterias'
 import GestionDeRoles from './webparts/gestionDeRoles/components/GestionDeRoles'
+import GestionarComision from './webparts/gestionarComision/components/GestionarComision'
 
 export const UserPresetContext = createContext<{
     isPreset: boolean
@@ -91,6 +92,10 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
             <Route
                 path='/gestionar-roles'
                 element={<GestionDeRoles {...props} />}
+            />
+            <Route
+                path='/gestionar-comision'
+                element={<GestionarComision {...props} />}
             />
         </Routes>
     )

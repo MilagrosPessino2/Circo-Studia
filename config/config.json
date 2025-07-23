@@ -161,6 +161,14 @@
           "manifest": "./src/webparts/gestionDeRoles/GestionDeRolesWebPart.manifest.json"
         }
       ]
+    },
+    "gestionar-comision-web-part": {
+      "components": [
+        {
+          "entrypoint": "./lib/webparts/gestionarComision/GestionarComisionWebPart.js",
+          "manifest": "./src/webparts/gestionarComision/GestionarComisionWebPart.manifest.json"
+        }
+      ]
     }
   },
   "externals": {},
@@ -184,6 +192,7 @@
     "ModificacionMateriaWebPartStrings": "lib/webparts/modificacionMateria/loc/{locale}.js",
     "CargarOfertaDeMateriasWebPartStrings": "lib/webparts/cargarOfertaDeMaterias/loc/{locale}.js",
     "FormularioCursandoWebPartStrings": "lib/webparts/formularioCursando/loc/{locale}.js",
-    "GestionDeRolesWebPartStrings": "lib/webparts/gestionDeRoles/loc/{locale}.js"
+    "GestionDeRolesWebPartStrings": "lib/webparts/gestionDeRoles/loc/{locale}.js",
+    "GestionarComisionWebPartStrings": "lib/webparts/gestionarComision/loc/{locale}.js"
   }
 }

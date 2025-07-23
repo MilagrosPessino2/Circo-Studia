@@ -1,17 +1,42 @@
 import * as React from 'react'
-import { useState } from 'react'
-import { PrimaryButton, Dropdown, IDropdownOption } from '@fluentui/react'
-import { getSP } from '../../../pnpjsConfig'
-import { ICargarOfertaDeMateriasProps } from './ICargarOfertaDeMateriasProps'
-import Menu from '../../menu/components/Menu'
-import styles from './CargarOfertaDeMaterias.module.scss'
+import { useState, useRef } from 'react'
 import {
+    PrimaryButton,
+    Dropdown,
+    IDropdownOption,
     DefaultButton,
     Dialog,
     DialogFooter,
     DialogType,
 } from '@fluentui/react'
+import { getSP } from '../../../pnpjsConfig'
+import { ICargarOfertaDeMateriasProps } from './ICargarOfertaDeMateriasProps'
+import Menu from '../../menu/components/Menu'
+import styles from './CargarOfertaDeMaterias.module.scss'
 
+interface IMateria {
+    Id: number
+    codMateria: string
+    nombre?: string
+    anio?: number
+}
+
+interface IComision {
+    Id: number
+    codComision: string
+    turno?: string
+    diaSemana?: string
+    descripcion?: string
+}
+
+interface IOfertaExistente {
+    Id: number
+    codMateriaId: number
+    codComisionId: number
+    modalidad: string
+}
+
+// Tipo de fila cargada desde el CSV
 interface RowData {
     codMateria: string
     codComision: string
@@ -21,6 +46,7 @@ interface RowData {
     descripcion?: string
 }
 
+// Opciones de cuatrimestre
 const cuatrimestres: IDropdownOption[] = [
     { key: 1, text: 'Primer cuatrimestre' },
     { key: 2, text: 'Segundo cuatrimestre' },
@@ -37,54 +63,28 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
     const [mostrarDialogo, setMostrarDialogo] = useState(false)
     const [eliminando, setEliminando] = useState(false)
 
-    const parseCSV = (text: string): void => {
-        const lines = text.split(/\r\n|\n/).filter((line) => line.trim() !== '')
-        const resultado: RowData[] = []
-        let materiaActual = ''
+    // Refs para guardar materias y comisiones
+    const materiasRef = useRef<Map<string, number>>(new Map())
+    const comisionesRef = useRef<Map<string, number>>(new Map())
 
-        for (let i = 1; i < lines.length; i++) {
-            const line = lines[i]
-            const columnas = line.split(';').map((c) => c.trim())
-
-            if (columnas[0] !== '') materiaActual = columnas[0]
-            else columnas[0] = materiaActual
-
-            const row: RowData = {
-                codMateria: columnas[0] || '', // Código
-                descripcion: columnas[1] || '', // Descripción
-                codComision: columnas[2] || '', // Cod. Comisión
-                turno: columnas[3] || '', // Turno
-                dias: columnas[4] || '', // Días
-                modalidad: columnas[5] || '', // Modalidad
-            }
-
-            if (
-                row.codMateria &&
-                row.codComision &&
-                row.codComision.toLowerCase() !== 'no ofertada'
-            ) {
-                resultado.push(row)
-            }
-        }
-
-        console.log('CSV parseado:', resultado)
-        setDatos(resultado)
-    }
+    // Eliminar toda la oferta del cuatrimestre seleccionado
     const vaciarOfertaCuatrimestre = async (): Promise<void> => {
         setEliminando(true)
         setStatus('Eliminando registros del cuatrimestre...')
         try {
             const itemsAEliminar = await sp.web.lists
                 .getByTitle('OfertaDeMaterias')
-                .items.filter(`Cuatrimestre eq '${cuatrimestre.toString()}'`)
+                .items.filter(`Cuatrimestre eq '${cuatrimestre}'`)
                 .top(4999)()
 
-            for (const item of itemsAEliminar) {
-                await sp.web.lists
-                    .getByTitle('OfertaDeMaterias')
-                    .items.getById(item.Id)
-                    .recycle()
-            }
+            await Promise.all(
+                itemsAEliminar.map((item) =>
+                    sp.web.lists
+                        .getByTitle('OfertaDeMaterias')
+                        .items.getById(item.Id)
+                        .recycle()
+                )
+            )
 
             setStatus(`🗑️ Se vació la oferta del cuatrimestre ${cuatrimestre}.`)
         } catch (error) {
@@ -95,30 +95,79 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
             setMostrarDialogo(false)
         }
     }
-    const leerArchivo = async (file: File): Promise<void> => {
-        const reader = new FileReader()
-        reader.onload = (event) => {
-            const text = event.target?.result as string
-            parseCSV(text)
-        }
-        reader.onerror = () => {
-            setStatus('Error al leer el archivo.')
-        }
-        reader.readAsText(file, 'utf-8')
-    }
 
-    const handleFileUpload = (
+    // Leer archivo CSV y parsear datos válidos
+    const handleFileUpload = async (
         event: React.ChangeEvent<HTMLInputElement>
-    ): void => {
+    ): Promise<void> => {
         const file = event.target.files?.[0]
-        if (file) {
-            leerArchivo(file).catch((err) => {
-                console.error('Error al leer archivo:', err)
-                setStatus('Error al leer el archivo.')
-            })
+        if (!file) return
+
+        try {
+            setStatus('Procesando archivo CSV...')
+
+            // Cargar todas las materias y comisiones de SharePoint
+            const [materias, comisiones] = await Promise.all([
+                sp.web.lists.getByTitle('Materia').items.top(4999)(),
+                sp.web.lists.getByTitle('Comision').items.top(4999)(),
+            ])
+
+            // Guardar codigos y sus IDs
+            materiasRef.current = new Map(
+                (materias as IMateria[]).map((m) => [m.codMateria, m.Id])
+            )
+
+            comisionesRef.current = new Map(
+                (comisiones as IComision[]).map((c) => [c.codComision, c.Id])
+            )
+
+            const text = await file.text()
+            const lines = text
+                .split(/\r\n|\n/)
+                .filter((line) => line.trim() !== '')
+            const resultado: RowData[] = []
+            let materiaActual = ''
+
+            // Procesar cada línea del CSV
+            for (let i = 1; i < lines.length; i++) {
+                const columnas = lines[i].split(';').map((c) => c.trim())
+                if (columnas[0] !== '') materiaActual = columnas[0]
+                else columnas[0] = materiaActual
+
+                const row: RowData = {
+                    codMateria: columnas[0] || '',
+                    descripcion: columnas[1] || '',
+                    codComision: columnas[2] || '',
+                    turno: columnas[3] || '',
+                    dias: columnas[4] || '',
+                    modalidad: columnas[5] || '',
+                }
+
+                // Validar existencia local de materia y comisión
+                if (
+                    row.codMateria &&
+                    row.codComision &&
+                    row.codComision.toLowerCase() !== 'no ofertada' &&
+                    materiasRef.current.has(row.codMateria) &&
+                    comisionesRef.current.has(row.codComision)
+                ) {
+                    resultado.push(row)
+                } else {
+                    console.warn('Registro inválido:', row)
+                }
+            }
+
+            setDatos(resultado)
+            setStatus(
+                `Archivo procesado. ${resultado.length} registros válidos para cargar.`
+            )
+        } catch (error) {
+            console.error('❌ Error al procesar el archivo:', error)
+            setStatus('Error al procesar el archivo.')
         }
     }
 
+    // Cargar datos válidos en SharePoint
     const handleCargarOferta = async (): Promise<void> => {
         if (datos.length === 0) {
             setStatus('No hay datos para cargar.')
@@ -126,78 +175,77 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
         }
 
         setStatus('Cargando nueva oferta en SharePoint...')
-        let cargadas = 0
         const errores: Set<string> = new Set()
+        let cargadas = 0
 
-        for (const item of datos) {
-            try {
-                console.log(
-                    `🔄 Procesando ${item.codMateria} / ${item.codComision}`
-                )
-
-                const materia = await sp.web.lists
-                    .getByTitle('Materia')
-                    .items.filter(`codMateria eq '${item.codMateria}'`)
-                    .top(1)()
-
-                if (materia.length === 0) {
-                    console.warn('⚠️ Materia no encontrada:', item.codMateria)
-                    errores.add(`${item.codMateria} / ${item.codComision}`)
-                    continue
-                }
-
-                const comision = await sp.web.lists
-                    .getByTitle('Comision')
-                    .items.filter(`codComision eq '${item.codComision}'`)
-                    .top(1)()
-
-                if (comision.length === 0) {
-                    console.warn('⚠️ Comisión no encontrada:', item.codComision)
-                    errores.add(`${item.codMateria} / ${item.codComision}`)
-                    continue
-                }
-
-                // Validación de duplicado
-                const duplicado = await sp.web.lists
-                    .getByTitle('OfertaDeMaterias')
-                    .items.filter(
-                        `codMateriaId eq ${materia[0].Id} and codComisionId eq ${comision[0].Id} and Cuatrimestre eq '${cuatrimestre}' and modalidad eq '${item.modalidad}'`
-                    )
-                    .top(1)()
-
-                if (duplicado.length > 0) {
-                    // Solo actualizar fecha si ya existe
-                    await sp.web.lists
-                        .getByTitle('OfertaDeMaterias')
-                        .items.getById(duplicado[0].Id)
-                        .update({
-                            fechaDePublicacion: new Date().toISOString(),
-                        })
-                    console.log('📝 Oferta duplicada actualizada.')
-                } else {
-                    // Insertar nueva
-                    await sp.web.lists
-                        .getByTitle('OfertaDeMaterias')
-                        .items.add({
-                            codMateriaId: materia[0].Id,
-                            codComisionId: comision[0].Id,
-                            fechaDePublicacion: new Date().toISOString(),
-                            Cuatrimestre: cuatrimestre.toString(),
-                            modalidad: item.modalidad,
-                        })
-
-                    console.log('🆕 Oferta insertada.')
-                    cargadas++
-                }
-            } catch (error) {
-                console.error(
-                    `❌ Error al procesar ${item.codMateria} / ${item.codComision}:`,
-                    error
-                )
-                errores.add(`${item.codMateria} / ${item.codComision}`)
-            }
+        // Obtener registros ya existentes para este cuatrimestre
+        let ofertasExistentes: IOfertaExistente[] = []
+        try {
+            ofertasExistentes = await sp.web.lists
+                .getByTitle('OfertaDeMaterias')
+                .items.filter(`Cuatrimestre eq '${cuatrimestre}'`)
+                .select('Id', 'codMateriaId', 'codComisionId', 'modalidad')
+                .top(4999)()
+        } catch (error) {
+            console.error('❌ Error al obtener ofertas existentes:', error)
+            setStatus('Error verificando duplicados en la lista.')
+            return
         }
 
+        // Mapa de duplicados existentes
+        const existentesMap = new Map<string, number>()
+        for (const oferta of ofertasExistentes) {
+            const key = `${oferta.codMateriaId}-${oferta.codComisionId}-${oferta.modalidad}`
+            existentesMap.set(key, oferta.Id)
+        }
+
+        // Insertar o actualizar en paralelo
+        // Insertar o actualizar en serie usando Promise.all
+        await Promise.all(
+            datos.map(async (item) => {
+                const materiaId = materiasRef.current.get(item.codMateria)
+                const comisionId = comisionesRef.current.get(item.codComision)
+                if (!materiaId || !comisionId) return
+
+                const key = `${materiaId}-${comisionId}-${item.modalidad}`
+                const existenteId = existentesMap.get(key)
+
+                try {
+                    if (existenteId) {
+                        // Pisar registro existente con todos los campos
+                        await sp.web.lists
+                            .getByTitle('OfertaDeMaterias')
+                            .items.getById(existenteId)
+                            .update({
+                                codMateriaId: materiaId,
+                                codComisionId: comisionId,
+                                modalidad: item.modalidad,
+                                Cuatrimestre: cuatrimestre.toString(),
+                                fechaDePublicacion: new Date().toISOString(),
+                            })
+                        console.log('📝 Oferta actualizada:', item)
+                    } else {
+                        // Insertar nuevo registro
+                        await sp.web.lists
+                            .getByTitle('OfertaDeMaterias')
+                            .items.add({
+                                codMateriaId: materiaId,
+                                codComisionId: comisionId,
+                                modalidad: item.modalidad,
+                                Cuatrimestre: cuatrimestre.toString(),
+                                fechaDePublicacion: new Date().toISOString(),
+                            })
+                        cargadas++
+                        console.log('🆕 Oferta insertada:', item)
+                    }
+                } catch (e: unknown) {
+                    console.error('❌ Error al procesar registro:', item, e)
+                    errores.add(`${item.codMateria} / ${item.codComision}`)
+                }
+            })
+        )
+
+        // Mostrar resultado final
         if (errores.size > 0) {
             setStatus(
                 `Carga parcial. Errores en: ${Array.from(errores).join(', ')}`
@@ -206,6 +254,8 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
             setStatus(`Carga exitosa. Registros insertados: ${cargadas}`)
         }
     }
+
+    // Render visual
     return (
         <div className={styles.layout}>
             <Menu context={context} />
@@ -233,6 +283,7 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                         }}
                     />
 
+                    {/* Vista previa */}
                     {datos.length > 0 && (
                         <>
                             <h3>Vista previa</h3>
@@ -275,16 +326,16 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                             />
                         </>
                     )}
+
+                    {/* Botón para vaciar oferta */}
                     <DefaultButton
                         text='Vaciar oferta para cuatrimestre'
                         onClick={() => setMostrarDialogo(true)}
-                        style={{
-                            marginBottom: '1rem',
-                            marginLeft: '1rem',
-                        }}
+                        style={{ marginBottom: '1rem', marginLeft: '1rem' }}
                         disabled={eliminando}
                     />
 
+                    {/* Diálogo de confirmación */}
                     <Dialog
                         hidden={!mostrarDialogo}
                         onDismiss={() => setMostrarDialogo(false)}
