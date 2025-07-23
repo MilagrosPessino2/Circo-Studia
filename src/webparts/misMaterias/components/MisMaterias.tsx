@@ -154,7 +154,7 @@ const fetchMateriasHistorial = async (): Promise<void> => {
 }
 
    useEffect(() => {
-    const cargarMaterias = async () => {
+    const cargarMaterias = async () : Promise<void> => {
         if (modoVista === 'curso') {
             await fetchMateriasCursando()
         } else {
