@@ -103,6 +103,11 @@ const Menu: FC<MenuProps> = ({ context }): JSX.Element => {
                                 Gestionar Roles
                             </button>
                         </Link>
+                        <Link to='/gestionar-comision'>
+                            <button className={menuStyles.buttonNav}>
+                                Gestionar Comision
+                            </button>
+                        </Link>
                     </>
                 )}
             </nav>
