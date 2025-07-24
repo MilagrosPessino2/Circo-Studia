@@ -76,10 +76,14 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
     const navigate = useNavigate()
 
     const [loading, setLoading] = useState(true)
-    const [materiasConComisiones, setMateriasConComisiones] = useState<IMateriaConComisiones[]>([])
+    const [materiasConComisiones, setMateriasConComisiones] = useState<
+        IMateriaConComisiones[]
+    >([])
     const [selectedCarrera, setSelectedCarrera] = useState('')
     const [mensaje, setMensaje] = useState<string | null>(null)
-    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null)
+    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(
+        null
+    )
 
     useEffect(() => {
         const cargarDatos = async (): Promise<void> => {
@@ -104,6 +108,8 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     inscriptos[0]?.idCarrera?.codigoCarrera || ''
                 )
 
+                console.log('Carrera seleccionada:', selectedCarrera)
+
                 const estado: IEstadoItem[] = await sp.web.lists
                     .getByTitle('Estado')
                     .items.filter(`idEstudianteId eq ${estudiante.ID}`)
@@ -111,7 +117,6 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     .expand('codMateria')()//leanelmejor
                 const idsAprobadas = estado.map((e) => e.codMateria.ID)
 
-                //correlativas
                 const correlativasItems: ICorrelativaItem[] = await sp.web.lists
                     .getByTitle('Correlativa')
                     .items.select('codMateria/ID', 'codMateriaRequerida/ID')
@@ -143,6 +148,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     )
                     .expand('codMateria', 'codComision').top(4999)()
 
+                console.log('Oferta de materias:', ofertaItems)
                 const materiaCarreraItems = await sp.web.lists
                     .getByTitle('MateriaCarrera')
                     .items.filter(
@@ -158,7 +164,6 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
 
                 const agrupadas = new Map<number, IMateriaConComisiones>()
 
-                //agrupa comisiones
                 ofertaItems.forEach((o) => {
                     const mId = o.codMateria?.Id
                     if (!mId || !o.codMateria?.codMateria) return
@@ -189,6 +194,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                 })
 
                 setMateriasConComisiones(Array.from(agrupadas.values()))
+                console.log('Materias con comisiones:', materiasConComisiones)
             } catch (error) {
                 console.error('Error cargando datos:', error)
             } finally {
@@ -213,70 +219,82 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
         )
     }
 
-    const handleGuardar = async (): Promise<void> => {
-        try {
-            const user = await sp.web.currentUser()
-            const estudiantes: IEstudiante[] = await sp.web.lists
-                .getByTitle('Estudiante')
-                .items.select('ID', 'usuario/Id')
-                .expand('usuario')()
-            const estudiante = estudiantes.find(
-                (e) => e.usuario?.Id === user.Id
-            )
-            if (!estudiante) return
+      const handleGuardar = async (): Promise<void> => {
+    try {
+        const user = await sp.web.currentUser();
 
-            const seleccionadas = materiasConComisiones.filter(
-                (m) => m.comisionSeleccionada
-            )
+        // Buscar el estudiante correspondiente al usuario actual
+        const estudiantes: IEstudiante[] = await sp.web.lists
+            .getByTitle('Estudiante')
+            .items.select('ID', 'usuario/Id')
+            .expand('usuario')();
 
-            const ofertaItems: IOfertaDeMaterias[] = await sp.web.lists
-                .getByTitle('OfertaDeMaterias')
-                .items.select('Id', 'codMateria/Id', 'codComision/Id')
-                .expand('codMateria', 'codComision').top(4999)()
+        const estudiante = estudiantes.find(
+            (e) => e.usuario?.Id === user.Id
+        );
 
-            await Promise.all(
-                seleccionadas.map(async (m) => {
-                    const oferta = ofertaItems.find(
-                        (o) =>
-                            o.codMateria?.Id === m.materiaId &&
-                            Number(o.codComision?.Id) ===
-                                Number(m.comisionSeleccionada)
-                    )
-
-                    if (!oferta) {
-                        console.warn(
-                            `Oferta no encontrada para materia ${m.materiaId} comisión ${m.comisionSeleccionada}`
-                        )
-                        return
-                    }
-
-                    await sp.web.lists.getByTitle('Estado').items.add({
-                        idEstudianteId: estudiante.ID,
-                        codMateriaId: m.materiaId,
-                        condicion: 'C',
-                    })
-
-                    await sp.web.lists.getByTitle('CursaEn').items.add({
-                        idEstudianteId: estudiante.ID,
-                        idOfertaId: oferta.Id,
-                    })
-                })
-            )
-
-            console.log(
-                'Estado completo materiasConComisiones:',
-                materiasConComisiones,
-                seleccionadas
-            )
-            setMensaje(`${seleccionadas.length} materia(s) guardadas.`)
-            setTipoMensaje('exito')
-            navigate('/inicio')
-        } catch (err) {
-            console.error('Error al guardar:', err)
-            setMensaje('Error al guardar.')
-            setTipoMensaje('error')
+        if (!estudiante) {
+            console.warn('Estudiante no encontrado');
+            return;
         }
+
+        // Materias con comisión seleccionada
+        const seleccionadas = materiasConComisiones.filter(
+            (m) => m.comisionSeleccionada
+        );
+
+        if (seleccionadas.length === 0) {
+            setMensaje('No seleccionaste ninguna comisión.');
+            setTipoMensaje('error');
+            return;
+        }
+
+        // Traer todas las ofertas de materias disponibles
+        const ofertaItems: IOfertaDeMaterias[] = await sp.web.lists
+            .getByTitle('OfertaDeMaterias')
+            .items.select('Id', 'codMateria/Id', 'codComision/Id')
+            .expand('codMateria', 'codComision').top(4999)();
+
+        // Guardar estado y cursada
+        await Promise.all(
+            seleccionadas.map(async (m) => {
+                const oferta = ofertaItems.find(
+                    (o) =>
+                        o.codMateria?.Id === m.materiaId &&
+                        Number(o.codComision?.Id) === Number(m.comisionSeleccionada)
+                );
+
+                if (!oferta) {
+                    console.warn(
+                        `No se encontró la oferta para la materia ${m.materiaId} y comisión ${m.comisionSeleccionada}`
+                    );
+                    return;
+                }
+
+                // Guardar en Estado (condición "C" de cursando)
+                await sp.web.lists.getByTitle('Estado').items.add({
+                    idEstudianteId: estudiante.ID,
+                    codMateriaId: m.materiaId,
+                    condicion: 'C',
+                });
+
+                // Guardar en CursaEn
+                await sp.web.lists.getByTitle('CursaEn').items.add({
+                    idEstudianteId: estudiante.ID,
+                    idOfertaId: oferta.Id,
+                });
+            })
+        );
+
+        setMensaje(`${seleccionadas.length} materia(s) guardadas con éxito.`);
+        setTipoMensaje('exito');
+        navigate('/inicio')
+    } catch (err) {
+        console.error('Error al guardar:', err);
+        setMensaje('Ocurrió un error al guardar las materias.');
+        setTipoMensaje('error');
     }
+};
 
     const handleVolver = async (): Promise<void> => {
         navigate('/preset/cargar-aprobadas')
