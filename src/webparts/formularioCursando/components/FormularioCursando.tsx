@@ -218,66 +218,89 @@ const formularioCursando: React.FC<ISeleccionarCarreraProps> = ({
         )
     }
 
-    const handleGuardar = async (): Promise<void> => {
+     const handleGuardar = async (): Promise<void> => {
     try {
         const user = await sp.web.currentUser();
 
-        // Buscar el estudiante correspondiente al usuario actual
         const estudiantes: IEstudiante[] = await sp.web.lists
             .getByTitle('Estudiante')
             .items.select('ID', 'usuario/Id')
             .expand('usuario')();
 
-        const estudiante = estudiantes.find(
-            (e) => e.usuario?.Id === user.Id
-        );
-
+        const estudiante = estudiantes.find((e) => e.usuario?.Id === user.Id);
         if (!estudiante) {
             console.warn('Estudiante no encontrado');
             return;
         }
 
-        // Materias con comisión seleccionada
         const seleccionadas = materiasConComisiones.filter(
             (m) => m.comisionSeleccionada
         );
 
-        if (seleccionadas.length === 0) {
-            setMensaje('No seleccionaste ninguna comisión.');
-            setTipoMensaje('error');
-            return;
-        }
 
-        // Traer todas las ofertas de materias disponibles
+        // Obtener materias aprobadas del estudiante
+        const estadoItems = await sp.web.lists
+            .getByTitle('Estado')
+            .items.select('codMateria/Id', 'condicion')
+            .expand('codMateria')
+            .filter(`idEstudianteId eq ${estudiante.ID}`)();
+
+        const materiasAprobadas = estadoItems
+            .filter((e) => e.condicion === 'A')
+            .map((e) => e.codMateria?.Id);
+
+        // Obtener correlativas
+        const correlativasItems = await sp.web.lists
+            .getByTitle('Correlativa')
+            .items.select('codMateria/Id', 'codMateriaRequerida/Id')
+            .expand('codMateria', 'codMateriaRequerida')
+            .top(4999)();
+
+        // Verificar correlativas
+        const materiasHabilitadas = seleccionadas.filter((m) => {
+            const correlativasDeEsta = correlativasItems
+                .filter((c) => c.codMateria?.Id === m.materiaId)
+                .map((c) => c.codMateriaRequerida?.Id);
+
+            const tieneTodoAprobado = correlativasDeEsta.every((correlativaId) =>
+                materiasAprobadas.includes(correlativaId)
+            );
+
+            if (!tieneTodoAprobado) {
+                console.warn(`No cumple correlativas para materia ${m.materiaId}`);
+            }
+
+            return tieneTodoAprobado;
+        });
+
+
+        // Obtener oferta de materias
         const ofertaItems: IOfertaDeMaterias[] = await sp.web.lists
             .getByTitle('OfertaDeMaterias')
             .items.select('Id', 'codMateria/Id', 'codComision/Id')
-            .expand('codMateria', 'codComision').top(4999)();
+            .expand('codMateria', 'codComision')
+            .top(4999)();
 
-        // Guardar estado y cursada
+        // Guardar en Estado y CursaEn solo materias habilitadas
         await Promise.all(
-            seleccionadas.map(async (m) => {
+            materiasHabilitadas.map(async (m) => {
                 const oferta = ofertaItems.find(
                     (o) =>
                         o.codMateria?.Id === m.materiaId &&
-                        Number(o.codComision?.Id) === Number(m.comisionSeleccionada)
+                        o.codComision?.Id === Number(m.comisionSeleccionada)
                 );
 
                 if (!oferta) {
-                    console.warn(
-                        `No se encontró la oferta para la materia ${m.materiaId} y comisión ${m.comisionSeleccionada}`
-                    );
+                    console.warn(`No se encontró oferta para materia ${m.materiaId}`);
                     return;
                 }
 
-                // Guardar en Estado (condición "C" de cursando)
                 await sp.web.lists.getByTitle('Estado').items.add({
                     idEstudianteId: estudiante.ID,
                     codMateriaId: m.materiaId,
                     condicion: 'C',
                 });
 
-                // Guardar en CursaEn
                 await sp.web.lists.getByTitle('CursaEn').items.add({
                     idEstudianteId: estudiante.ID,
                     idOfertaId: oferta.Id,
@@ -285,9 +308,24 @@ const formularioCursando: React.FC<ISeleccionarCarreraProps> = ({
             })
         );
 
-        setMensaje(`${seleccionadas.length} materia(s) guardadas con éxito.`);
+        const cantidadGuardadas = materiasHabilitadas.length;
+        const cantidadIgnoradas = seleccionadas.length - cantidadGuardadas;
+
+       if (cantidadGuardadas === 0) {
+            setMensaje('No se pudo guardar ninguna materia. Verificá que cumplís con las correlativas.');
+            setTipoMensaje('error');
+            return;
+        }
+
+        let mensajeFinal = `${cantidadGuardadas} materia(s) guardadas con éxito.`;
+        if (cantidadIgnoradas > 0) {
+            mensajeFinal += ` ${cantidadIgnoradas} materia(s) no se guardaron por falta de correlativas.`;
+        }
+
+        setMensaje(mensajeFinal);
         setTipoMensaje('exito');
         window.location.reload();
+
     } catch (err) {
         console.error('Error al guardar:', err);
         setMensaje('Ocurrió un error al guardar las materias.');
