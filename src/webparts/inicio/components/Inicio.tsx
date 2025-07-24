@@ -15,7 +15,7 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
   const [coincidencias, setCoincidencias] = useState<Record<string, { nombre: string; fotoUrl: string }[]>>({});
 
 
- const fetchHorarioEnCurso = async (): Promise<void> => {
+const fetchHorarioEnCurso = async (): Promise<void> => {
   try {
     const user = await sp.web.currentUser();
     setNombre(user.Title);
@@ -61,11 +61,28 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
       .getByTitle('Comision')
       .items
       .filter(filtroComisiones)
-      .select('codComision', 'diaSemana', 'turno')();
+      .select('codComision', 'descripcion', 'turno')(); // acá usá 'descripcion' que tiene la info del horario
 
     const franjas = ['08:00 a 12 hs', '14:00 a 18 hs', '19:00 a 23 hs'];
-    const dias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
     const tabla: string[][] = franjas.map(f => [f, '', '', '', '', '', '']);
+
+    // Mapear días a columnas (0..5 para Lunes a Sábado)
+    const diasColumna: { [key: string]: number } = {
+      LU: 0,
+      MA: 1,
+      MI: 2,
+      JU: 3,
+      VI: 4,
+      SA: 5,
+    };
+
+    // Función que dado hora de inicio devuelve fila (turno)
+    const getFilaPorHora = (hora: number): number => {
+      if (hora >= 7 && hora <= 12) return 0; // mañana
+      if (hora >= 13 && hora <= 18) return 1; // tarde
+      if (hora >= 19 && hora <= 23) return 2; // noche
+      return -1; // inválido
+    };
 
     for (const cursa of cursaEnItems) {
       const oferta = ofertas.find(o => o.Id === cursa.idOferta?.Id);
@@ -78,38 +95,42 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
       const clases = comisiones.filter(c => c.codComision === codComision);
 
       for (const clase of clases) {
-        // Aquí dividimos diaSemana por " Y " para manejar varios días
-       const diasClase = clase.diaSemana?.split(' Y ').map((d: string) => d.trim()) || [];
+        if (!clase.descripcion) continue;
 
+        // Ejemplo: "Lu19a23Sa14a18"
+        const bloques = clase.descripcion.match(/([A-Z][a-z])(\d{2})a(\d{2})/g) || [];
 
-        const turnoNormalized = clase.turno?.trim().toUpperCase();
-        const row = turnoNormalized === 'M' ? 0 : turnoNormalized === 'T' ? 1 : turnoNormalized === 'N' ? 2 : -1;
+        for (const bloque of bloques) {
+          const match = bloque.match(/([A-Z][a-z])(\d{2})a(\d{2})/);
+          if (!match) continue;
 
-        for (const diaStr of diasClase) {
-          const col = dias.findIndex(d => d.toLowerCase() === diaStr.toLowerCase());
-          console.log('Agregar a tabla:', codMateria, codComision, diaStr, clase.turno, '→ fila:', row, 'col:', col);
+          const dia = match[1].toUpperCase();  // "LU", "SA"
+          const horaInicio = parseInt(match[2], 10);
 
-          if (col >= 0 && row >= 0) {
-            if (!tabla[row][col + 1]) {
-              tabla[row][col + 1] = `${codMateria} (${codComision})`;
+          const fila = getFilaPorHora(horaInicio);
+          const col = diasColumna[dia];
+
+          if (fila >= 0 && col !== undefined) {
+            if (!tabla[fila][col + 1]) {
+              tabla[fila][col + 1] = `${codMateria} (${codComision})`;
             } else {
-              tabla[row][col + 1] += ` / ${codMateria} (${codComision})`;
+              tabla[fila][col + 1] += ` / ${codMateria} (${codComision})`;
             }
           } else {
-            console.warn('Día o turno inválido, no se asigna:', clase, 'día:', diaStr);
+            console.warn('Día o hora inválidos:', dia, horaInicio);
           }
         }
       }
     }
 
     setHorario(tabla);
+
   } catch (error) {
     console.error('Error cargando horario desde CursaEn:', error);
   } finally {
     setLoading(false);
   }
 };
-
 
 
   useEffect(() => {
