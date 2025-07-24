@@ -15,8 +15,7 @@ const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
   const [coincidencias, setCoincidencias] = useState<Record<string, { nombre: string; fotoUrl: string }[]>>({});
 
 
-  // Cargar horario en curso (tabla)
-const fetchHorarioEnCurso = async (): Promise<void> => {
+ const fetchHorarioEnCurso = async (): Promise<void> => {
   try {
     const user = await sp.web.currentUser();
     setNombre(user.Title);
@@ -36,50 +35,72 @@ const fetchHorarioEnCurso = async (): Promise<void> => {
       .select('Id', 'idOferta/Id')
       .expand('idOferta')();
 
-    const ofertaIds = cursaEnItems.map(item => item.idOferta?.Id).filter(id => id !== null);
+    const ofertaIds = cursaEnItems.map(item => item.idOferta?.Id).filter(Boolean);
     if (ofertaIds.length === 0) {
-      setHorario([['08:00 a 12 hs', '', '', '', '', '', ''], ['14:00 a 18 hs', '', '', '', '', '', ''], ['19:00 a 23 hs', '', '', '', '', '', '']]);
+      setHorario([
+        ['08:00 a 12 hs', '', '', '', '', '', ''],
+        ['14:00 a 18 hs', '', '', '', '', '', ''],
+        ['19:00 a 23 hs', '', '', '', '', '', '']
+      ]);
       return;
     }
 
-    const filterString = ofertaIds.map(id => `Id eq ${id}`).join(' or ');
+    const filterOfertas = ofertaIds.map(id => `Id eq ${id}`).join(' or ');
 
     const ofertas = await sp.web.lists
       .getByTitle('OfertaDeMaterias')
       .items
-      .filter(filterString)
-      .select('Id', 'codMateria/nombre', 'codComision/codComision', 'codComision/diaSemana', 'codComision/turno')
+      .filter(filterOfertas)
+      .select('Id', 'codMateria/nombre', 'codComision/codComision')
       .expand('codMateria', 'codComision')();
 
-    const cursaConDetalles = cursaEnItems.map(cursa => {
-      const oferta = ofertas.find(o => o.Id === cursa.idOferta?.Id);
-      return {
-        ...cursa,
-        codMateria: oferta?.codMateria?.nombre,
-        codComision: oferta?.codComision?.codComision,
-        diaSemana: oferta?.codComision?.diaSemana,
-        turno: oferta?.codComision?.turno,
-      };
-    });
+    const codComisiones = ofertas.map(o => o.codComision?.codComision).filter(Boolean);
+    const filtroComisiones = codComisiones.map(c => `codComision eq ${c}`).join(' or ');
+
+    const comisiones = await sp.web.lists
+      .getByTitle('Comision')
+      .items
+      .filter(filtroComisiones)
+      .select('codComision', 'diaSemana', 'turno')();
 
     const franjas = ['08:00 a 12 hs', '14:00 a 18 hs', '19:00 a 23 hs'];
     const dias = ['Lunes', 'Martes', 'Miercoles', 'Jueves', 'Viernes', 'Sabado'];
-    const tabla: string[][] = franjas.map((f) => [f, '', '', '', '', '', '']);
+    const tabla: string[][] = franjas.map(f => [f, '', '', '', '', '', '']);
 
-    cursaConDetalles.forEach((c) => {
-      const { codMateria, codComision, diaSemana, turno } = c;
+    for (const cursa of cursaEnItems) {
+      const oferta = ofertas.find(o => o.Id === cursa.idOferta?.Id);
+      if (!oferta) continue;
 
-      const col = dias.findIndex((d) => d.toLowerCase() === diaSemana?.toLowerCase());
-      const row = turno === 'M' ? 0 : turno === 'T' ? 1 : turno === 'N' ? 2 : -1;
+      const codMateria = oferta.codMateria?.nombre;
+      const codComision = oferta.codComision?.codComision;
+      if (!codMateria || !codComision) continue;
 
-      if (col >= 0 && row >= 0 && codMateria && codComision) {
-        if (!tabla[row][col + 1]) {
-          tabla[row][col + 1] = `${codMateria} (${codComision})`;
-        } else {
-          tabla[row][col + 1] += ` / ${codMateria} (${codComision})`;
+      const clases = comisiones.filter(c => c.codComision === codComision);
+
+      for (const clase of clases) {
+        // Aquí dividimos diaSemana por " Y " para manejar varios días
+       const diasClase = clase.diaSemana?.split(' Y ').map((d: string) => d.trim()) || [];
+
+
+        const turnoNormalized = clase.turno?.trim().toUpperCase();
+        const row = turnoNormalized === 'M' ? 0 : turnoNormalized === 'T' ? 1 : turnoNormalized === 'N' ? 2 : -1;
+
+        for (const diaStr of diasClase) {
+          const col = dias.findIndex(d => d.toLowerCase() === diaStr.toLowerCase());
+          console.log('Agregar a tabla:', codMateria, codComision, diaStr, clase.turno, '→ fila:', row, 'col:', col);
+
+          if (col >= 0 && row >= 0) {
+            if (!tabla[row][col + 1]) {
+              tabla[row][col + 1] = `${codMateria} (${codComision})`;
+            } else {
+              tabla[row][col + 1] += ` / ${codMateria} (${codComision})`;
+            }
+          } else {
+            console.warn('Día o turno inválido, no se asigna:', clase, 'día:', diaStr);
+          }
         }
       }
-    });
+    }
 
     setHorario(tabla);
   } catch (error) {
@@ -88,6 +109,9 @@ const fetchHorarioEnCurso = async (): Promise<void> => {
     setLoading(false);
   }
 };
+
+
+
   useEffect(() => {
     fetchHorarioEnCurso().catch(console.error);
   }, []);
