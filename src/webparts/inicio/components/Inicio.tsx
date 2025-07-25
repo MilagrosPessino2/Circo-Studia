@@ -61,12 +61,11 @@ const fetchHorarioEnCurso = async (): Promise<void> => {
       .getByTitle('Comision')
       .items
       .filter(filtroComisiones)
-      .select('codComision', 'descripcion', 'turno')(); // acá usá 'descripcion' que tiene la info del horario
+      .select('codComision', 'descripcion', 'turno')();
 
     const franjas = ['08:00 a 12 hs', '14:00 a 18 hs', '19:00 a 23 hs'];
     const tabla: string[][] = franjas.map(f => [f, '', '', '', '', '', '']);
 
-    // Mapear días a columnas (0..5 para Lunes a Sábado)
     const diasColumna: { [key: string]: number } = {
       LU: 0,
       MA: 1,
@@ -76,12 +75,11 @@ const fetchHorarioEnCurso = async (): Promise<void> => {
       SA: 5,
     };
 
-    // Función que dado hora de inicio devuelve fila (turno)
     const getFilaPorHora = (hora: number): number => {
-      if (hora >= 7 && hora <= 12) return 0; // mañana
-      if (hora >= 13 && hora <= 18) return 1; // tarde
-      if (hora >= 19 && hora <= 23) return 2; // noche
-      return -1; // inválido
+      if (hora >= 7 && hora <= 12) return 0;
+      if (hora >= 13 && hora <= 18) return 1;
+      if (hora >= 19 && hora <= 23) return 2;
+      return -1;
     };
 
     for (const cursa of cursaEnItems) {
@@ -97,17 +95,24 @@ const fetchHorarioEnCurso = async (): Promise<void> => {
       for (const clase of clases) {
         if (!clase.descripcion) continue;
 
-        // Ejemplo: "Lu19a23Sa14a18"
-        const bloques = clase.descripcion.match(/([A-Z][a-z])(\d{2})a(\d{2})/g) || [];
+        // Nueva lógica para bloques como "LuJu12a14" o "Lu19a23Sa14a18"
+        const bloques: { dia: string; horaDesde: number }[] = [];
+        const matchBloques = clase.descripcion.match(/(?:[A-Z][a-z])+\d{2}a\d{2}/g) || [];
 
-        for (const bloque of bloques) {
-          const match = bloque.match(/([A-Z][a-z])(\d{2})a(\d{2})/);
-          if (!match) continue;
+        for (const bloque of matchBloques) {
+          const partes = bloque.match(/((?:[A-Z][a-z])+)(\d{2})a(\d{2})/);
+          if (!partes) continue;
 
-          const dia = match[1].toUpperCase();  // "LU", "SA"
-          const horaInicio = parseInt(match[2], 10);
+          const dias = partes[1].match(/[A-Z][a-z]/g) || [];
+          const horaDesde = parseInt(partes[2], 10);
 
-          const fila = getFilaPorHora(horaInicio);
+          for (const dia of dias) {
+            bloques.push({ dia: dia.toUpperCase(), horaDesde });
+          }
+        }
+
+        for (const { dia, horaDesde } of bloques) {
+          const fila = getFilaPorHora(horaDesde);
           const col = diasColumna[dia];
 
           if (fila >= 0 && col !== undefined) {
@@ -117,7 +122,7 @@ const fetchHorarioEnCurso = async (): Promise<void> => {
               tabla[fila][col + 1] += ` / ${codMateria} (${codComision})`;
             }
           } else {
-            console.warn('Día o hora inválidos:', dia, horaInicio);
+            console.warn('Día u hora inválidos:', dia, horaDesde);
           }
         }
       }
@@ -131,6 +136,7 @@ const fetchHorarioEnCurso = async (): Promise<void> => {
     setLoading(false);
   }
 };
+
 
 
   useEffect(() => {
