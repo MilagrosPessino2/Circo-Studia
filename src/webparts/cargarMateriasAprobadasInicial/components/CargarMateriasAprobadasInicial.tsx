@@ -1,11 +1,10 @@
 import * as React from 'react'
-import { useEffect, useState, useContext } from 'react'
+import { useEffect, useState } from 'react'
 import { Spinner } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import { ICargarMateriasAprobadasInicialProps } from './ICargarMateriasAprobadasInicialProps'
 import { useNavigate } from 'react-router-dom'
 import styles from './CargarMateriasAprobadasInicial.module.scss'
-import { UserPresetContext } from '../../../app'
 
 interface IMateria {
     id: number
@@ -64,7 +63,6 @@ const CargarMateriasAprobadasInicial: React.FC<
         null
     )
     const [eliminando, setEliminando] = useState(false)
-    const { setIsPreset } = useContext(UserPresetContext)
 
     useEffect(() => {
         const fetchCarrera = async (): Promise<void> => {
@@ -221,8 +219,6 @@ const CargarMateriasAprobadasInicial: React.FC<
                 )
             )
 
-            setIsPreset(false)
-            localStorage.setItem('userPreset', 'false')
             navigate('/preset/select-carrera')
         } catch (error) {
             console.error('Error al eliminar inscripción:', error)

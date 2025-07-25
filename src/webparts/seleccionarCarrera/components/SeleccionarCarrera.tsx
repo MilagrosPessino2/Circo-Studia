@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { useEffect, useState, useContext } from 'react'
+import { useEffect, useState } from 'react'
 import { Dropdown, PrimaryButton, Spinner } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import { ISeleccionarCarreraProps } from './ISeleccionarCarreraProps'
@@ -7,14 +7,12 @@ import { ICarreraItem } from '../../../interfaces'
 //import CargarMateriasAprobadasInicial from '../../cargarMateriasAprobadasInicial/components/CargarMateriasAprobadasInicial'
 import styles from './SeleccionarCarrera.module.scss'
 import { useNavigate } from 'react-router-dom'
-import { UserPresetContext } from '../../../app'
 
 const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
     context,
 }) => {
     const sp = getSP(context)
     const navigate = useNavigate()
-    const { setIsPreset } = useContext(UserPresetContext)
 
     const [carreras, setCarreras] = useState<ICarreraItem[]>([])
     const [selectedCarreraId, setSelectedCarreraId] = useState<string>('')
@@ -51,8 +49,7 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
                 console.log(
                     '✅ Estudiante ya tiene una carrera asociada. Redireccionando...'
                 )
-                setIsPreset(true)
-                localStorage.setItem('userPreset', 'true')
+
                 navigate('/preset/cargar-aprobadas')
                 return
             }
@@ -88,8 +85,6 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
 
             alert('✅ Carrera seleccionada correctamente.')
 
-            setIsPreset(true)
-            localStorage.setItem('userPreset', 'true')
             navigate('/preset/cargar-aprobadas')
         } catch (error) {
             console.error('Error al guardar inscripción:', error)
