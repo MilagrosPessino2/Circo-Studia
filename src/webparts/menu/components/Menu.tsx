@@ -83,11 +83,11 @@ const Menu: FC<MenuProps> = ({ context }): JSX.Element => {
 
                 {isAdmin && (
                     <>
-                        <Link to='/estudiantes'>
+                        {/* <Link to='/estudiantes'>
                             <button className={menuStyles.buttonNav}>
                                 Estudiantes
                             </button>
-                        </Link>
+                        </Link> */}
                         <Link to='/gestionar-plan'>
                             <button className={menuStyles.buttonNav}>
                                 Gestionar Plan de Estudios
@@ -96,6 +96,16 @@ const Menu: FC<MenuProps> = ({ context }): JSX.Element => {
                         <Link to='/cargar-oferta'>
                             <button className={menuStyles.buttonNav}>
                                 Cargar Oferta de Materias
+                            </button>
+                        </Link>
+                        <Link to='/gestionar-roles'>
+                            <button className={menuStyles.buttonNav}>
+                                Gestionar Roles
+                            </button>
+                        </Link>
+                        <Link to='/gestionar-comision'>
+                            <button className={menuStyles.buttonNav}>
+                                Gestionar Comision
                             </button>
                         </Link>
                     </>

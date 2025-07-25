@@ -1,68 +1,48 @@
 .modificacionMateria {
-  background-color: #ffffff;
-  border-radius: 16px;
-  padding: 2rem;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  max-width: 600px;
+  padding: 20px;
+  max-width: 500px;
   margin: 0 auto;
-  font-family: 'Segoe UI', sans-serif;
+  background-color: #ffffff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
+}
 
-  h3.titulo {
-    color: #059669; // Verde fuerte
-    font-size: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
+.titulo {
+  font-size: 22px;
+  font-weight: bold;
+  color: #1fb286;
+  margin-bottom: 20px;
+}
 
-  label {
-    display: block;
-    margin: 1rem 0 0.5rem;
-    font-weight: 600;
-    color: #333;
-  }
+.formulario {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 20px;
+}
 
-  select,
-  input {
-    width: 100%;
-    padding: 0.6rem 1rem;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 1rem;
-  }
+input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+}
 
-  .formulario {
-    margin-top: 1.5rem;
-  }
+button, .msButton {
+  background-color: #1fb286;
+  color: white;
+  border: none;
+  padding: 10px;
+  font-size: 16px;
+  cursor: pointer;
+}
 
-  button {
-    margin-top: 1.5rem;
-    width: 100%;
-    background-color: #10b981; // Verde tailwind
-    color: white;
-    font-weight: 600;
-    border: none;
-    padding: 0.8rem 1.2rem;
-    border-radius: 10px;
-    font-size: 1rem;
-    cursor: pointer;
-    transition: background-color 0.3s ease;
+button:hover, .msButton:hover {
+  background-color: #17a076;
+}
 
-    &:hover {
-      background-color: #059669;
-    }
-
-    &:disabled {
-      background-color: #9ca3af;
-      cursor: not-allowed;
-    }
-  }
-
-  .texto {
-    margin-top: 1rem;
-    font-size: 0.95rem;
-    color: #065f46; // verde oscuro
-    background-color: #d1fae5;
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    border: 1px solid #10b981;
-  }
+.texto {
+  margin-top: 16px;
+  font-weight: bold;
+  text-align: center;
+  color: #1f1f1f;
 }

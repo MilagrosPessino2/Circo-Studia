@@ -1,0 +1,34 @@
+.tabla {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-family: Arial, sans-serif;
+}
+
+.tabla thead {
+  background-color: #1fb286;
+}
+
+.tabla th, 
+.tabla td {
+  padding: 0.75rem 1rem;
+  text-align: left;
+  border: 1px solid #ddd;
+}
+
+.tabla th {
+  font-weight: bold;
+  color: #ffff;
+}
+
+.tabla tr:nth-child(even) {
+  background-color: #fafafa;
+}
+
+
+.tabla select {
+  padding: 0.4rem 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 0.95rem;
+}

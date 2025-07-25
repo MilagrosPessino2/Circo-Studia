@@ -1,6 +1,12 @@
 import * as React from 'react'
 import styles from './AltaMateria.module.scss'
-import { Spinner } from '@fluentui/react'
+import {
+    Spinner,
+    TextField,
+    Dropdown,
+    IDropdownOption,
+    PrimaryButton,
+} from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import type { IAltaMateriaProps } from './IAltaMateriaProps'
 
@@ -23,8 +29,13 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
     const [correlativasInput, setCorrelativasInput] = React.useState('')
     const [mensaje, setMensaje] = React.useState('')
     const [cargando, setCargando] = React.useState(false)
+    const [errores, setErrores] = React.useState({
+        codMateria: false,
+        nombreMateria: false,
+        correlativas: false,
+    })
 
-    React.useEffect((): void => {
+    React.useEffect(() => {
         const fetchCarreras = async (): Promise<void> => {
             try {
                 const result: Carrera[] = await sp.web.lists
@@ -45,18 +56,49 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
 
         const cod = codMateria.trim()
         const nom = nombreMateria.trim()
+        const codsCorrelativas = correlativasInput
+            .split('/')
+            .map((c) => c.trim())
+            .filter((c) => c)
 
-        if (!selectedCarreraId || !cod || !nom || !anio) {
-            setMensaje('Por favor, complete todos los campos.')
+        const nuevosErrores = {
+            codMateria: !/^\d{3,4}$/.test(cod),
+            nombreMateria: !nom,
+            correlativas:
+                correlativasInput.trim() !== '' &&
+                codsCorrelativas.some((c) => !/^\d{3,4}$/.test(c)),
+        }
+
+        if (
+            !selectedCarreraId ||
+            !cod ||
+            !nom ||
+            !anio ||
+            Object.values(nuevosErrores).some(Boolean)
+        ) {
+            setErrores(nuevosErrores)
+            if (nuevosErrores.codMateria) {
+                setMensaje(
+                    'El código de materia debe ser un número de 3 o 4 dígitos.'
+                )
+            } else if (nuevosErrores.nombreMateria) {
+                setMensaje('Por favor, completá el nombre de la materia.')
+            } else if (nuevosErrores.correlativas) {
+                setMensaje(
+                    'Error: Se ingresaron códigos de correlativas no válidos.'
+                )
+            } else {
+                setMensaje('Por favor, completá todos los campos.')
+            }
             setCargando(false)
             return
         }
 
-        if (!/^[0-9]{3,4}$/.test(cod)) {
-            setMensaje('El código de materia debe ser un número de 4 dígitos.')
-            setCargando(false)
-            return
-        }
+        setErrores({
+            codMateria: false,
+            nombreMateria: false,
+            correlativas: false,
+        })
 
         try {
             const codigoExiste = await sp.web.lists
@@ -79,16 +121,12 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                 return
             }
 
-            await sp.web.lists.getByTitle('Materia').items.add({
-                codMateria: cod,
-                nombre: nom,
-                anio,
-            })
+            await sp.web.lists
+                .getByTitle('Materia')
+                .items.add({ codMateria: cod, nombre: nom, anio })
 
             let nuevaMateriaId: number | null = null
-            const maxIntentos = 5
-
-            for (let i = 0; i < maxIntentos; i++) {
+            for (let i = 0; i < 5; i++) {
                 const nuevaMateria = await sp.web.lists
                     .getByTitle('Materia')
                     .items.filter(
@@ -105,11 +143,10 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                 await new Promise((resolve) => setTimeout(resolve, 1000))
             }
 
-            if (!nuevaMateriaId) {
+            if (!nuevaMateriaId)
                 throw new Error(
                     'No se pudo confirmar la creación de la materia.'
                 )
-            }
 
             const relacionExiste = await sp.web.lists
                 .getByTitle('MateriaCarrera')
@@ -117,7 +154,6 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                     `CodMateriaId eq ${nuevaMateriaId} and codCarreraId eq ${selectedCarreraId}`
                 )
                 .top(1)()
-
             if (relacionExiste.length === 0) {
                 await sp.web.lists.getByTitle('MateriaCarrera').items.add({
                     CodMateriaId: nuevaMateriaId,
@@ -125,17 +161,11 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                 })
             }
 
-            const codsCorrelativas = correlativasInput
-                .split('/')
-                .map((c) => c.trim())
-                .filter((c) => c)
-
             for (const codCorrelativa of codsCorrelativas) {
                 const correlativa = await sp.web.lists
                     .getByTitle('Materia')
                     .items.filter(`codMateria eq '${codCorrelativa}'`)
                     .top(1)()
-
                 if (correlativa.length > 0) {
                     await sp.web.lists.getByTitle('Correlativa').items.add({
                         codMateriaId: nuevaMateriaId,
@@ -170,60 +200,86 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
         }
     }
 
+    const opcionesCarrera: IDropdownOption[] = carreras.map((c) => ({
+        key: c.ID,
+        text: `${c.nombre} (${c.codigoCarrera})`,
+    }))
+
     return (
         <section className={styles.altaMateria}>
-            <h3>Alta de Materia</h3>
+            <h3 className={styles.titulo}>Alta de Materia</h3>
+            
 
             <div className={styles.controls}>
-                <label>Carrera:</label>
-                <select
-                    value={selectedCarreraId ?? ''}
-                    onChange={(e) =>
-                        setSelectedCarreraId(Number(e.target.value))
+                <Dropdown
+                    label='Carrera'
+                    placeholder='Seleccionar carrera'
+                    options={opcionesCarrera}
+                    selectedKey={selectedCarreraId ?? undefined}
+                    onChange={(_, option) =>
+                        setSelectedCarreraId(Number(option?.key))
                     }
-                >
-                    <option value=''>Seleccione una carrera</option>
-                    {carreras.map((c) => (
-                        <option key={c.ID} value={c.ID}>
-                            {c.nombre} ({c.codigoCarrera})
-                        </option>
-                    ))}
-                </select>
+                />
 
-                <label>Código de materia:</label>
-                <input
-                    type='text'
+                <TextField
+                    label='Código de materia'
                     value={codMateria}
-                    onChange={(e) => setCodMateria(e.target.value)}
+                    onChange={(_, newValue) =>
+                        setCodMateria((newValue ?? '').replace(/\D/g, ''))
+                    }
+                    errorMessage={
+                        errores.codMateria
+                            ? 'Debe ser un número de 3 o 4 dígitos.'
+                            : undefined
+                    }
                 />
 
-                <label>Nombre de la materia:</label>
-                <input
-                    type='text'
+                <TextField
+                    label='Nombre de la materia'
                     value={nombreMateria}
-                    onChange={(e) => setNombreMateria(e.target.value)}
+                    onChange={(_, newValue) =>
+                        setNombreMateria((newValue ?? '').toUpperCase())
+                    }
+                    errorMessage={
+                        errores.nombreMateria ? 'Campo requerido' : undefined
+                    }
                 />
 
-                <label>Correlativas (códigos separados por coma):</label>
-                <input
-                    type='text'
+                <TextField
+                    label='Correlativas (códigos separados por /)'
                     value={correlativasInput}
-                    onChange={(e) => setCorrelativasInput(e.target.value)}
+                    onChange={(_, newValue) =>
+                        setCorrelativasInput(newValue ?? '')
+                    }
                     placeholder='Ej: 3621/3623'
+                    errorMessage={
+                        errores.correlativas ? 'Formato inválido' : undefined
+                    }
                 />
 
-                <label>Año:</label>
-                <input
+                <TextField
+                    label='Año'
                     type='number'
+                    value={anio.toString()}
                     min={1}
                     max={5}
-                    value={anio}
-                    onChange={(e) => setAnio(Number(e.target.value))}
+                    onChange={(_, newValue) => setAnio(Number(newValue))}
                 />
 
-                <button className={styles.botonCargar} onClick={handleSubmit}>
-                    Cargar materia
-                </button>
+                <PrimaryButton
+                    text='Cargar materia'
+                    onClick={handleSubmit}
+                    styles={{
+                        root: {
+                            backgroundColor: '#1fb286',
+                            borderColor: '#1fb286',
+                        },
+                        rootHovered: {
+                            backgroundColor: '#17a076',
+                            borderColor: '#17a076',
+                        },
+                    }}
+                />
             </div>
 
             {cargando && (
@@ -232,7 +288,25 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                 </div>
             )}
 
-            {mensaje && <p className={styles.mensaje}>{mensaje}</p>}
+            {mensaje && (
+                <div
+                    style={{
+                        marginTop: '20px',
+                        padding: '12px',
+                        borderRadius: '4px',
+                        fontWeight: 'bold',
+                        color: mensaje.startsWith('✅') ? '#0f5132' : '#842029',
+                        backgroundColor: mensaje.startsWith('✅')
+                            ? '#d1e7dd'
+                            : '#f8d7da',
+                        border: `1px solid ${
+                            mensaje.startsWith('✅') ? '#badbcc' : '#f5c2c7'
+                        }`,
+                    }}
+                >
+                    {mensaje}
+                </div>
+            )}
         </section>
     )
 }

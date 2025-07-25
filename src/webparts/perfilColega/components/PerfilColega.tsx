@@ -6,102 +6,113 @@ import Menu from '../../menu/components/Menu'
 import styles from './PerfilColega.module.scss'
 import type { IPerfilColegaProps } from './IPerfilColegaProps'
 
+interface IColega {
+    ID: number
+    emailPersonal?: string
+    usuario: {
+        Id: number
+        Title: string
+        Name: string
+        EMail: string
+    }
+    carreraNombre: string
+}
+
+interface IMateriaCursando {
+    nombre: string
+    comision: string
+    horario: string
+}
+
 const PerfilColega: React.FC<IPerfilColegaProps> = ({ context }) => {
     const { id } = useParams()
     const sp = getSP(context)
 
-    const [colega, setColega] = useState<any>(null)
-    const [materias, setMaterias] = useState<any[]>([])
+    const [colega, setColega] = useState<IColega | null>(null)
+    const [materias, setMaterias] = useState<IMateriaCursando[]>([])
+
     const [Email, setEmail] = useState(false)
 
     useEffect(() => {
-        const cargarPerfil = async () => {
-            if (!id) return
+    const cargarPerfil = async (): Promise<void> => {
+        if (!id) return
 
-            const estudiante = await sp.web.lists
-                .getByTitle('Estudiante')
-                .items.getById(Number(id))
-                .select(
-                    'ID',
-                    'emailPersonal',
-                    'usuario/Id',
-                    'usuario/Title',
-                    'usuario/Name',
-                    'usuario/EMail'
-                )
-                .expand('usuario')()
-
-            const inscripciones = await sp.web.lists
-                .getByTitle('Inscripto')
-                .items.select('idEstudiante/ID', 'idCarreraId')
-                .expand('idEstudiante')()
-
-            const carreraRelacionada = inscripciones.find(
-                (i) => i.idEstudiante?.ID === estudiante.ID
+        // 1. Obtener datos del colega
+        const estudiante = await sp.web.lists
+            .getByTitle('Estudiante')
+            .items.getById(Number(id))
+            .select(
+                'ID',
+                'emailPersonal',
+                'usuario/Id',
+                'usuario/Title',
+                'usuario/Name',
+                'usuario/EMail'
             )
+            .expand('usuario')()
 
-            let carreraNombre = ''
-            if (carreraRelacionada) {
-                const carrera = await sp.web.lists
-                    .getByTitle('Carrera')
-                    .items.getById(carreraRelacionada.idCarreraId)
-                    .select('nombre')()
-                carreraNombre = carrera.nombre
-            }
+        // 2. Obtener la carrera del colega
+        const inscripciones = await sp.web.lists
+            .getByTitle('Inscripto')
+            .items.select('idEstudiante/ID', 'idCarreraId')
+            .expand('idEstudiante')()
 
-            const estado = await sp.web.lists
-                .getByTitle('Estado')
-                .items.select(
-                    'idEstudiante/ID',
-                    'codMateria/ID',
-                    'codMateria/codMateria',
-                    'codMateria/nombre',
-                    'condicion'
-                )
-                .expand('idEstudiante', 'codMateria')()
+        const carreraRelacionada = inscripciones.find(
+            (i) => i.idEstudiante?.ID === estudiante.ID
+        )
 
-            const materiasCursando = estado.filter(
-                (e) =>
-                    e.idEstudiante?.ID === estudiante.ID && e.condicion === 'C'
-            )
-
-            // 2. Obtener todas las ofertas
-            const ofertas = await sp.web.lists
-                .getByTitle('OfertaDeMaterias')
-                .items.select(
-                    'codMateria/ID',
-                    'codComision/ID',
-                    'codComision/codComision'
-                )
-                .expand('codMateria', 'codComision')()
-
-            // 3. Obtener todas las comisiones
-            const comisiones = await sp.web.lists
-                .getByTitle('Comision')
-                .items.select('ID', 'codComision', 'descripcion')()
-
-            // 4. Construir las materias con su comisión y horario
-            const materiasFinal = materiasCursando.map((e) => {
-                const ofertaRelacionada = ofertas.find(
-                    (o) => o.codMateria?.ID === e.codMateria?.ID
-                )
-                const comision = comisiones.find(
-                    (c) => c.ID === ofertaRelacionada?.codComision?.ID
-                )
-
-                return {
-                    nombre: e.codMateria?.nombre,
-                    comision: comision?.codComision || '-',
-                    horario: comision?.descripcion || '-',
-                }
-            })
-
-            setColega({ ...estudiante, carreraNombre })
-            setMaterias(materiasFinal)
+        let carreraNombre = ''
+        if (carreraRelacionada) {
+            const carrera = await sp.web.lists
+                .getByTitle('Carrera')
+                .items.getById(carreraRelacionada.idCarreraId)
+                .select('nombre')()
+            carreraNombre = carrera.nombre
         }
 
-        void cargarPerfil()
-    }, [context, id])
+        // 3. Obtener materias desde CursaEn
+        const cursaEnItems = await sp.web.lists
+            .getByTitle('CursaEn')
+            .items
+            .filter(`idEstudianteId eq ${estudiante.ID}`)
+            .select('Id', 'idOferta/Id')
+            .expand('idOferta')()
+
+        const ofertaIds = cursaEnItems.map(item => item.idOferta?.Id).filter(id => id !== null)
+        if (ofertaIds.length === 0) {
+            setMaterias([])
+            setColega({ ...estudiante, carreraNombre })
+            return
+        }
+
+        const filterString = ofertaIds.map(id => `Id eq ${id}`).join(' or ')
+
+        const ofertas = await sp.web.lists
+            .getByTitle('OfertaDeMaterias')
+            .items
+            .filter(filterString)
+            .select(
+                'Id',
+                'codMateria/nombre',
+                'codComision/codComision',
+                'codComision/descripcion'
+            )
+            .expand('codMateria', 'codComision')()
+
+        // 4. Construir las materias
+        const materiasFinal: IMateriaCursando[] = ofertas.map((oferta) => ({
+            nombre: oferta.codMateria?.nombre ?? '-',
+            comision: oferta.codComision?.codComision ?? '-',
+            horario: oferta.codComision?.descripcion ?? '-'
+        }))
+
+        setColega({ ...estudiante, carreraNombre })
+        setMaterias(materiasFinal)
+    }
+
+    cargarPerfil().catch(console.error)
+}, [context, id])
+
 
     if (!colega) return <p>Cargando perfil...</p>
 
