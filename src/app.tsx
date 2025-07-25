@@ -1,5 +1,4 @@
 import * as React from 'react'
-import { useEffect, useState, createContext } from 'react'
 import {
     HashRouter,
     Routes,
@@ -8,6 +7,7 @@ import {
     useLocation,
 } from 'react-router-dom'
 import { ICircoStudiaProps } from './webparts/circoStudia/components/ICircoStudiaProps'
+import { PresetProvider, usePreset } from './context/PresetContext'
 
 // COMPONENTES
 import SeleccionarCarrera from './webparts/seleccionarCarrera/components/SeleccionarCarrera'
@@ -22,28 +22,34 @@ import Formulario from './webparts/formulario/components/Formulario'
 import FormularioCursando from './webparts/formularioCursando/components/FormularioCursando'
 import Perfil from './webparts/perfil/components/Perfil'
 import PerfilColega from './webparts/perfilColega/components/PerfilColega'
-// import Estudiantes from './webparts/estudiantes/components/Estudiantes'
 import GestionarPlanDeEstudios from './webparts/gestionarPlanDeEstudios/components/GestionarPlanDeEstudios'
 import CargarOfertaDeMaterias from './webparts/cargarOfertaDeMaterias/components/CargarOfertaDeMaterias'
 import GestionDeRoles from './webparts/gestionDeRoles/components/GestionDeRoles'
 import GestionarComision from './webparts/gestionarComision/components/GestionarComision'
 
-export const UserPresetContext = createContext<{
-    isPreset: boolean
-    setIsPreset: (v: boolean) => void
-}>({
-    isPreset: false,
-    setIsPreset: () => {},
-})
-
-const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
-    const { isPreset } = React.useContext(UserPresetContext)
+// ✅ Ruta protegida para evitar acceso a preset si ya fue hecho
+const ProtectedPresetRoute: React.FC<{ children: React.ReactNode }> = ({
+    children,
+}) => {
+    const { presetDone } = usePreset()
     const location = useLocation()
 
-    if (!isPreset && !location.pathname.startsWith('/preset')) {
+    if (presetDone === undefined) {
+        return <div>Cargando aplicación...</div>
+    }
+
+    if (presetDone && location.pathname.startsWith('/preset')) {
+        return <Navigate to='/inicio' replace />
+    }
+
+    if (!presetDone && !location.pathname.startsWith('/preset')) {
         return <Navigate to='/preset/select-carrera' replace />
     }
 
+    return <>{children}</>
+}
+
+const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
     return (
         <Routes>
             <Route
@@ -78,9 +84,7 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
                 path='/perfilColega/:id'
                 element={<PerfilColega {...props} />}
             />
-
             <Route path='/inicio' element={<Inicio {...props} />} />
-            {/* <Route path='/estudiantes' element={<Estudiantes {...props} />} /> */}
             <Route
                 path='/gestionar-plan'
                 element={<GestionarPlanDeEstudios {...props} />}
@@ -102,23 +106,14 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
 }
 
 const App: React.FC<ICircoStudiaProps> = (props): JSX.Element => {
-    const [isPreset, setIsPreset] = useState<boolean>(false)
-    const [presetCargado, setPresetCargado] = useState<boolean>(false)
-
-    useEffect(() => {
-        const stored = localStorage.getItem('userPreset') === 'true'
-        setIsPreset(stored)
-        setPresetCargado(true)
-    }, [])
-
-    if (!presetCargado) return <div>Cargando aplicación...</div>
-
     return (
-        <UserPresetContext.Provider value={{ isPreset, setIsPreset }}>
+        <PresetProvider context={props.context}>
             <HashRouter>
-                <AppRoutes {...props} />
+                <ProtectedPresetRoute>
+                    <AppRoutes {...props} />
+                </ProtectedPresetRoute>
             </HashRouter>
-        </UserPresetContext.Provider>
+        </PresetProvider>
     )
 }
 
