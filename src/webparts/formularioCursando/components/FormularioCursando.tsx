@@ -246,7 +246,7 @@ const formularioCursando: React.FC<ISeleccionarCarreraProps> = ({
             .filter(`idEstudianteId eq ${estudiante.ID}`)();
 
         const materiasAprobadas = estadoItems
-            .filter((e) => e.condicion === 'A')
+            .filter((e) => e.condicion === 'A'|| e.condicion === 'R')
             .map((e) => e.codMateria?.Id);
 
         // Obtener correlativas
