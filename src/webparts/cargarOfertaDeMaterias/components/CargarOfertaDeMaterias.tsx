@@ -1,10 +1,8 @@
 import * as React from 'react'
 import { useState, useRef } from 'react'
 import {
-    PrimaryButton,
     Dropdown,
     IDropdownOption,
-    DefaultButton,
     Dialog,
     DialogFooter,
     DialogType,
@@ -13,6 +11,7 @@ import { getSP } from '../../../pnpjsConfig'
 import { ICargarOfertaDeMateriasProps } from './ICargarOfertaDeMateriasProps'
 import Menu from '../../menu/components/Menu'
 import styles from './CargarOfertaDeMaterias.module.scss'
+import Boton from '../../../utils/boton/Boton'
 
 interface IMateria {
     Id: number
@@ -331,21 +330,16 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                                 </tbody>
                             </table>
 
-                            <PrimaryButton
-                                text='Cargar Oferta'
-                                onClick={handleCargarOferta}
-                                style={{ marginBottom: '1rem' }}
-                            />
+                            <Boton onClick={handleCargarOferta} style={{ marginBottom: '1rem' }}>
+                                Cargar Oferta
+                            </Boton>
                         </>
                     )}
 
                     {/* Botón para vaciar oferta */}
-                    <DefaultButton
-                        text='Vaciar oferta para cuatrimestre'
-                        onClick={() => setMostrarDialogo(true)}
-                        style={{ marginBottom: '1rem', marginLeft: '1rem' }}
-                        disabled={eliminando}
-                    />
+                    <Boton onClick={() => setMostrarDialogo(true)} disabled={eliminando} style={{ marginBottom: '1rem', marginLeft: '1rem' }}>
+                        Vaciar oferta para cuatrimestre
+                    </Boton>
 
                     {/* Diálogo de confirmación */}
                     <Dialog
@@ -358,16 +352,14 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                         }}
                     >
                         <DialogFooter>
-                            <PrimaryButton
-                                onClick={vaciarOfertaCuatrimestre}
-                                text='Sí, vaciar oferta'
-                                disabled={eliminando}
-                            />
-                            <DefaultButton
-                                onClick={() => setMostrarDialogo(false)}
-                                text='Cancelar'
-                                disabled={eliminando}
-                            />
+                            <Boton onClick={vaciarOfertaCuatrimestre} disabled={eliminando}>
+                                Sí, vaciar oferta
+                            </Boton>
+
+                            <Boton onClick={() => setMostrarDialogo(false)} disabled={eliminando}>
+                                Cancelar
+                            </Boton>
+
                         </DialogFooter>
                     </Dialog>
 

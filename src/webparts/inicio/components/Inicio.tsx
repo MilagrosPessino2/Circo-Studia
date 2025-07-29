@@ -4,8 +4,8 @@ import { IInicioProps } from './IInicioProps';
 import { Spinner } from '@fluentui/react';
 import { getSP } from '../../../pnpjsConfig';
 import Menu from '../../menu/components/Menu';
-import { Link } from 'react-router-dom';
 import styles from './Inicio.module.scss';
+import Boton from '../../../utils/boton/Boton';
 
 const InicioEstudiante: React.FC<IInicioProps> = ({ context }) => {
   const sp = getSP(context);
@@ -276,9 +276,9 @@ const fetchHorarioEnCurso = async (): Promise<void> => {
             );
           })()}
 
-          <Link to="/coincidencias">
-            <button className={styles.boton}>Ver coincidencias</button>
-          </Link>
+          
+          <Boton to="/coincidencias"> Ver coincidencias </Boton>
+          
         </section>
       </main>
     </div>

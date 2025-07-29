@@ -6,9 +6,9 @@ import {
     Dropdown,
     ComboBox,
     Spinner,
-    PrimaryButton,
     TextField,
 } from '@fluentui/react'
+import Boton from '../../../utils/boton/Boton'
 
 interface MateriaExpandida {
     ID: number
@@ -258,21 +258,7 @@ const ModificacionMateria: React.FC<IModificacionMateriaProps> = (props) => {
                         }
                     />
 
-                    <PrimaryButton
-                        text='Guardar cambios'
-                        onClick={handleGuardar}
-                        styles={{
-                            root: {
-                                backgroundColor: '#ffd900ff',
-                                borderColor: '#ffd900ff',
-                                color: 'black',
-                            },
-                            rootHovered: {
-                                backgroundColor: '#ffd900ff',
-                                borderColor: '#ffd900ff',
-                            },
-                        }}
-                    />
+                    <Boton onClick={handleGuardar}>Cargar materia</Boton>
                 </div>
             )}
 

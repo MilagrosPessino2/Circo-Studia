@@ -7,12 +7,11 @@ import {
     Dialog,
     DialogType,
     DialogFooter,
-    DefaultButton,
-    PrimaryButton,
     Spinner,
     Dropdown,
     ComboBox,
 } from '@fluentui/react'
+import Boton from '../../../utils/boton/Boton'
 
 interface MateriaExpandida {
     ID: number
@@ -213,20 +212,7 @@ const BajaMateria: React.FC<IBajaMateriaProps> = ({ context }) => {
             />
 
             {idSeleccionado && (
-                <PrimaryButton
-                    text='Eliminar materia'
-                    onClick={() => setMostrarModal(true)}
-                    styles={{
-                        root: {
-                            backgroundColor: '#ff4d4d',
-                            borderColor: '#ff4d4d',
-                        },
-                        rootHovered: {
-                            backgroundColor: '#e04343',
-                            borderColor: '#e04343',
-                        },
-                    }}
-                />
+                <Boton onClick={() => setMostrarModal(true)}>Eliminar materia </Boton>
             )}
 
             {mensaje && (
@@ -261,14 +247,8 @@ const BajaMateria: React.FC<IBajaMateriaProps> = ({ context }) => {
                 onDismiss={() => setMostrarModal(false)}
             >
                 <DialogFooter>
-                    <PrimaryButton
-                        onClick={eliminarMateria}
-                        text='Sí, eliminar'
-                    />
-                    <DefaultButton
-                        onClick={() => setMostrarModal(false)}
-                        text='Cancelar'
-                    />
+                    <Boton onClick={eliminarMateria}>Sí, eliminar</Boton>
+                    <Boton onClick={() => setMostrarModal(false)}>Cancelar</Boton>
                 </DialogFooter>
             </Dialog>
         </section>

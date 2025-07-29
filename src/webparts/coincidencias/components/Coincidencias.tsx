@@ -6,6 +6,7 @@ import { Spinner } from '@fluentui/react'
 import styles from './Coincidencias.module.scss'
 import type { ICoincidenciasProps } from './ICoincidenciasProps'
 import { useNavigate } from 'react-router-dom'
+import Boton from '../../../utils/boton/Boton';
 
 interface Colega {
     nombre: string
@@ -266,7 +267,7 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
                         value={busqueda}
                         onChange={(e) => setBusqueda(e.target.value)}
                     />
-                    <button>Buscar</button>
+                    <Boton>Buscar</Boton>
                     {error && <p style={{ color: 'red' }}>{error}</p>}
                 </div>
 
@@ -402,15 +403,8 @@ const Coincidencias: React.FC<ICoincidenciasProps> = ({ context }) => {
                                                                 <span>
                                                                     {c.nombre}
                                                                 </span>
-                                                                <button
-                                                                    onClick={() =>
-                                                                        navigate(
-                                                                            `/perfilColega/${c.id}`
-                                                                        )
-                                                                    }
-                                                                >
-                                                                    Ver perfil
-                                                                </button>
+                                        
+                                                                <Boton to={`/perfilColega/${c.id}`}> Ver perfil </Boton>
                                                             </li>
                                                         )
                                                     )}

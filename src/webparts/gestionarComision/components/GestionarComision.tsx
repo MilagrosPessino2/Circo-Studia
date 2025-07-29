@@ -1,8 +1,6 @@
 import * as React from 'react'
 import { useState, useEffect } from 'react'
 import {
-    PrimaryButton,
-    DefaultButton,
     TextField,
     Dropdown,
     IDropdownOption,
@@ -12,6 +10,7 @@ import styles from './GestionarComision.module.scss'
 import { IGestionarComisionProps } from './IGestionarComisionProps'
 import Menu from '../../menu/components/Menu'
 import { useNavigate } from 'react-router-dom'
+import Boton from '../../../utils/boton/Boton';
 
 const dias: IDropdownOption[] = [
     { key: 'LUNES', text: 'Lunes' },
@@ -129,15 +128,8 @@ const GestionarComision: React.FC<IGestionarComisionProps> = ({ context }) => {
                 />
 
                 <div style={{ marginTop: 20 }}>
-                    <PrimaryButton
-                        text='Crear Comisión'
-                        onClick={crearComision}
-                        style={{ marginRight: 10 }}
-                    />
-                    <DefaultButton
-                        text='Eliminar Comisión'
-                        onClick={eliminarComision}
-                    />
+                    <Boton onClick={crearComision}style={{ marginRight: 10 }}>Crear Comisión</Boton>
+                    <Boton onClick={eliminarComision}>Eliminar Comisión </Boton>
                 </div>
                 {status && <p style={{ marginTop: 10 }}>{status}</p>}
             </section>
