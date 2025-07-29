@@ -5,7 +5,7 @@ import { getSP } from '../../../pnpjsConfig'
 import { useEffect, useState } from 'react'
 import styles from './Perfil.module.scss'
 import Mensaje from '../../../utils/mensaje/mensaje'
-
+import Boton from '../../../utils/boton/Boton';
 
 const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     const sp = getSP(context)
@@ -112,12 +112,7 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
                         onChange={(e) => setEmailPersonal(e.target.value)}
                         className={styles.inputMail}
                     />
-                    <button
-                        onClick={guardarEmail}
-                        className={styles.botonGuardar}
-                    >
-                        Guardar Email
-                    </button>
+                    <Boton onClick={guardarEmail}> Guardar Email </Boton>
 
                     {mensaje && tipoMensaje && (
                         <Mensaje

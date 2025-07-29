@@ -4,8 +4,8 @@ import type { IMisMateriasProps } from './IMisMateriasProps'
 import { getSP } from '../../../pnpjsConfig'
 import { useEffect, useState } from 'react'
 import { Spinner } from '@fluentui/react'
-import { Link } from 'react-router-dom'
 import styles from '../../inicio/components/Inicio.module.scss'
+import Boton from '../../../utils/boton/Boton';
 
 interface IMateria {
     id: number 
@@ -333,17 +333,14 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
             <div style={{ padding: 24 }}>
                 <div className={styles.vistaHeader}>
                     <button
-                        className={`${styles.tabButton} ${
-                            modoVista === 'curso' ? styles.activo : ''
-                        }`}
+                        className={`${styles.tabButton} ${modoVista === 'curso' ? styles.activo : ''}`}
                         onClick={() => setModoVista('curso')}
                     >
                         Materias en curso
                     </button>
+                    
                     <button
-                        className={`${styles.tabButton} ${
-                            modoVista === 'historial' ? styles.activo : ''
-                        }`}
+                        className={`${styles.tabButton} ${modoVista === 'historial' ? styles.activo : ''}`}
                         onClick={() => setModoVista('historial')}
                     >
                         Historial académico
@@ -413,7 +410,8 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                                                 }}
                                                 title='Eliminar materia'
                                             >
-                                                🗑️
+                                            <svg width="24" height="24" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                              <path d="M21.5 6a1 1 0 0 1-.883.993L20.5 7h-.845l-1.231 12.52A2.75 2.75 0 0 1 15.687 22H8.313a2.75 2.75 0 0 1-2.737-2.48L4.345 7H3.5a1 1 0 0 1 0-2h5a3.5 3.5 0 1 1 7 0h5a1 1 0 0 1 1 1Zm-7.25 3.25a.75.75 0 0 0-.743.648L13.5 10v7l.007.102a.75.75 0 0 0 1.486 0L15 17v-7l-.007-.102a.75.75 0 0 0-.743-.648Zm-4.5 0a.75.75 0 0 0-.743.648L9 10v7l.007.102a.75.75 0 0 0 1.486 0L10.5 17v-7l-.007-.102a.75.75 0 0 0-.743-.648ZM12 3.5A1.5 1.5 0 0 0 10.5 5h3A1.5 1.5 0 0 0 12 3.5Z" fill="#009266"/></svg>
                                             </button>
                                         ) : !m.bloqueada && m.idHistorial && (
                                             <button
@@ -432,7 +430,8 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                                                 }}
                                                 title='Eliminar materia'
                                             >
-                                                🗑️
+                                              <svg width="24" height="24" fill="none" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                              <path d="M21.5 6a1 1 0 0 1-.883.993L20.5 7h-.845l-1.231 12.52A2.75 2.75 0 0 1 15.687 22H8.313a2.75 2.75 0 0 1-2.737-2.48L4.345 7H3.5a1 1 0 0 1 0-2h5a3.5 3.5 0 1 1 7 0h5a1 1 0 0 1 1 1Zm-7.25 3.25a.75.75 0 0 0-.743.648L13.5 10v7l.007.102a.75.75 0 0 0 1.486 0L15 17v-7l-.007-.102a.75.75 0 0 0-.743-.648Zm-4.5 0a.75.75 0 0 0-.743.648L9 10v7l.007.102a.75.75 0 0 0 1.486 0L10.5 17v-7l-.007-.102a.75.75 0 0 0-.743-.648ZM12 3.5A1.5 1.5 0 0 0 10.5 5h3A1.5 1.5 0 0 0 12 3.5Z" fill="#009266"/></svg>
                                             </button>
                                         )}
                                     </td>
@@ -446,24 +445,18 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                         )}
 
                         <div style={{ marginTop: 20 }}>
-                            <Link
+                            <Boton style={{ marginLeft: 20 }}
                                 to={
                                     modoVista === 'curso'
                                         ? '/formularioCursando'
                                         : '/formulario'
                                 }
-                            >
-                                <button className={styles.boton}>Añadir</button>
-                            </Link>
+                            > Añadir
+                            </Boton>
 
                             {modoVista === 'curso' && (
-                                <button
-                                    onClick={() => eliminarMaterias('En curso')}
-                                    className={styles.boton}
-                                    style={{ marginLeft: 20 }}
-                                >
-                                    Eliminar todas
-                                </button>
+                                <Boton onClick={() => eliminarMaterias('En curso')}> Eliminar todas </Boton>
+                                
                             )}
                         </div>
                     </>

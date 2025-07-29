@@ -5,10 +5,10 @@ import {
     TextField,
     Dropdown,
     IDropdownOption,
-    PrimaryButton,
 } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import type { IAltaMateriaProps } from './IAltaMateriaProps'
+import Boton from '../../../utils/boton/Boton'
 
 interface Carrera {
     ID: number
@@ -266,20 +266,7 @@ const AltaMateria: React.FC<IAltaMateriaProps> = (props): JSX.Element => {
                     onChange={(_, newValue) => setAnio(Number(newValue))}
                 />
 
-                <PrimaryButton
-                    text='Cargar materia'
-                    onClick={handleSubmit}
-                    styles={{
-                        root: {
-                            backgroundColor: '#1fb286',
-                            borderColor: '#1fb286',
-                        },
-                        rootHovered: {
-                            backgroundColor: '#17a076',
-                            borderColor: '#17a076',
-                        },
-                    }}
-                />
+               <Boton onClick={handleSubmit}>Cargar materia</Boton>
             </div>
 
             {cargando && (

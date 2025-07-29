@@ -5,6 +5,7 @@ import { getSP } from '../../../pnpjsConfig'
 import Menu from '../../menu/components/Menu'
 import styles from './PerfilColega.module.scss'
 import type { IPerfilColegaProps } from './IPerfilColegaProps'
+import Boton from '../../../utils/boton/Boton';
 
 interface IColega {
     ID: number
@@ -130,9 +131,7 @@ const PerfilColega: React.FC<IPerfilColegaProps> = ({ context }) => {
                 />
                 <h2 className={styles.nombre}>{colega.usuario?.Title}</h2>
                 <p className={styles.carrera}>{colega.carreraNombre}</p>
-                <button className={styles.boton} onClick={() => setEmail(true)}>
-                    Contactar
-                </button>
+                <Boton onClick={() => setEmail(true)}>Contactar</Boton>
 
                 {Email && (
                     <div className={styles.popup}>
@@ -147,7 +146,7 @@ const PerfilColega: React.FC<IPerfilColegaProps> = ({ context }) => {
                             </>
                         )}
                         <br />
-                        <button onClick={() => setEmail(false)}>Cerrar</button>
+                        <Boton onClick={() => setEmail(false)}>Cerrar</Boton>
                     </div>
                 )}
 
