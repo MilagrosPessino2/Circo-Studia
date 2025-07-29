@@ -27,6 +27,7 @@ const dias: IDropdownOption[] = [
     { key: 'LUNES Y MARTES', text: 'Lunes y Martes' },
     { key: 'MIERCOLES Y SABADO', text: 'Miércoles y Sábado' },
     { key: 'MARTES Y MIERCOLES', text: 'Martes y Miércoles' },
+    { key: 'MARTES Y SABADO', text: 'Martes y Sábado' },
 ]
 
 const turnos: IDropdownOption[] = [
