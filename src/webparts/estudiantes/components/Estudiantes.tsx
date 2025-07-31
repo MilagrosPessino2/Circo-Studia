@@ -50,49 +50,64 @@ const Estudiantes: React.FC<IEstudiantesProps> = ({ context }) => {
                     .items.filter(`usuarioId eq ${usuarioId}`)
                     .top(1)()
 
-                console.log('¿Ya existe estudiante?:', yaExiste.length > 0)
-
-                if (yaExiste.length === 0) {
-                    const nuevo = await sp.web.lists
-                        .getByTitle('Estudiante')
-                        .items.add({
-                            usuarioId,
-                            emailPersonal: '',
-                            preset: false,
-                        })
-
-                    console.log('Respuesta completa:', nuevo)
-                    console.log('nuevo.data:', nuevo?.data)
-
-                    const idEstudiante = nuevo?.data?.ID
+                if (yaExiste.length > 0) {
                     console.log(
-                        'Nuevo estudiante agregado con ID:',
-                        idEstudiante
+                        '⚠️ El usuario ya está registrado como estudiante.'
                     )
+                    continue
+                }
 
-                    if (idEstudiante) {
-                        try {
-                            const asignado = await sp.web.lists
-                                .getByTitle('AsignadoA')
-                                .items.add({
-                                    idEstudianteId: idEstudiante,
-                                    idRolId: 2,
-                                })
-                            console.log(
-                                '✅ Registro creado en AsignadoA:',
-                                asignado
-                            )
-                        } catch (asignadoError) {
-                            console.error(
-                                '❌ Error al crear registro en AsignadoA',
-                                asignadoError
-                            )
-                        }
-                    } else {
-                        console.warn(
-                            'No se pudo obtener el ID del nuevo estudiante.'
+                const nuevo = await sp.web.lists
+                    .getByTitle('Estudiante')
+                    .items.add({
+                        usuarioId,
+                        emailPersonal: '',
+                        preset: false,
+                    })
+
+                let idEstudiante: number | null = nuevo?.data?.ID || null
+                console.log('Intentando obtener ID del nuevo estudiante...')
+
+                let intentos = 0
+                while (!idEstudiante && intentos < 10) {
+                    await new Promise((resolve) => setTimeout(resolve, 500))
+                    const consulta = await sp.web.lists
+                        .getByTitle('Estudiante')
+                        .items.filter(`usuarioId eq ${usuarioId}`)
+                        .top(1)()
+                    idEstudiante = consulta?.[0]?.ID || null
+                    intentos++
+                }
+
+                if (idEstudiante) {
+                    try {
+                        const asignado = await sp.web.lists
+                            .getByTitle('AsignadoA')
+                            .items.add({
+                                idEstudianteId: idEstudiante,
+                                idRolId: 2,
+                            })
+                        console.log(
+                            '✅ Registro creado en AsignadoA:',
+                            asignado
+                        )
+                    } catch (asignadoError) {
+                        console.error(
+                            '❌ Error al crear registro en AsignadoA',
+                            asignadoError
+                        )
+                        throw new Error(
+                            'Error al vincular el estudiante en AsignadoA.'
                         )
                     }
+
+                    console.log(
+                        `✅ Estudiante con ID ${idEstudiante} registrado correctamente.`
+                    )
+                } else {
+                    throw new Error(
+                        'No se pudo obtener el ID del estudiante luego de varios intentos.'
+                    )
                 }
             }
 
