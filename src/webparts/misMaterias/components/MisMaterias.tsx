@@ -445,7 +445,7 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                         )}
 
                         <div style={{ marginTop: 20 }}>
-                            <Boton style={{ marginLeft: 20 }}
+                            <Boton style={{ marginRight: 20 }}
                                 to={
                                     modoVista === 'curso'
                                         ? '/formularioCursando'
