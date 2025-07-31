@@ -6,6 +6,7 @@ import styles from './GestionDeRoles.module.scss'
 import type { IGestionDeRolesProps } from './IGestionDeRolesProps'
 import Menu from '../../menu/components/Menu'
 import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 interface IEstudiante {
     Id: number
@@ -146,14 +147,17 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
         <div className={styles.layout}>
             <Menu context={context} />
             <div className={styles.estudiantes}>
-                <h2 className={styles.titulo}>Gestión de Roles</h2>
+                <h2 className={styles.titulo}>Estudiantes</h2>
 
                 <TextField
                     label='Buscar por nombre o email'
-                    placeholder='Ej: Juan Pérez o juan@email.com'
+                    placeholder='Ej: Juan Pérez o juan@circostudio.com'
                     onChange={(_, value) => setFiltro(value || '')}
                     styles={{ root: { marginBottom: 16 } }}
                 />
+                <Link to='/admin/estudiantes' className={styles.linkBoton}>
+                    Ir a Estudiantes
+                </Link>
 
                 {loading ? (
                     <Spinner label='Cargando estudiantes y roles...' />

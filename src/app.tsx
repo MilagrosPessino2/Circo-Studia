@@ -26,6 +26,7 @@ import GestionarPlanDeEstudios from './webparts/gestionarPlanDeEstudios/componen
 import CargarOfertaDeMaterias from './webparts/cargarOfertaDeMaterias/components/CargarOfertaDeMaterias'
 import GestionDeRoles from './webparts/gestionDeRoles/components/GestionDeRoles'
 import GestionarComision from './webparts/gestionarComision/components/GestionarComision'
+import Estudiantes from './webparts/estudiantes/components/Estudiantes'
 
 // ✅ Ruta protegida para evitar acceso a preset si ya fue hecho
 const ProtectedPresetRoute: React.FC<{ children: React.ReactNode }> = ({
@@ -86,19 +87,23 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
             />
             <Route path='/inicio' element={<Inicio {...props} />} />
             <Route
-                path='/gestionar-plan'
+                path='/admin/gestionar-plan'
                 element={<GestionarPlanDeEstudios {...props} />}
             />
             <Route
-                path='/cargar-oferta'
+                path='/admin/cargar-oferta'
                 element={<CargarOfertaDeMaterias {...props} />}
             />
             <Route
-                path='/gestionar-roles'
+                path='/admin/gestionar-roles'
                 element={<GestionDeRoles {...props} />}
             />
             <Route
-                path='/gestionar-comision'
+                path='/admin/estudiantes'
+                element={<Estudiantes {...props} />}
+            />
+            <Route
+                path='/admin/gestionar-comision'
                 element={<GestionarComision {...props} />}
             />
         </Routes>

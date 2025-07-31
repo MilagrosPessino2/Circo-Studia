@@ -12,11 +12,9 @@ import * as strings from 'EstudiantesWebPartStrings';
 import Estudiantes from './components/Estudiantes';
 import { IEstudiantesProps } from './components/IEstudiantesProps';
 
-export interface IEstudiantesWebPartProps {
-  description: string;
-}
 
-export default class EstudiantesWebPart extends BaseClientSideWebPart<IEstudiantesWebPartProps> {
+
+export default class EstudiantesWebPart extends BaseClientSideWebPart<IEstudiantesProps> {
 
   private _isDarkTheme: boolean = false;
   private _environmentMessage: string = '';
