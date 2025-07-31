@@ -1,10 +1,6 @@
-import { WebPartContext } from "@microsoft/sp-webpart-base";
+import { WebPartContext } from '@microsoft/sp-webpart-base'
 
 export interface IEstudiantesProps {
-  description: string;
-  isDarkTheme: boolean;
-  environmentMessage: string;
-  hasTeamsContext: boolean;
-  userDisplayName: string;
-  context: WebPartContext;
+  context: WebPartContext
+  onEstudianteAgregado?: () => void
 }

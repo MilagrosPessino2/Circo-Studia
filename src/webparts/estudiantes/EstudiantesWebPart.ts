@@ -16,18 +16,12 @@ import { IEstudiantesProps } from './components/IEstudiantesProps';
 
 export default class EstudiantesWebPart extends BaseClientSideWebPart<IEstudiantesProps> {
 
-  private _isDarkTheme: boolean = false;
-  private _environmentMessage: string = '';
 
   public render(): void {
     const element: React.ReactElement<IEstudiantesProps> = React.createElement(
       Estudiantes,
       {
-        description: this.properties.description,
-        isDarkTheme: this._isDarkTheme,
-        environmentMessage: this._environmentMessage,
-        hasTeamsContext: !!this.context.sdks.microsoftTeams,
-        userDisplayName: this.context.pageContext.user.displayName,
+
         context: this.context
       }
     );
@@ -37,7 +31,7 @@ export default class EstudiantesWebPart extends BaseClientSideWebPart<IEstudiant
 
   protected onInit(): Promise<void> {
     return this._getEnvironmentMessage().then(message => {
-      this._environmentMessage = message;
+      return Promise.resolve();
     });
   }
 
@@ -75,7 +69,6 @@ export default class EstudiantesWebPart extends BaseClientSideWebPart<IEstudiant
       return;
     }
 
-    this._isDarkTheme = !!currentTheme.isInverted;
     const {
       semanticColors
     } = currentTheme;
