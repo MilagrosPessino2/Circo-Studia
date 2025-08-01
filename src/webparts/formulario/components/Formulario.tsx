@@ -8,6 +8,7 @@ import styles from './Formulario.module.scss'
 import TablaMaterias from '../../../utils/tablaMaterias/TablaMaterias'
 import Mensaje from '../../../utils/mensaje/mensaje'
 import { useNavigate } from 'react-router-dom'
+import Boton from '../../../utils/boton/Boton'
 
 interface IMateria {
     Id: number
@@ -238,11 +239,10 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
                             onCondicionChange={handleCondicionChange}
                             />
 
-                        <button
-                            className={styles.botonGuardar}
+                        <Boton
                             onClick={guardarCondiciones}>
                             Guardar estados
-                        </button>
+                        </Boton>
                     </>
                 )}
             </div>

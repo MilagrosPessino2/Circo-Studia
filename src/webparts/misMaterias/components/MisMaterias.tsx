@@ -233,7 +233,7 @@ const fetchMateriasHistorial = async (): Promise<void> => {
     }
 }
 
-const confirmarEliminacion = (materia: IMateria, onConfirmar: () => void) => {
+const confirmarEliminacion = (materia: IMateria, onConfirmar: () => void): void => {
   setMateriaAEliminar(materia);
   setConfirmarCallback(() => onConfirmar);
   setMostrarDialogo(true);
@@ -279,7 +279,7 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
     const confirmar = window.confirm(
         `Vas a eliminar ${materiasAEliminar.length} materias en estado "${estadoAEliminar}".\n¿Estás seguro?`
     )
-     
+ 
 
     if (!confirmar) return
 
@@ -476,7 +476,6 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                                 }
                             > Añadir
                             </Boton>
-
                             {modoVista === 'curso' && (
                                 <Boton onClick={() => eliminarMaterias('En curso')}> Eliminar todas </Boton>
                                 
