@@ -243,7 +243,7 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                                 codMateriaId: materiaId,
                                 codComisionId: comisionId,
                                 modalidad: item.modalidad,
-                                Cuatrimestre: cuatrimestre.toString(),
+                                Cuatrimestre: cuatrimestre,
                                 fechaDePublicacion: new Date().toISOString(),
                             })
                         cargadas++
@@ -330,14 +330,21 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                                 </tbody>
                             </table>
 
-                            <Boton onClick={handleCargarOferta} style={{ marginBottom: '1rem' }}>
+                            <Boton
+                                onClick={handleCargarOferta}
+                                style={{ marginBottom: '1rem' }}
+                            >
                                 Cargar Oferta
                             </Boton>
                         </>
                     )}
 
                     {/* Botón para vaciar oferta */}
-                    <Boton onClick={() => setMostrarDialogo(true)} disabled={eliminando} style={{ marginBottom: '1rem', marginLeft: '1rem' }}>
+                    <Boton
+                        onClick={() => setMostrarDialogo(true)}
+                        disabled={eliminando}
+                        style={{ marginBottom: '1rem', marginLeft: '1rem' }}
+                    >
                         Vaciar oferta para cuatrimestre
                     </Boton>
 
@@ -352,14 +359,19 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                         }}
                     >
                         <DialogFooter>
-                            <Boton onClick={vaciarOfertaCuatrimestre} disabled={eliminando}>
+                            <Boton
+                                onClick={vaciarOfertaCuatrimestre}
+                                disabled={eliminando}
+                            >
                                 Sí, vaciar oferta
                             </Boton>
 
-                            <Boton onClick={() => setMostrarDialogo(false)} disabled={eliminando}>
+                            <Boton
+                                onClick={() => setMostrarDialogo(false)}
+                                disabled={eliminando}
+                            >
                                 Cancelar
                             </Boton>
-
                         </DialogFooter>
                     </Dialog>
 

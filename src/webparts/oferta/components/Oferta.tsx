@@ -3,7 +3,7 @@ import Menu from '../../menu/components/Menu'
 import { getSP } from '../../../pnpjsConfig'
 import type { IOfertaProps } from './IOfertaProps'
 import { useEffect, useState } from 'react'
-import { Spinner } from '@fluentui/react'
+import { Spinner, TextField, Dropdown, IDropdownOption } from '@fluentui/react'
 import styles from '../../inicio/components/Inicio.module.scss'
 
 interface IOfertaDeMaterias {
@@ -18,6 +18,7 @@ interface IOfertaDeMaterias {
         codComision: string
     }
     modalidad: string
+    Cuatrimestre?: number
     codigoCarrera?: string
     nombreCarrera?: string
 }
@@ -50,7 +51,6 @@ interface IMateriaCarrera {
         Id: number
     }
 }
-// ... importaciones e interfaces iguales ...
 
 const Oferta: React.FC<IOfertaProps> = ({ context }) => {
     const sp = getSP(context)
@@ -59,6 +59,16 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
     const [selectedCarrera, setSelectedCarrera] = useState<string>('')
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
+    const [filtro, setFiltro] = useState<string>('')
+    const [cuatrimestre, setCuatrimestre] = useState<number | undefined>(
+        undefined
+    )
+
+    const cuatrimestres: IDropdownOption[] = [
+        { key: 1, text: 'Primer cuatrimestre' },
+        { key: 2, text: 'Segundo cuatrimestre' },
+        { key: 3, text: 'Cuatrimestre de verano' },
+    ]
 
     useEffect(() => {
         const cargarDatos = async (): Promise<void> => {
@@ -104,13 +114,13 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
                         'codMateria/nombre',
                         'codComision/descripcion',
                         'codComision/codComision',
-                        'modalidad'
+                        'modalidad',
+                        'Cuatrimestre'
                     )
                     .expand('codMateria', 'codComision')
                     .top(4999)()
 
                 const ofertasCompletas: IOfertaDeMaterias[] = []
-
                 for (const oferta of ofertasData) {
                     const relaciones = materiaCarrera.filter(
                         (mc) => mc.CodMateria?.Id === oferta.codMateria?.Id
@@ -146,7 +156,24 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
     }, [context])
 
     const ofertasFiltradas = ofertas
-        .filter((o) => o.codigoCarrera === selectedCarrera)
+        .filter((o) => {
+            const coincideCarrera = o.codigoCarrera === selectedCarrera
+            const termino = filtro.toLowerCase()
+            const coincideBusqueda =
+                termino === '' ||
+                (o.codMateria?.codMateria?.toLowerCase() ?? '').includes(
+                    termino
+                ) ||
+                (o.codMateria?.nombre?.toLowerCase() ?? '').includes(termino) ||
+                (o.codComision?.descripcion?.toLowerCase() ?? '').includes(
+                    termino
+                )
+            const coincideCuatrimestre =
+                cuatrimestre === undefined ||
+                Number(o.Cuatrimestre) === cuatrimestre
+
+            return coincideCarrera && coincideBusqueda && coincideCuatrimestre
+        })
         .sort((a, b) => {
             const codA = a.codMateria?.codMateria ?? ''
             const codB = b.codMateria?.codMateria ?? ''
@@ -167,7 +194,7 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
 
                 {error && <p style={{ color: 'red' }}>{error}</p>}
 
-                <h3>filtrar por carrera:</h3>
+                <h3>Filtrar por carrera:</h3>
                 <label htmlFor='carrera-select' />
                 <select
                     id='carrera-select'
@@ -181,6 +208,38 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
                         </option>
                     ))}
                 </select>
+
+                <TextField
+                    label='Buscar materia o comisión'
+                    placeholder='Ej: 901, Inglés, Lu08a12'
+                    onChange={(_, value) => setFiltro(value || '')}
+                    styles={{
+                        root: {
+                            marginTop: 16,
+                            marginBottom: 16,
+                            maxWidth: 300,
+                        },
+                    }}
+                />
+
+                <Dropdown
+                    label='Seleccionar cuatrimestre'
+                    options={cuatrimestres}
+                    selectedKey={cuatrimestre}
+                    onChange={(_, option) =>
+                        setCuatrimestre(
+                            option ? (option.key as number) : undefined
+                        )
+                    }
+                    placeholder='Todos los cuatrimestres'
+                    styles={{
+                        dropdown: {
+                            width: 300,
+                            marginTop: 10,
+                            marginBottom: 10,
+                        },
+                    }}
+                />
 
                 {loading ? (
                     <Spinner label='Cargando oferta...' />
