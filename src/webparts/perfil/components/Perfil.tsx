@@ -5,7 +5,7 @@ import { getSP } from '../../../pnpjsConfig'
 import { useEffect, useState } from 'react'
 import styles from './Perfil.module.scss'
 import Mensaje from '../../../utils/mensaje/mensaje'
-import Boton from '../../../utils/boton/Boton';
+import Boton from '../../../utils/boton/Boton'
 
 const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     const sp = getSP(context)
@@ -14,7 +14,9 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     const [foto, setFoto] = useState<string>('')
     const [emailPersonal, setEmailPersonal] = useState<string>('')
     const [mensaje, setMensaje] = useState<string | null>(null)
-    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null)
+    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(
+        null
+    )
 
     useEffect(() => {
         const cargarDatosPerfil = async (): Promise<void> => {
