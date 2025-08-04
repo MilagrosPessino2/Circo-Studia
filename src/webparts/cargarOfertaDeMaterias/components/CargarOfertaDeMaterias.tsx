@@ -340,13 +340,13 @@ const CargarOfertaDeMaterias: React.FC<ICargarOfertaDeMateriasProps> = ({
                     )}
 
                     {/* Botón para vaciar oferta */}
-                    <Boton
+                    {/* <Boton
                         onClick={() => setMostrarDialogo(true)}
                         disabled={eliminando}
                         style={{ marginBottom: '1rem', marginLeft: '1rem' }}
                     >
                         Vaciar oferta para cuatrimestre
-                    </Boton>
+                    </Boton> */}
 
                     {/* Diálogo de confirmación */}
                     <Dialog

@@ -4,7 +4,7 @@ import { getSP } from '../../../pnpjsConfig'
 import type { IOfertaProps } from './IOfertaProps'
 import { useEffect, useState } from 'react'
 import { Spinner, TextField, Dropdown, IDropdownOption } from '@fluentui/react'
-import styles from '../../inicio/components/Inicio.module.scss'
+import styles from '../../oferta/components/Oferta.module.scss'
 
 interface IOfertaDeMaterias {
     Id: number
@@ -194,52 +194,61 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
 
                 {error && <p style={{ color: 'red' }}>{error}</p>}
 
-                <h3>Filtrar por carrera:</h3>
-                <label htmlFor='carrera-select' />
-                <select
-                    id='carrera-select'
-                    className={styles.seleccionar}
-                    value={selectedCarrera}
-                    onChange={(e) => setSelectedCarrera(e.target.value)}
-                >
-                    {carreras.map((c) => (
-                        <option key={c.codigoCarrera} value={c.codigoCarrera}>
-                            {c.nombre}
-                        </option>
-                    ))}
-                </select>
+                <div className={styles.filtrosContainer}>
+                    <div className={styles.filtroItem}>
+                        <Dropdown
+                            label='Seleccionar carrera'
+                            options={carreras.map((c) => ({
+                                key: c.codigoCarrera,
+                                text: c.nombre,
+                            }))}
+                            selectedKey={selectedCarrera}
+                            onChange={(_, option) =>
+                                setSelectedCarrera(
+                                    option ? (option.key as string) : ''
+                                )
+                            }
+                            placeholder='Todas las carreras'
+                            styles={{
+                                dropdown: {
+                                    width: 300,
+                                },
+                            }}
+                        />
+                    </div>
 
-                <TextField
-                    label='Buscar materia o comisión'
-                    placeholder='Ej: 901, Inglés, Lu08a12'
-                    onChange={(_, value) => setFiltro(value || '')}
-                    styles={{
-                        root: {
-                            marginTop: 16,
-                            marginBottom: 16,
-                            maxWidth: 300,
-                        },
-                    }}
-                />
+                    <div className={styles.filtroItem}>
+                        <TextField
+                            label='Buscar materia o comisión'
+                            placeholder='Ej: 901, Inglés, Lu08a12'
+                            onChange={(_, value) => setFiltro(value || '')}
+                            styles={{
+                                root: {
+                                    maxWidth: 300,
+                                },
+                            }}
+                        />
+                    </div>
 
-                <Dropdown
-                    label='Seleccionar cuatrimestre'
-                    options={cuatrimestres}
-                    selectedKey={cuatrimestre}
-                    onChange={(_, option) =>
-                        setCuatrimestre(
-                            option ? (option.key as number) : undefined
-                        )
-                    }
-                    placeholder='Todos los cuatrimestres'
-                    styles={{
-                        dropdown: {
-                            width: 300,
-                            marginTop: 10,
-                            marginBottom: 10,
-                        },
-                    }}
-                />
+                    <div className={styles.filtroItem}>
+                        <Dropdown
+                            label='Seleccionar cuatrimestre'
+                            options={cuatrimestres}
+                            selectedKey={cuatrimestre}
+                            onChange={(_, option) =>
+                                setCuatrimestre(
+                                    option ? (option.key as number) : undefined
+                                )
+                            }
+                            placeholder='Todos los cuatrimestres'
+                            styles={{
+                                dropdown: {
+                                    width: 300,
+                                },
+                            }}
+                        />
+                    </div>
+                </div>
 
                 {loading ? (
                     <Spinner label='Cargando oferta...' />
