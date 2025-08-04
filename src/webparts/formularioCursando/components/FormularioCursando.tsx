@@ -6,6 +6,7 @@ import { ISeleccionarCarreraProps } from '../../seleccionarCarrera/components/IS
 import styles from './FormularioCursando.module.scss'
 import TablaMateriasEnCurso from '../../../utils/tablaMateriasCursando/TablaMateriasCursando'
 import Menu from '../../menu/components/Menu'
+import { useNavigate } from 'react-router-dom'
 
 interface IMateriaConComisiones {
     materiaId: number
@@ -78,6 +79,7 @@ const formularioCursando: React.FC<ISeleccionarCarreraProps> = ({
     const [materiasConComisiones, setMateriasConComisiones] = useState<
         IMateriaConComisiones[]
     >([])
+    const navigate = useNavigate()
     const [selectedCarrera, setSelectedCarrera] = useState('')
     const [mensaje, setMensaje] = useState<string | null>(null)
     const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(
@@ -324,7 +326,7 @@ const formularioCursando: React.FC<ISeleccionarCarreraProps> = ({
 
         setMensaje(mensajeFinal);
         setTipoMensaje('exito');
-        window.location.reload();
+        navigate('/mis-materias');
 
     } catch (err) {
         console.error('Error al guardar:', err);
@@ -333,6 +335,9 @@ const formularioCursando: React.FC<ISeleccionarCarreraProps> = ({
     }
 };
 
+  const handleVolver = async (): Promise<void> => {
+       navigate('/mis-materias');
+    }
 
     const comisionesSeleccionadas: { [materiaId: number]: number } = {}
     materiasConComisiones.forEach((m) => {
@@ -347,6 +352,9 @@ const formularioCursando: React.FC<ISeleccionarCarreraProps> = ({
         <div className={styles.contenedor}>
             <Menu context={context} />
             <div className={styles.contenidoFormularioCursando}>
+
+                <svg onClick={handleVolver} style={{ cursor: 'pointer' }}
+                 xmlns="http://www.w3.org/2000/svg" width="20px" height="20px" viewBox="0 0 24 24"><path fill="#009266" d="M10.295 19.715a1 1 0 0 0 1.404-1.424l-5.37-5.292h13.67a1 1 0 0 0 0-2H6.336L11.7 5.714a1 1 0 0 0-1.404-1.424L3.37 11.112a1.25 1.25 0 0 0 0 1.78z"/></svg>
                 <h2 className={styles.titulo}>Seleccionar Materias en Curso</h2>
                 <p>
                     Carrera: <strong>{selectedCarrera}</strong>

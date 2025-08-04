@@ -49,7 +49,8 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     }, [context])
 
     const guardarEmail = async (): Promise<void> => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        const emailRegex = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+(\.[a-zA-Z]+)+$/
+
         if (!emailRegex.test(emailPersonal.trim())) {
             setMensaje('El email ingresado no tiene un formato válido.')
             setTipoMensaje('error')
@@ -74,7 +75,7 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
                 .update({
                     emailPersonal: emailPersonal,
                 })
-            
+
             setMensaje('Email personal guardado correctamente.')
             setTipoMensaje('exito')
         } catch (error) {
