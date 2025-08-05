@@ -259,7 +259,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                 .filter(`idEstudianteId eq ${estudiante.ID}`)()
 
             const materiasAprobadas = estadoItems
-                .filter((e) => e.condicion === 'A')
+                .filter((e) => e.condicion === 'A'|| e.condicion === 'R')
                 .map((e) => e.codMateria?.Id)
 
             const correlativasItems = await sp.web.lists
