@@ -238,11 +238,12 @@ const Formulario: React.FC<IFormularioProps> = ({ context }) => {
                             materiasBloqueadas={materiasBloqueadas}
                             onCondicionChange={handleCondicionChange}
                             />
-
-                        <Boton
+                     <div style={{ marginTop: 16 }}>
+                        <Boton 
                             onClick={guardarCondiciones}>
                             Guardar estados
                         </Boton>
+                    </div>
                     </>
                 )}
             </div>

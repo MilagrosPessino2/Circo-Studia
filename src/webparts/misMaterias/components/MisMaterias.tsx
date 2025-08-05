@@ -276,12 +276,11 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
         return
     }
 
-    const confirmar = window.confirm(
-        `Vas a eliminar ${materiasAEliminar.length} materias en estado "${estadoAEliminar}".\n¿Estás seguro?`
-    )
- 
 
-    if (!confirmar) return
+
+  confirmarEliminacion(
+        { nombre: `${materiasAEliminar.length} materias` } as IMateria,
+        async () => {
 
     try {
         for (const materia of materiasAEliminar) {
@@ -329,7 +328,8 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
         console.error('Error eliminando materias:', error)
     }
 }
-
+   )
+}
 
     const materiasAgrupadas =
         modoVista === 'historial'
@@ -476,10 +476,12 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                                 }
                             > Añadir
                             </Boton>
-                            {modoVista === 'curso' && (
-                                <Boton onClick={() => eliminarMaterias('En curso')}> Eliminar todas </Boton>
-                                
+                            {modoVista === 'curso' && materias.some((m) => m.estado === 'En curso') && (
+                                <Boton onClick={() => eliminarMaterias('En curso')}>
+                                    Eliminar todas
+                                </Boton>
                             )}
+
                         </div>
                     </>
                 )}
@@ -491,9 +493,14 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                     type: DialogType.normal,
                     title: 'Confirmar eliminación',
                     closeButtonAriaLabel: 'Cerrar',
-                    subText: materiaAEliminar
-                    ? `¿Estás seguro que querés eliminar la materia "${materiaAEliminar.nombre}"?`
-                    : ''
+                   subText: materiaAEliminar
+                ? `¿Estás seguro que querés eliminar ${
+                    materiaAEliminar.nombre.includes('materias')
+                        ? materiaAEliminar.nombre
+                        : `la materia "${materiaAEliminar.nombre}"`
+                }?`
+                : ''
+
                 }}
                 >
                 <DialogFooter>

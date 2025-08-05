@@ -7,6 +7,7 @@ import styles from './FormularioCursando.module.scss'
 import TablaMateriasEnCurso from '../../../utils/tablaMateriasCursando/TablaMateriasCursando'
 import Menu from '../../menu/components/Menu'
 import { useNavigate } from 'react-router-dom'
+import Boton from '../../../utils/boton/Boton'
 
 interface IMateriaConComisiones {
     materiaId: number
@@ -391,12 +392,12 @@ const formularioCursando: React.FC<ISeleccionarCarreraProps> = ({
                 )}
 
                 <div style={{ marginTop: 16 }}>
-                    <button
+                    <Boton
                         className={styles.botonGuardar}
                         onClick={handleGuardar}
                     >
                         Guardar
-                    </button>
+                    </Boton>
                 </div>
             </div>
         </div>
