@@ -86,19 +86,19 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
             />
             <Route path='/inicio' element={<Inicio {...props} />} />
             <Route
-                path='/gestionar-plan'
+                path='/admin/gestionar-plan'
                 element={<GestionarPlanDeEstudios {...props} />}
             />
             <Route
-                path='/cargar-oferta'
+                path='/admin/cargar-oferta'
                 element={<CargarOfertaDeMaterias {...props} />}
             />
             <Route
-                path='/gestionar-roles'
+                path='/admin/estudiantes'
                 element={<GestionDeRoles {...props} />}
             />
             <Route
-                path='/gestionar-comision'
+                path='/admin/gestionar-comision'
                 element={<GestionarComision {...props} />}
             />
         </Routes>

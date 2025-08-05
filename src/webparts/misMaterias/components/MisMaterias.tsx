@@ -6,6 +6,12 @@ import { useEffect, useState } from 'react'
 import { Spinner } from '@fluentui/react'
 import styles from '../../inicio/components/Inicio.module.scss'
 import Boton from '../../../utils/boton/Boton';
+import {
+  Dialog,
+  DialogType,
+  DialogFooter,
+} from '@fluentui/react';
+
 
 interface IMateria {
     id: number 
@@ -28,6 +34,10 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
     const [materias, setMaterias] = useState<IMateria[]>([])
     const [correlativasInversas, setCorrelativasInversas] = useState<
 Record<number, number[]>>({})
+    const [mostrarDialogo, setMostrarDialogo] = useState(false);
+    const [materiaAEliminar, setMateriaAEliminar] = useState<IMateria | null>(null);
+    const [confirmarCallback, setConfirmarCallback] = useState<() => void>(() => () => {});
+
 
 
 
@@ -223,6 +233,13 @@ const fetchMateriasHistorial = async (): Promise<void> => {
     }
 }
 
+const confirmarEliminacion = (materia: IMateria, onConfirmar: () => void): void => {
+  setMateriaAEliminar(materia);
+  setConfirmarCallback(() => onConfirmar);
+  setMostrarDialogo(true);
+};
+
+
 
 const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Promise<void> => {
     try {
@@ -259,11 +276,11 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
         return
     }
 
-    const confirmar = window.confirm(
-        `Vas a eliminar ${materiasAEliminar.length} materias en estado "${estadoAEliminar}".\n¿Estás seguro?`
-    )
 
-    if (!confirmar) return
+
+  confirmarEliminacion(
+        { nombre: `${materiasAEliminar.length} materias` } as IMateria,
+        async () => {
 
     try {
         for (const materia of materiasAEliminar) {
@@ -311,7 +328,8 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
         console.error('Error eliminando materias:', error)
     }
 }
-
+   )
+}
 
     const materiasAgrupadas =
         modoVista === 'historial'
@@ -397,7 +415,10 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                                             <button
                                                 onClick={async () => {
                                                     try {
-                                                        await eliminarMateriaCurso(m.idCurso!, m.idHistorial)
+                                                        confirmarEliminacion(m, async () => {
+                                                        await eliminarMateriaCurso(m.idCurso!, m.idHistorial);
+                                                        });
+
                                                     } catch (error) {
                                                         console.error('Error al eliminar:', error)
                                                     }
@@ -417,7 +438,9 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                                             <button
                                                 onClick={async () => {
                                                     try {
-                                                        await eliminarMateriaHistorial(m.idHistorial!)
+                                                        confirmarEliminacion(m, async () => {
+                                                        await eliminarMateriaHistorial(m.idHistorial!);
+                                                        });
                                                     } catch (error) {
                                                         console.error('Error al eliminar del historial:', error)
                                                     }
@@ -445,7 +468,7 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                         )}
 
                         <div style={{ marginTop: 20 }}>
-                            <Boton style={{ marginLeft: 20 }}
+                            <Boton style={{ marginRight: 20 }}
                                 to={
                                     modoVista === 'curso'
                                         ? '/formularioCursando'
@@ -453,15 +476,44 @@ const eliminarMateriaCurso = async (idCurso: number, idHistorial?: number): Prom
                                 }
                             > Añadir
                             </Boton>
-
-                            {modoVista === 'curso' && (
-                                <Boton onClick={() => eliminarMaterias('En curso')}> Eliminar todas </Boton>
-                                
+                            {modoVista === 'curso' && materias.some((m) => m.estado === 'En curso') && (
+                                <Boton onClick={() => eliminarMaterias('En curso')}>
+                                    Eliminar todas
+                                </Boton>
                             )}
+
                         </div>
                     </>
                 )}
             </div>
+            <Dialog
+                hidden={!mostrarDialogo}
+                onDismiss={() => setMostrarDialogo(false)}
+                dialogContentProps={{
+                    type: DialogType.normal,
+                    title: 'Confirmar eliminación',
+                    closeButtonAriaLabel: 'Cerrar',
+                   subText: materiaAEliminar
+                ? `¿Estás seguro que querés eliminar ${
+                    materiaAEliminar.nombre.includes('materias')
+                        ? materiaAEliminar.nombre
+                        : `la materia "${materiaAEliminar.nombre}"`
+                }?`
+                : ''
+
+                }}
+                >
+                <DialogFooter>
+                    <Boton
+                    onClick={async () => {
+                        setMostrarDialogo(false);
+                        await confirmarCallback();
+                    }}>Sí, eliminar </Boton>
+
+                    <Boton onClick={() => setMostrarDialogo(false)}>Cancelar </Boton>
+                </DialogFooter>
+                </Dialog>
+
         </div>
     )
 }

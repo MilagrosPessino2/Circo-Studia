@@ -5,7 +5,7 @@ import { getSP } from '../../../pnpjsConfig'
 import { useEffect, useState } from 'react'
 import styles from './Perfil.module.scss'
 import Mensaje from '../../../utils/mensaje/mensaje'
-import Boton from '../../../utils/boton/Boton';
+import Boton from '../../../utils/boton/Boton'
 
 const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     const sp = getSP(context)
@@ -14,7 +14,9 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     const [foto, setFoto] = useState<string>('')
     const [emailPersonal, setEmailPersonal] = useState<string>('')
     const [mensaje, setMensaje] = useState<string | null>(null)
-    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null)
+    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(
+        null
+    )
 
     useEffect(() => {
         const cargarDatosPerfil = async (): Promise<void> => {
@@ -49,7 +51,8 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     }, [context])
 
     const guardarEmail = async (): Promise<void> => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        const emailRegex = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+(\.[a-zA-Z]+)+$/
+
         if (!emailRegex.test(emailPersonal.trim())) {
             setMensaje('El email ingresado no tiene un formato válido.')
             setTipoMensaje('error')
@@ -74,7 +77,7 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
                 .update({
                     emailPersonal: emailPersonal,
                 })
-            
+
             setMensaje('Email personal guardado correctamente.')
             setTipoMensaje('exito')
         } catch (error) {

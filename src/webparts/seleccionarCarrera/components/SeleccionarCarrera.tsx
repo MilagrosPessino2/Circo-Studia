@@ -83,8 +83,6 @@ const SeleccionarCarrera: React.FC<ISeleccionarCarreraProps> = ({
                 idCarreraId: parseInt(selectedCarreraId),
             })
 
-            alert('✅ Carrera seleccionada correctamente.')
-
             navigate('/preset/cargar-aprobadas')
         } catch (error) {
             console.error('Error al guardar inscripción:', error)

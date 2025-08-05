@@ -193,6 +193,7 @@
     "CargarOfertaDeMateriasWebPartStrings": "lib/webparts/cargarOfertaDeMaterias/loc/{locale}.js",
     "FormularioCursandoWebPartStrings": "lib/webparts/formularioCursando/loc/{locale}.js",
     "GestionDeRolesWebPartStrings": "lib/webparts/gestionDeRoles/loc/{locale}.js",
-    "GestionarComisionWebPartStrings": "lib/webparts/gestionarComision/loc/{locale}.js"
+    "GestionarComisionWebPartStrings": "lib/webparts/gestionarComision/loc/{locale}.js",
+    "ControlStrings": "node_modules/@pnp/spfx-controls-react/lib/loc/{locale}.js"
   }
 }

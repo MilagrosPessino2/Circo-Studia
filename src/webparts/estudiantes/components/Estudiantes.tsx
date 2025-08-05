@@ -1,115 +1,127 @@
 import * as React from 'react'
-import { useEffect, useState } from 'react'
-import { Spinner, TextField } from '@fluentui/react'
+import { IEstudiantesProps } from './IEstudiantesProps'
 import { getSP } from '../../../pnpjsConfig'
 import styles from './Estudiantes.module.scss'
-import type { IEstudiantesProps } from './IEstudiantesProps'
-import Menu from '../../menu/components/Menu'
-import { useNavigate } from 'react-router-dom'
+import { PrimaryButton, Spinner, SpinnerSize, Text } from '@fluentui/react'
+import { UserPicker, IUserInfo } from '@pnp/spfx-controls-react/lib/userPicker'
 
-interface IEstudiante {
-    Id: number
-    usuario: {
-        Title: string
-        EMail: string
-        Name: string
-    }
+interface Props extends IEstudiantesProps {
+    onEstudianteAgregado?: () => void
 }
 
-const Estudiantes: React.FC<IEstudiantesProps> = ({ context }): JSX.Element => {
+const Estudiantes: React.FC<Props> = ({ context, onEstudianteAgregado }) => {
+    const [usuariosSeleccionados, setUsuariosSeleccionados] = React.useState<
+        IUserInfo[]
+    >([])
+    const [mensaje, setMensaje] = React.useState('')
+    const [error, setError] = React.useState('')
+    const [loading, setLoading] = React.useState(false)
     const sp = getSP(context)
-    const navigate = useNavigate()
-    const [estudiantes, setEstudiantes] = useState<IEstudiante[]>([])
-    const [filtro, setFiltro] = useState<string>('')
-    const [loading, setLoading] = useState<boolean>(true)
 
-    // 🔒 Control de acceso por rol
-    useEffect(() => {
-        const rol = localStorage.getItem('rol')
-        if (rol !== '1') {
-            navigate('/inicio') // Redirige si no es admin
+    const onUsuariosSeleccionados = (usuarios: IUserInfo[]): void => {
+        setUsuariosSeleccionados(usuarios)
+        setMensaje('')
+        setError('')
+    }
+
+    const agregarEstudiantes = async (): Promise<void> => {
+        setMensaje('')
+        setError('')
+        setLoading(true)
+
+        if (usuariosSeleccionados.length === 0) {
+            setError('Seleccioná al menos un usuario.')
+            setLoading(false)
+            return
         }
-    }, [navigate])
 
-    useEffect(() => {
-        const cargarEstudiantes = async (): Promise<void> => {
-            try {
-                const items: IEstudiante[] = await sp.web.lists
+        try {
+            for (const usuario of usuariosSeleccionados) {
+                if (!usuario.userPrincipalName) continue
+
+                const user = await sp.web.ensureUser(usuario.userPrincipalName)
+                const usuarioId = user.Id
+
+                const yaExiste = await sp.web.lists
                     .getByTitle('Estudiante')
-                    .items.select(
-                        'Id',
-                        'usuario/Title',
-                        'usuario/EMail',
-                        'usuario/Name'
-                    )
-                    .expand('usuario')
-                    .top(4999)()
+                    .items.filter(`usuarioId eq ${usuarioId}`)
+                    .top(1)()
 
-                setEstudiantes(items)
-            } catch (error) {
-                console.error('❌ Error cargando estudiantes:', error)
-            } finally {
-                setLoading(false)
+                if (yaExiste.length > 0) continue
+
+                const nuevo = await sp.web.lists
+                    .getByTitle('Estudiante')
+                    .items.add({
+                        usuarioId,
+                        emailPersonal: '',
+                        preset: false,
+                    })
+
+                let idEstudiante: number | null = nuevo?.data?.ID || null
+                let intentos = 0
+                while (!idEstudiante && intentos < 10) {
+                    await new Promise((resolve) => setTimeout(resolve, 500))
+                    const consulta = await sp.web.lists
+                        .getByTitle('Estudiante')
+                        .items.filter(`usuarioId eq ${usuarioId}`)
+                        .top(1)()
+                    idEstudiante = consulta?.[0]?.ID || null
+                    intentos++
+                }
+
+                if (idEstudiante) {
+                    await sp.web.lists.getByTitle('AsignadoA').items.add({
+                        idEstudianteId: idEstudiante,
+                        idRolId: 2,
+                    })
+                } else {
+                    throw new Error('No se pudo obtener el ID del estudiante.')
+                }
             }
+
+            setMensaje('✅ Estudiantes agregados correctamente.')
+            setUsuariosSeleccionados([])
+            onEstudianteAgregado?.()
+        } catch (err) {
+            console.error('❌ Error al agregar estudiantes:', err)
+            setError('❌ Error al agregar estudiantes.')
+        } finally {
+            setLoading(false)
         }
-
-        cargarEstudiantes().catch(console.error)
-    }, [sp])
-
-    const estudiantesFiltrados = estudiantes.filter(
-        (e) =>
-            e.usuario?.Title?.toLowerCase().includes(filtro.toLowerCase()) ||
-            e.usuario?.EMail?.toLowerCase().includes(filtro.toLowerCase())
-    )
+    }
 
     return (
-        <div className={styles.layout}>
-            <Menu context={context} />
-            <div className={styles.estudiantes}>
-                <h2 className={styles.titulo}>Estudiantes</h2>
-                <TextField
-                    label='Buscar por nombre o email'
-                    onChange={(_, value) => setFiltro(value || '')}
+        <div className={styles.containerEstudiantes}>
+            <h2>Agregar nuevos estudiantes</h2>
+
+            <UserPicker
+                context={context}
+                label='Buscar usuarios'
+                placeholder='Escribí nombre o mail'
+                onSelectedUsers={onUsuariosSeleccionados}
+                secondaryTextPropertyName='mail'
+                userSelectionLimit={10}
+            />
+
+            <PrimaryButton
+                text='Agregar Estudiantes'
+                onClick={agregarEstudiantes}
+                disabled={usuariosSeleccionados.length === 0 || loading}
+                style={{ marginTop: 12 }}
+            />
+
+            {loading && (
+                <Spinner
+                    label='Agregando estudiantes...'
+                    size={SpinnerSize.medium}
+                    style={{ marginTop: 10 }}
                 />
-                {loading ? (
-                    <Spinner label='Cargando estudiantes...' />
-                ) : (
-                    <table className={styles.tabla}>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Foto</th>
-                                <th>Nombre</th>
-                                <th>Email</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {estudiantesFiltrados.map((e) => {
-                                const imagen = e.usuario?.Name
-                                    ? `/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(
-                                          e.usuario.Name
-                                      )}&size=S`
-                                    : 'https://static.thenounproject.com/png/5034901-200.png'
-                                return (
-                                    <tr key={e.Id}>
-                                        <td>{e.Id}</td>
-                                        <td className={styles.fotoColumna}>
-                                            <img
-                                                src={imagen}
-                                                alt={e.usuario?.Title}
-                                                width='40'
-                                                height='40'
-                                            />
-                                        </td>
-                                        <td>{e.usuario?.Title}</td>
-                                        <td>{e.usuario?.EMail}</td>
-                                    </tr>
-                                )
-                            })}
-                        </tbody>
-                    </table>
-                )}
-            </div>
+            )}
+
+            <br />
+
+            {mensaje && <Text style={{ color: 'green' }}>{mensaje}</Text>}
+            {error && <Text style={{ color: 'red' }}>{error}</Text>}
         </div>
     )
 }

@@ -5,13 +5,19 @@
   padding: 1.5em;
   background-color: #1fb286;
   color: #ffffff;
-  min-height: 100vh;
+  min-height: 100vh;  
+  padding: 16px;
 
   &.teams {
     font-family: $ms-font-family-fallbacks;
   }
 }
 
+
+.menu nav:empty {
+  min-height: 200px; // o el alto que te guste para que no se achique
+  visibility: hidden; // oculta visualmente el nav vacío
+}
 .titulo {
   font-size: 28px;
   font-weight: bold;

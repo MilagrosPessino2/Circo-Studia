@@ -1,11 +1,11 @@
 import * as React from 'react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Dropdown, Spinner, TextField } from '@fluentui/react'
 import { getSP } from '../../../pnpjsConfig'
 import styles from './GestionDeRoles.module.scss'
 import type { IGestionDeRolesProps } from './IGestionDeRolesProps'
 import Menu from '../../menu/components/Menu'
-import { useNavigate } from 'react-router-dom'
+import Estudiantes from '../../estudiantes/components/Estudiantes'
 
 interface IEstudiante {
     Id: number
@@ -29,7 +29,6 @@ interface IAsignadoA {
 
 const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
     const sp = getSP(context)
-    const navigate = useNavigate()
 
     const [estudiantes, setEstudiantes] = useState<IEstudiante[]>([])
     const [roles, setRoles] = useState<IRol[]>([])
@@ -38,55 +37,56 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
     const [usuarioActual, setUsuarioActual] = useState<string>('')
     const [filtro, setFiltro] = useState<string>('')
 
+    const cargarDatos = useCallback(async () => {
+        setLoading(true)
+        try {
+            const user = await sp.web.currentUser()
+            setUsuarioActual(user.Email.toLowerCase())
+
+            const [est, rolesList, asignados] = await Promise.all([
+                sp.web.lists
+                    .getByTitle('Estudiante')
+                    .items.select(
+                        'Id',
+                        'usuario/Title',
+                        'usuario/EMail',
+                        'usuario/Name'
+                    )
+                    .expand('usuario')
+                    .top(4999)(),
+
+                sp.web.lists
+                    .getByTitle('Rol')
+                    .items.select('Id', 'nombreRol')
+                    .top(4999)(),
+
+                sp.web.lists
+                    .getByTitle('AsignadoA')
+                    .items.select('Id', 'idEstudiante/Id', 'idRol/Id')
+                    .expand('idEstudiante', 'idRol')
+                    .top(4999)(),
+            ])
+
+            setEstudiantes(est)
+            setRoles(rolesList)
+            setAsignaciones(asignados)
+        } catch (err) {
+            console.error('❌ Error cargando datos:', err)
+        } finally {
+            setLoading(false)
+        }
+    }, [sp])
+
     useEffect(() => {
         const rol = localStorage.getItem('rol')
         if (rol !== '1') {
-            navigate('/inicio')
+            window.location.href = '/inicio'
         }
-    }, [navigate])
+    }, [])
 
     useEffect(() => {
-        const cargarDatos = async (): Promise<void> => {
-            try {
-                const user = await sp.web.currentUser()
-                setUsuarioActual(user.Email.toLowerCase())
-
-                const [est, rolesList, asignados] = await Promise.all([
-                    sp.web.lists
-                        .getByTitle('Estudiante')
-                        .items.select(
-                            'Id',
-                            'usuario/Title',
-                            'usuario/EMail',
-                            'usuario/Name'
-                        )
-                        .expand('usuario')
-                        .top(4999)(),
-
-                    sp.web.lists
-                        .getByTitle('Rol')
-                        .items.select('Id', 'nombreRol')
-                        .top(4999)(),
-
-                    sp.web.lists
-                        .getByTitle('AsignadoA')
-                        .items.select('Id', 'idEstudiante/Id', 'idRol/Id')
-                        .expand('idEstudiante', 'idRol')
-                        .top(4999)(),
-                ])
-
-                setEstudiantes(est)
-                setRoles(rolesList)
-                setAsignaciones(asignados)
-            } catch (err) {
-                console.error('❌ Error cargando datos:', err)
-            } finally {
-                setLoading(false)
-            }
-        }
-
         cargarDatos().catch(console.error)
-    }, [sp])
+    }, [cargarDatos])
 
     const handleRolChange = async (
         estudianteId: number,
@@ -146,11 +146,11 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
         <div className={styles.layout}>
             <Menu context={context} />
             <div className={styles.estudiantes}>
-                <h2 className={styles.titulo}>Gestión de Roles</h2>
+                <h2 className={styles.titulo}>Estudiantes</h2>
 
                 <TextField
                     label='Buscar por nombre o email'
-                    placeholder='Ej: Juan Pérez o juan@email.com'
+                    placeholder='Ej: Juan Pérez o juan@circostudio.com'
                     onChange={(_, value) => setFiltro(value || '')}
                     styles={{ root: { marginBottom: 16 } }}
                 />
@@ -221,6 +221,9 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
                         </tbody>
                     </table>
                 )}
+
+                {/* Componente embebido para alta de estudiantes */}
+                <Estudiantes context={context} />
             </div>
         </div>
     )
