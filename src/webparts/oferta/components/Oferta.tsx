@@ -60,9 +60,7 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
     const [filtro, setFiltro] = useState<string>('')
-    const [cuatrimestre, setCuatrimestre] = useState<number | undefined>(
-        undefined
-    )
+    const [cuatrimestre, setCuatrimestre] = useState<number>(2)
 
     const cuatrimestres: IDropdownOption[] = [
         { key: 1, text: 'Primer cuatrimestre' },
@@ -237,7 +235,7 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
                             selectedKey={cuatrimestre}
                             onChange={(_, option) =>
                                 setCuatrimestre(
-                                    option ? (option.key as number) : undefined
+                                    option ? (option.key as number) : 2
                                 )
                             }
                             placeholder='Todos los cuatrimestres'
