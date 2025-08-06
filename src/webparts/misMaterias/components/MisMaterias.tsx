@@ -393,11 +393,11 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 {modoVista === 'historial' && (
                     <div style={{ marginBottom: 16 }}>
                         <p>
-                            <strong>Total de materias aprobadas:</strong>{' '}
+                            <strong>Total aprobadas:</strong>{' '}
                             {materiasAgrupadas.Aprobadas?.length ?? 0}
                         </p>
                         <p>
-                            <strong>Total de materias regularizadas:</strong>{' '}
+                            <strong>Total regularizadas:</strong>{' '}
                             {materiasAgrupadas.EnFinal?.length ?? 0}
                         </p>
                     </div>
