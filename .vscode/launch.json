@@ -18,6 +18,26 @@
         "--remote-debugging-port=9222",
         "-incognito"
       ]
+    },
+    {
+      "name": "debug con manifest",
+      "type": "msedge",
+      "request": "launch",
+      "url": "https://circo.sharepoint.com/sites/CircoStudia/?debug=true&noredir=true&debugManifestsFile=https://localhost:4321/temp/build/manifests.js",
+      "webRoot": "${workspaceRoot}",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///.././src/*": "${webRoot}/src/*",
+        "webpack:///../../../src/*": "${webRoot}/src/*",
+        "webpack:///../../../../src/*": "${webRoot}/src/*",
+        "webpack:///../../../../../src/*": "${webRoot}/src/*"
+      },
+      "runtimeArgs": [
+        "--remote-debugging-port=9222",
+        "-incognito"
+      ]
     }
   ]
+
+  
 }
