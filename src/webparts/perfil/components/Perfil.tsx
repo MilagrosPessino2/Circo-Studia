@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import styles from './Perfil.module.scss'
 import Mensaje from '../../../utils/mensaje/mensaje'
 import Boton from '../../../utils/boton/Boton'
+import { Spinner } from '@fluentui/react'
 
 const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     const sp = getSP(context)
@@ -17,9 +18,11 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
     const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(
         null
     )
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const cargarDatosPerfil = async (): Promise<void> => {
+            setLoading(true)
             try {
                 const user = await sp.web.currentUser()
                 setNombre(user.Title)
@@ -39,17 +42,20 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
                 )
                 if (estudiante) {
                     setEmailPersonal(estudiante.emailPersonal || '')
-                }
+                }if (!estudiante) <p>Cargando perfil...</p>
             } catch (error) {
                 console.error('Error cargando datos del perfil:', error)
                 setMensaje('Error al cargar el perfil.')
                 setTipoMensaje('error')
-            }
+            }finally {
+            setLoading(false)
+        }
         }
 
         cargarDatosPerfil().catch(console.error)
     }, [context])
 
+    
     const guardarEmail = async (): Promise<void> => {
         const emailRegex = /^[a-zA-Z0-9]+@[a-zA-Z0-9]+(\.[a-zA-Z]+)+$/
 
@@ -87,47 +93,53 @@ const PerfilEstudiante: React.FC<IPerfilProps> = ({ context }) => {
         }
     }
 
-    return (
-        <div className={styles.perfilContainer}>
-            <Menu context={context} />
-            <main className={styles.mainContent}>
-                <div className={styles.perfilInfo}>
-                    <img
-                        src={
-                            foto ||
-                            'https://static.thenounproject.com/png/5034901-200.png'
-                        }
-                        alt='Foto de perfil'
-                        className={styles.foto}
-                    />
-                    <div className={styles.textos}>
-                        <div className={styles.nombre}>{nombre}</div>
-                        <div className={styles.email}>{email}</div>
-                    </div>
-                </div>
-
-                <div className={styles.formulario}>
-                    <h3>📬 Email Personal</h3>
-                    <input
-                        type='email'
-                        placeholder='Ingresá tu email personal'
-                        value={emailPersonal}
-                        onChange={(e) => setEmailPersonal(e.target.value)}
-                        className={styles.inputMail}
-                    />
-                    <Boton onClick={guardarEmail}> Guardar Email </Boton>
-
-                    {mensaje && tipoMensaje && (
-                        <Mensaje
-                            texto={mensaje}
-                            tipo={tipoMensaje}
-                            onCerrar={() => setMensaje(null)}
+return (
+    <div className={styles.perfilContainer}>
+        <Menu context={context} />
+        <main className={styles.mainContent}>
+            {loading ? (
+                <Spinner label='Cargando informacion...' />
+            ) : (
+                <>
+                    <div className={styles.perfilInfo}>
+                        <img
+                            src={
+                                foto ||
+                                'https://static.thenounproject.com/png/5034901-200.png'
+                            }
+                            alt='Foto de perfil'
+                            className={styles.foto}
                         />
-                    )}
-                </div>
-            </main>
-        </div>
-    )
+                        <div className={styles.textos}>
+                            <div className={styles.nombre}>{nombre}</div>
+                            <div className={styles.email}>{email}</div>
+                        </div>
+                    </div>
+
+                    <div className={styles.formulario}>
+                        <h3>📬 Email Personal</h3>
+                        <input
+                            type='email'
+                            placeholder='Ingresá tu email personal'
+                            value={emailPersonal}
+                            onChange={(e) => setEmailPersonal(e.target.value)}
+                            className={styles.inputMail}
+                        />
+                        <Boton onClick={guardarEmail}> Guardar Email </Boton>
+
+                        {mensaje && tipoMensaje && (
+                            <Mensaje
+                                texto={mensaje}
+                                tipo={tipoMensaje}
+                                onCerrar={() => setMensaje(null)}
+                            />
+                        )}
+                    </div>
+                </>
+            )}
+        </main>
+    </div>
+)
 }
 
 export default PerfilEstudiante

@@ -78,14 +78,10 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
     const sp = getSP(context)
     const navigate = useNavigate()
     const [loading, setLoading] = useState(true)
-    const [materiasConComisiones, setMateriasConComisiones] = useState<
-        IMateriaConComisiones[]
-    >([])
+    const [materiasConComisiones, setMateriasConComisiones] = useState<IMateriaConComisiones[]>([])
     const [selectedCarrera, setSelectedCarrera] = useState('')
     const [mensaje, setMensaje] = useState<string | null>(null)
-    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(
-        null
-    )
+    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null)
     const { refetchPreset } = usePreset()
 
     useEffect(() => {
@@ -193,7 +189,12 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     })
                 })
 
-                setMateriasConComisiones(Array.from(agrupadas.values()))
+               setMateriasConComisiones(
+                    Array.from(agrupadas.values()).sort((a, b) =>
+                        a.codMateria.localeCompare(b.codMateria, 'es', { numeric: true })
+                    )
+)
+
             } catch (error) {
                 console.error('Error cargando datos:', error)
             } finally {
@@ -247,7 +248,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                         preset: true,
                     })
 
-                await refetchPreset() // ✅ actualiza el contexto
+                await refetchPreset()
                 navigate('/inicio')
                 return
             }
@@ -259,7 +260,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                 .filter(`idEstudianteId eq ${estudiante.ID}`)()
 
             const materiasAprobadas = estadoItems
-                .filter((e) => e.condicion === 'A'|| e.condicion === 'R')
+                .filter((e) => e.condicion === 'A' || e.condicion === 'R')
                 .map((e) => e.codMateria?.Id)
 
             const correlativasItems = await sp.web.lists
@@ -294,7 +295,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                         preset: true,
                     })
 
-                await refetchPreset() // ✅ actualiza si no tiene materias habilitadas
+                await refetchPreset()
                 navigate('/inicio')
                 return
             }
@@ -332,8 +333,6 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     })
                 })
             )
-
-            // ✅ marcar preset como completo
             await sp.web.lists
                 .getByTitle('Estudiante')
                 .items.getById(estudiante.ID)
@@ -341,7 +340,7 @@ const SeleccionarMateriasEnCurso: React.FC<ISeleccionarCarreraProps> = ({
                     preset: true,
                 })
 
-            await refetchPreset() // ✅ actualiza después de guardar materias
+            await refetchPreset()
 
             const cantidadGuardadas = materiasHabilitadas.length
             const cantidadIgnoradas = seleccionadas.length - cantidadGuardadas
