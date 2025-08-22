@@ -2,8 +2,14 @@ import * as React from 'react'
 import Menu from '../../menu/components/Menu'
 import { getSP } from '../../../pnpjsConfig'
 import type { IOfertaProps } from './IOfertaProps'
-import { useEffect, useState } from 'react'
-import { Spinner, TextField, Dropdown, IDropdownOption } from '@fluentui/react'
+import { useEffect, useMemo, useState } from 'react'
+import {
+    Spinner,
+    TextField,
+    Dropdown,
+    IDropdownOption,
+    DefaultButton,
+} from '@fluentui/react'
 import styles from '../../oferta/components/Oferta.module.scss'
 
 interface IOfertaDeMaterias {
@@ -61,6 +67,16 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
     const [error, setError] = useState<string | null>(null)
     const [filtro, setFiltro] = useState<string>('')
     const [cuatrimestre, setCuatrimestre] = useState<number>(2)
+
+    // --- NUEVO: paginado ---
+    const [page, setPage] = useState<number>(1)
+    const [pageSize, setPageSize] = useState<number>(20)
+    const pageSizeOptions: IDropdownOption[] = [
+        { key: 10, text: '10' },
+        { key: 20, text: '20' },
+        { key: 50, text: '50' },
+    ]
+    // ------------------------
 
     const cuatrimestres: IDropdownOption[] = [
         { key: 1, text: 'Primer cuatrimestre' },
@@ -123,12 +139,10 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
                     const relaciones = materiaCarrera.filter(
                         (mc) => mc.CodMateria?.Id === oferta.codMateria?.Id
                     )
-
                     for (const rel of relaciones) {
                         const carrera = carrerasData.find(
                             (c) => c.Id === rel.codCarrera?.Id
                         )
-
                         ofertasCompletas.push({
                             ...oferta,
                             codigoCarrera:
@@ -153,30 +167,53 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
         cargarDatos().catch(console.error)
     }, [context])
 
-    const ofertasFiltradas = ofertas
-        .filter((o) => {
-            const coincideCarrera = o.codigoCarrera === selectedCarrera
-            const termino = filtro.toLowerCase()
-            const coincideBusqueda =
-                termino === '' ||
-                (o.codMateria?.codMateria?.toLowerCase() ?? '').includes(
-                    termino
-                ) ||
-                (o.codMateria?.nombre?.toLowerCase() ?? '').includes(termino) ||
-                (o.codComision?.descripcion?.toLowerCase() ?? '').includes(
-                    termino
+    // Filtrado + orden (memo para performance)
+    const ofertasFiltradas = useMemo(() => {
+        const termino = filtro.toLowerCase()
+        return ofertas
+            .filter((o) => {
+                const coincideCarrera = o.codigoCarrera === selectedCarrera
+                const coincideBusqueda =
+                    termino === '' ||
+                    (o.codMateria?.codMateria?.toLowerCase() ?? '').includes(
+                        termino
+                    ) ||
+                    (o.codMateria?.nombre?.toLowerCase() ?? '').includes(
+                        termino
+                    ) ||
+                    (o.codComision?.descripcion?.toLowerCase() ?? '').includes(
+                        termino
+                    )
+                const coincideCuatrimestre =
+                    cuatrimestre === undefined ||
+                    Number(o.Cuatrimestre) === cuatrimestre
+                return (
+                    coincideCarrera && coincideBusqueda && coincideCuatrimestre
                 )
-            const coincideCuatrimestre =
-                cuatrimestre === undefined ||
-                Number(o.Cuatrimestre) === cuatrimestre
+            })
+            .sort((a, b) => {
+                const codA = a.codMateria?.codMateria ?? ''
+                const codB = b.codMateria?.codMateria ?? ''
+                return codA.localeCompare(codB, 'es', { numeric: true })
+            })
+    }, [ofertas, selectedCarrera, filtro, cuatrimestre])
 
-            return coincideCarrera && coincideBusqueda && coincideCuatrimestre
-        })
-        .sort((a, b) => {
-            const codA = a.codMateria?.codMateria ?? ''
-            const codB = b.codMateria?.codMateria ?? ''
-            return codA.localeCompare(codB, 'es', { numeric: true })
-        })
+    // --- NUEVO: lógica de paginado ---
+    const totalPages = Math.max(
+        1,
+        Math.ceil(ofertasFiltradas.length / pageSize)
+    )
+    const start = (page - 1) * pageSize
+    const currentPageItems = useMemo(
+        () => ofertasFiltradas.slice(start, start + pageSize),
+        [ofertasFiltradas, start, pageSize]
+    )
+
+    // Reset a página 1 si cambian los datos/filters o el tamaño de página
+    useEffect(() => {
+        setPage(1)
+    }, [ofertasFiltradas, pageSize])
+    // ---------------------------------
 
     return (
         <div className={styles.layout}>
@@ -231,6 +268,20 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
                                 styles={{ root: { width: '100%' } }}
                             />
                         </div>
+
+                        <div className={styles.filtroItem}>
+                            <Dropdown
+                                label='Items por página'
+                                options={pageSizeOptions}
+                                selectedKey={pageSize}
+                                onChange={(_, option) =>
+                                    setPageSize(
+                                        option ? Number(option.key) : 20
+                                    )
+                                }
+                                styles={{ root: { width: '100%' } }}
+                            />
+                        </div>
                     </div>
 
                     {/* Tabla */}
@@ -240,34 +291,102 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
                         </div>
                     ) : (
                         <div className={styles.tableWrapper}>
-                            <table className={styles.tabla}>
-                                <thead>
-                                    <tr>
-                                        <th>Cód. Materia</th>
-                                        <th>Nombre Materia</th>
-                                        <th>Comisión</th>
-                                        <th>Modalidad</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {ofertasFiltradas.map((o, i) => (
-                                        <tr key={`${o.Id}-${i}`}>
-                                            <td>
-                                                {o.codMateria?.codMateria ??
-                                                    '-'}
-                                            </td>
-                                            <td>
-                                                {o.codMateria?.nombre ?? '-'}
-                                            </td>
-                                            <td>
-                                                {o.codComision?.descripcion ??
-                                                    '-'}
-                                            </td>
-                                            <td>{o.modalidad}</td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
+                            {ofertasFiltradas.length === 0 ? (
+                                <div style={{ padding: 12 }}>
+                                    No hay resultados para los filtros
+                                    seleccionados.
+                                </div>
+                            ) : (
+                                <>
+                                    <table className={styles.tabla}>
+                                        <thead>
+                                            <tr>
+                                                <th>Cód. Materia</th>
+                                                <th>Nombre Materia</th>
+                                                <th>Comisión</th>
+                                                <th>Modalidad</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {currentPageItems.map((o, i) => (
+                                                <tr key={`${o.Id}-${i}`}>
+                                                    <td>
+                                                        {o.codMateria
+                                                            ?.codMateria ?? '-'}
+                                                    </td>
+                                                    <td>
+                                                        {o.codMateria?.nombre ??
+                                                            '-'}
+                                                    </td>
+                                                    <td>
+                                                        {o.codComision
+                                                            ?.descripcion ??
+                                                            '-'}
+                                                    </td>
+                                                    <td>{o.modalidad}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+
+                                    {/* NUEVO: barra de paginado */}
+                                    <div
+                                        style={{
+                                            display: 'flex',
+                                            gap: 12,
+                                            alignItems: 'center',
+                                            justifyContent: 'space-between',
+                                            padding: '12px 0',
+                                        }}
+                                    >
+                                        <div style={{ opacity: 0.8 }}>
+                                            Mostrando {start + 1}-
+                                            {Math.min(
+                                                start + pageSize,
+                                                ofertasFiltradas.length
+                                            )}{' '}
+                                            de {ofertasFiltradas.length}
+                                        </div>
+                                        <div
+                                            style={{
+                                                display: 'flex',
+                                                gap: 8,
+                                                alignItems: 'center',
+                                            }}
+                                        >
+                                            <DefaultButton
+                                                text='Anterior'
+                                                disabled={page <= 1}
+                                                onClick={() =>
+                                                    setPage((p) =>
+                                                        Math.max(1, p - 1)
+                                                    )
+                                                }
+                                            />
+                                            <span
+                                                style={{
+                                                    minWidth: 60,
+                                                    textAlign: 'center',
+                                                }}
+                                            >
+                                                {page} / {totalPages}
+                                            </span>
+                                            <DefaultButton
+                                                text='Siguiente'
+                                                disabled={page >= totalPages}
+                                                onClick={() =>
+                                                    setPage((p) =>
+                                                        Math.min(
+                                                            totalPages,
+                                                            p + 1
+                                                        )
+                                                    )
+                                                }
+                                            />
+                                        </div>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     )}
                 </div>
