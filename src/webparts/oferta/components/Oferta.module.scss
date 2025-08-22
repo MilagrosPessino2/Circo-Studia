@@ -1,80 +1,101 @@
-@import '~@fluentui/react/dist/sass/References.scss';
-
-.oferta {
-  overflow: hidden;
-  padding: 1em;
-  color: "[theme:bodyText, default: #323130]";
-  color: var(--bodyText);
-  &.teams {
-    font-family: $ms-font-family-fallbacks;
-  }
+/* Layout general: aside + contenido */
+.layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 100vh;
 }
 
-.welcome {
-  text-align: center;
+.main {
+  padding: 24px;
+  box-sizing: border-box;
 }
 
-.welcomeImage {
-  width: 100%;
-  max-width: 420px;
-}
-
-.links {
-  a {
-    text-decoration: none;
-    color: "[theme:link, default:#03787c]";
-    color: var(--link); // note: CSS Custom Properties support is limited to modern browsers only
-
-    &:hover {
-      text-decoration: underline;
-      color: "[theme:linkHovered, default: #014446]";
-      color: var(--linkHovered); // note: CSS Custom Properties support is limited to modern browsers only
-    }
-  }
-}
-
-.filtrosContainer {
+/* Contenedor centrado que define el ancho común de filtros y tabla */
+.content {
+  --content-max: 1100px; /* podés ajustar este máximo */
+  width: min(100%, var(--content-max));
+  margin: 0 auto; /* centra todo */
   display: flex;
-  justify-content: center;
-  align-items: flex-end;
-  gap: 24px;
-  margin-bottom: 24px;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Título */
+.titulo {
+  margin: 0 0 8px;
+  line-height: 1.2;
+}
+
+/* Errores */
+.error {
+  color: #c50f1f;
+  margin: 0;
+}
+
+/* Filtros en una fila (mismo alto visual, ancho uniforme) */
+.filtrosContainer {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 columnas iguales */
+  gap: 12px;
+  align-items: end; /* alinea por la base para que las labels no desplacen */
+  width: 100%;
 }
 
 .filtroItem {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  min-width: 200px;
-}
-.titulo {
-  font-size: 28px;
-  font-weight: bold;
-  color: #1fb286;
-  margin-bottom: 16px;
+  min-width: 0;    /* evita overflow de los inputs dentro de la celda */
+  width: 100%;
 }
 
+/* Asegura 100% de ancho de los controles de Fluent */
+.filtroItem :global(.ms-Dropdown),
+.filtroItem :global(.ms-TextField) {
+  width: 100%;
+}
+
+/* Wrapper de tabla para scroll horizontal si hace falta */
+.tableWrapper {
+  width: 100%;
+  overflow-x: auto;
+}
+
+/* Tabla alineada al ancho del contenedor */
 .tabla {
+  width: 100%;
   border-collapse: collapse;
-  margin-bottom: 32px;
-  text-align: center;
-  margin-top: 24px;
-
-  th {
-    background-color: #1fb286;
-    color: white;
-    padding: 10px;
-    border: 1px solid #ccc;
-  }
-
-  td {
-    border: 1px solid #ccc;
-    padding: 10px;
-  }
+  table-layout: fixed; /* columnas más consistentes */
 }
 
-.seleccionar{
-    padding: 6px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+.tabla thead th {
+  text-align: left;
+  font-weight: 600;
+  padding: 12px 10px;
+  border-bottom: 1px solid #e1e1e1;
+  white-space: nowrap;
+}
+
+.tabla tbody td {
+  padding: 10px;
+  border-bottom: 1px solid #eeeeee;
+  word-wrap: break-word;
+}
+
+.tabla tbody tr:hover {
+  background: #fafafa;
+}
+
+/* Loading centrado dentro del ancho común */
+.loading {
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+/* Responsive: reduce padding en pantallas más chicas */
+@media (max-width: 640px) {
+  .main {
+    padding: 16px;
+  }
+  .content {
+    gap: 12px;
+  }
 }

@@ -13,6 +13,7 @@ interface IMateria {
     idCurso?: number
     idHistorial?: number
     ofertaId?: number
+    codMateriaId?: number
     codigo: string
     nombre: string
     comision: string
@@ -37,11 +38,52 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
         () => () => {}
     )
 
+    /** Obtiene el ID del estudiante actual */
+    const getEstudianteId = async (): Promise<number | null> => {
+        const user = await sp.web.currentUser()
+        const estudiantes = await sp.web.lists
+            .getByTitle('Estudiante')
+            .items.select('ID', 'usuario/Id')
+            .expand('usuario')()
+
+        const est = estudiantes.find((e) => e.usuario?.Id === user.Id)
+        return est?.ID ?? null
+    }
+
+    /**
+     * Elimina TODOS los registros de Estado del estudiante para una materia con condicion = 'C'
+     * (sirve para limpiar duplicados o cuando no tenemos idHistorial a mano)
+     */
+    const deleteEstadoCByMateria = async (
+        estudianteId: number,
+        codMateriaId?: number
+    ): Promise<void> => {
+        if (!codMateriaId) return
+
+        const toDelete = await sp.web.lists
+            .getByTitle('Estado')
+            .items.filter(
+                `idEstudianteId eq ${estudianteId} and codMateria/ID eq ${codMateriaId} and condicion eq 'C'`
+            )
+            .select('ID')
+            .top(5000)() // por si hay duplicados
+
+        // borramos todos (papelera)
+        await Promise.all(
+            toDelete.map((row) =>
+                sp.web.lists
+                    .getByTitle('Estado')
+                    .items.getById(row.ID)
+                    .recycle()
+            )
+        )
+    }
+
+    /** Carga materias en curso + marca si existe un Estado=C asociado (toma sólo 1 para mostrar) */
     const fetchMateriasCursando = async (): Promise<void> => {
         setLoading(true)
         try {
             const user = await sp.web.currentUser()
-
             const estudiantes = await sp.web.lists
                 .getByTitle('Estudiante')
                 .items.select('ID', 'usuario/Id')
@@ -59,8 +101,8 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 .expand('idOferta')()
 
             const ofertaIds = cursaEnItems
-                .map((item) => item.idOferta?.Id)
-                .filter((id) => id !== null)
+                .map((i) => i.idOferta?.Id)
+                .filter((id) => id !== null) as number[]
             if (ofertaIds.length === 0) {
                 setMaterias([])
                 return
@@ -99,22 +141,21 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                     const codMateriaId = oferta?.codMateria?.ID
                     const estudianteId = estudiante.ID
 
-                    // Buscar si existe en Estado
+                    // ¿existe Estado C? (tomamos 1 para saber si hay)
                     const estadoItems = await sp.web.lists
                         .getByTitle('Estado')
                         .items.filter(
-                            `idEstudiante/ID eq ${estudianteId} and codMateria/ID eq ${codMateriaId}`
+                            `idEstudianteId eq ${estudianteId} and codMateria/ID eq ${codMateriaId} and condicion eq 'C'`
                         )
-                        .select('ID')()
+                        .select('ID')
+                        .top(1)()
 
                     return {
-                        id: item.Id, // id de CursaEn
+                        id: item.Id, // id en CursaEn
                         idCurso: item.Id,
-                        idHistorial:
-                            estadoItems.length > 0
-                                ? estadoItems[0].ID
-                                : undefined,
+                        idHistorial: estadoItems[0]?.ID, // id de Estado si hay 'C'
                         ofertaId: item.idOferta?.Id,
+                        codMateriaId, // <-- lo guardamos para borrar por materia si hace falta
                         codigo: oferta?.codMateria?.codMateria || '-',
                         nombre: oferta?.codMateria?.nombre || '-',
                         comision: com?.codComision || '-',
@@ -133,11 +174,11 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
         }
     }
 
+    /** Carga historial (A/R) */
     const fetchMateriasHistorial = async (): Promise<void> => {
         setLoading(true)
         try {
             const user = await sp.web.currentUser()
-
             const estudiantes = await sp.web.lists
                 .getByTitle('Estudiante')
                 .items.select('ID', 'usuario/Id')
@@ -191,12 +232,12 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 await fetchMateriasHistorial()
             }
         }
-
-        cargarMaterias().catch((err) => {
+        cargarMaterias().catch((err) =>
             console.error('Error al cargar materias:', err)
-        })
+        )
     }, [modoVista])
 
+    /** Elimina una entrada del historial (lista Estado) */
     const eliminarMateriaHistorial = async (
         idHistorial: number
     ): Promise<void> => {
@@ -215,10 +256,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
             if (!confirmar) return
         }
 
-        setCorrelativasInversas((correlativasInversas) => ({
-            ...correlativasInversas,
-            [idHistorial]: [],
-        }))
+        setCorrelativasInversas((c) => ({ ...c, [idHistorial]: [] }))
 
         try {
             await sp.web.lists
@@ -226,10 +264,11 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 .items.getById(idHistorial)
                 .recycle()
             await fetchMateriasHistorial()
-        } catch (error) {
+        } catch (error: unknown) {
             if (
-                error.message?.includes('El elemento no existe') ||
-                error.message?.includes('The item does not exist')
+                error instanceof Error &&
+                (error.message.includes('El elemento no existe') ||
+                    error.message.includes('The item does not exist'))
             ) {
                 console.warn('Ya se había eliminado el ítem de Estado')
             } else {
@@ -247,33 +286,29 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
         setMostrarDialogo(true)
     }
 
+    /**
+     * Elimina una materia "En curso":
+     * 1) Borra TODOS los Estado=C de esa materia para el estudiante (limpia duplicados)
+     * 2) Borra el registro en CursaEn
+     */
     const eliminarMateriaCurso = async (
         idCurso: number,
-        idHistorial?: number
+        _idHistorial?: number
     ): Promise<void> => {
         try {
-            if (idHistorial) {
-                try {
-                    await sp.web.lists
-                        .getByTitle('Estado')
-                        .items.getById(idHistorial)
-                        .recycle()
-                } catch (error) {
-                    if (
-                        error.message?.includes('El elemento no existe') ||
-                        error.message?.includes('The item does not exist')
-                    ) {
-                        console.warn('Ya se había eliminado el ítem de Estado')
-                    } else {
-                        throw error
-                    }
-                }
-            }
+            const estudianteId = await getEstudianteId()
+            if (!estudianteId) throw new Error('Estudiante no encontrado')
 
+            const materia = materias.find((m) => m.idCurso === idCurso)
+            // Siempre intentamos limpiar Estados=C por materia (haya o no idHistorial cargado)
+            await deleteEstadoCByMateria(estudianteId, materia?.codMateriaId)
+
+            // Luego eliminamos el registro de CursaEn
             await sp.web.lists
                 .getByTitle('CursaEn')
                 .items.getById(idCurso)
                 .recycle()
+
             await fetchMateriasCursando()
         } catch (error) {
             console.error(
@@ -283,6 +318,10 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
         }
     }
 
+    /**
+     * Eliminación en lote por estado. En modo "curso" limpia Estados=C por cada materia
+     * y luego borra CursaEn. En "historial" borra directamente de Estado.
+     */
     const eliminarMaterias = async (estadoAEliminar: string): Promise<void> => {
         const materiasAEliminar = materias.filter(
             (m) => m.estado === estadoAEliminar
@@ -299,46 +338,38 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
             { nombre: `${materiasAEliminar.length} materias` } as IMateria,
             async () => {
                 try {
-                    for (const materia of materiasAEliminar) {
-                        if (modoVista === 'historial') {
-                            // En modo historial, los ids sí son de la lista 'Estado'
-                            if (materia.idHistorial) {
-                                await sp.web.lists
-                                    .getByTitle('Estado')
-                                    .items.getById(materia.idHistorial)
-                                    .recycle()
-                            }
-                        } else {
-                            // En modo curso: primero borrar de Estado si existe
-                            if (materia.idHistorial) {
-                                try {
-                                    await sp.web.lists
+                    if (modoVista === 'historial') {
+                        // En historial: borrar elementos de Estado
+                        await Promise.all(
+                            materiasAEliminar
+                                .filter((m) => m.idHistorial)
+                                .map((m) =>
+                                    sp.web.lists
                                         .getByTitle('Estado')
-                                        .items.getById(materia.idHistorial)
+                                        .items.getById(m.idHistorial!)
                                         .recycle()
-                                } catch (error) {
-                                    console.warn(
-                                        `Error eliminando de Estado (idHistorial: ${materia.idHistorial}):`,
-                                        error
-                                    )
-                                }
-                            }
+                                )
+                        )
+                        await fetchMateriasHistorial()
+                    } else {
+                        // En curso: primero limpiar TODOS los Estado=C por materia, luego borrar CursaEn
+                        const estudianteId = await getEstudianteId()
+                        if (!estudianteId)
+                            throw new Error('Estudiante no encontrado')
 
-                            // Luego borrar de CursaEn
-                            if (materia.idCurso) {
+                        for (const m of materiasAEliminar) {
+                            await deleteEstadoCByMateria(
+                                estudianteId,
+                                m.codMateriaId
+                            )
+                            if (m.idCurso) {
                                 await sp.web.lists
                                     .getByTitle('CursaEn')
-                                    .items.getById(materia.idCurso)
+                                    .items.getById(m.idCurso)
                                     .recycle()
                             }
                         }
-                    }
-
-                    // Refrescar según vista
-                    if (modoVista === 'curso') {
                         await fetchMateriasCursando()
-                    } else {
-                        await fetchMateriasHistorial()
                     }
                 } catch (error) {
                     console.error('Error eliminando materias:', error)
@@ -355,6 +386,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
               }
             : { EnCurso: materias }
 
+    // ...resto del componente (JSX/handlers de diálogo/etc.)
     return (
         <div
             style={{

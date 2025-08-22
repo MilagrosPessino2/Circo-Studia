@@ -55,13 +55,9 @@ const CargarMateriasAprobadasInicial: React.FC<
     const navigate = useNavigate()
     const [carreraId, setCarreraId] = useState<number | null>(null)
     const [materias, setMaterias] = useState<IMateria[]>([])
-    const [correlatividades, setCorrelatividades] = useState<
-        Record<number, number[]>
-    >({})
+    const [correlatividades, setCorrelatividades] = useState<Record<number, number[]>>({})
     const [mensaje, setMensaje] = useState<string | null>(null)
-    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(
-        null
-    )
+    const [tipoMensaje, setTipoMensaje] = useState<'exito' | 'error' | null>(null)
     const [eliminando, setEliminando] = useState(false)
 
     useEffect(() => {
@@ -107,19 +103,20 @@ const CargarMateriasAprobadasInicial: React.FC<
                 const items = await sp.web.lists
                     .getByTitle('MateriaCarrera')
                     .items.filter(`codCarreraId eq ${carreraId}`)
-                    .select('ID', 'CodMateria/ID', 'CodMateria/nombre')
+                    .select('ID', 'CodMateria/ID', 'CodMateria/nombre', 'CodMateria/codMateria')
                     .expand('CodMateria')()
 
                 const materiasFormateadas: IMateria[] = items
-                    .filter((item) => item.CodMateria)
-                    .map((item) => ({
-                        id: item.CodMateria.ID,
-                        nombre: item.CodMateria.nombre,
-                        condicion: '',
-                        disabled: false,
-                        autoMarkedBy: [],
-                    }))
-
+                .filter((item) => item.CodMateria)
+                .map((item) => ({
+                    id: item.CodMateria.ID,
+                    codMateria: item.CodMateria.codMateria,
+                    nombre: item.CodMateria.nombre,
+                    condicion: '',
+                    disabled: false,
+                    autoMarkedBy: [],
+                })).sort((a, b) => a.codMateria - b.codMateria)   
+               
                 setMaterias(materiasFormateadas)
 
                 const correlativasRaw = await sp.web.lists
