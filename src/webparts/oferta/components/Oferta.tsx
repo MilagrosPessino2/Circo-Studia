@@ -179,102 +179,98 @@ const Oferta: React.FC<IOfertaProps> = ({ context }) => {
         })
 
     return (
-        <div
-            style={{
-                display: 'grid',
-                gridTemplateColumns: '200px 1fr',
-                minHeight: '100vh',
-            }}
-        >
+        <div className={styles.layout}>
             <Menu context={context} />
-            <main style={{ padding: 24 }}>
-                <h1 className={styles.titulo}>Oferta de Materias</h1>
 
-                {error && <p style={{ color: 'red' }}>{error}</p>}
+            <main className={styles.main}>
+                <div className={styles.content}>
+                    <h1 className={styles.titulo}>Oferta de Materias</h1>
 
-                <div className={styles.filtrosContainer}>
-                    <div className={styles.filtroItem}>
-                        <Dropdown
-                            label='Seleccionar carrera'
-                            options={carreras.map((c) => ({
-                                key: c.codigoCarrera,
-                                text: c.nombre,
-                            }))}
-                            selectedKey={selectedCarrera}
-                            onChange={(_, option) =>
-                                setSelectedCarrera(
-                                    option ? (option.key as string) : ''
-                                )
-                            }
-                            placeholder='Todas las carreras'
-                            styles={{
-                                dropdown: {
-                                    width: 300,
-                                },
-                            }}
-                        />
+                    {error && <p className={styles.error}>{error}</p>}
+
+                    {/* Filtros */}
+                    <div className={styles.filtrosContainer}>
+                        <div className={styles.filtroItem}>
+                            <Dropdown
+                                label='Seleccionar carrera'
+                                options={carreras.map((c) => ({
+                                    key: c.codigoCarrera,
+                                    text: c.nombre,
+                                }))}
+                                selectedKey={selectedCarrera}
+                                onChange={(_, option) =>
+                                    setSelectedCarrera(
+                                        option ? (option.key as string) : ''
+                                    )
+                                }
+                                placeholder='Todas las carreras'
+                                styles={{ root: { width: '100%' } }}
+                            />
+                        </div>
+
+                        <div className={styles.filtroItem}>
+                            <TextField
+                                label='Buscar materia o comisión'
+                                placeholder='Ej: 901, Inglés, Lu08a12'
+                                onChange={(_, value) => setFiltro(value || '')}
+                                styles={{ root: { width: '100%' } }}
+                            />
+                        </div>
+
+                        <div className={styles.filtroItem}>
+                            <Dropdown
+                                label='Seleccionar cuatrimestre'
+                                options={cuatrimestres}
+                                selectedKey={cuatrimestre}
+                                onChange={(_, option) =>
+                                    setCuatrimestre(
+                                        option ? (option.key as number) : 2
+                                    )
+                                }
+                                placeholder='Todos los cuatrimestres'
+                                styles={{ root: { width: '100%' } }}
+                            />
+                        </div>
                     </div>
 
-                    <div className={styles.filtroItem}>
-                        <TextField
-                            label='Buscar materia o comisión'
-                            placeholder='Ej: 901, Inglés, Lu08a12'
-                            onChange={(_, value) => setFiltro(value || '')}
-                            styles={{
-                                root: {
-                                    maxWidth: 300,
-                                },
-                            }}
-                        />
-                    </div>
-
-                    <div className={styles.filtroItem}>
-                        <Dropdown
-                            label='Seleccionar cuatrimestre'
-                            options={cuatrimestres}
-                            selectedKey={cuatrimestre}
-                            onChange={(_, option) =>
-                                setCuatrimestre(
-                                    option ? (option.key as number) : 2
-                                )
-                            }
-                            placeholder='Todos los cuatrimestres'
-                            styles={{
-                                dropdown: {
-                                    width: 300,
-                                },
-                            }}
-                        />
-                    </div>
+                    {/* Tabla */}
+                    {loading ? (
+                        <div className={styles.loading}>
+                            <Spinner label='Cargando oferta...' />
+                        </div>
+                    ) : (
+                        <div className={styles.tableWrapper}>
+                            <table className={styles.tabla}>
+                                <thead>
+                                    <tr>
+                                        <th>Cód. Materia</th>
+                                        <th>Nombre Materia</th>
+                                        <th>Comisión</th>
+                                        <th>Modalidad</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {ofertasFiltradas.map((o, i) => (
+                                        <tr key={`${o.Id}-${i}`}>
+                                            <td>
+                                                {o.codMateria?.codMateria ??
+                                                    '-'}
+                                            </td>
+                                            <td>
+                                                {o.codMateria?.nombre ?? '-'}
+                                            </td>
+                                            <td>
+                                                {o.codComision?.descripcion ??
+                                                    '-'}
+                                            </td>
+                                            <td>{o.modalidad}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </div>
-
-                {loading ? (
-                    <Spinner label='Cargando oferta...' />
-                ) : (
-                    <table className={styles.tabla}>
-                        <thead>
-                            <tr>
-                                <th>Cód. Materia</th>
-                                <th>Nombre Materia</th>
-                                <th>Comisión</th>
-                                <th>Modalidad</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {ofertasFiltradas.map((o, i) => (
-                                <tr
-                                    key={`${o.Id}-${i}`}
-                                    style={{ borderBottom: '1px solid #ccc' }}
-                                >
-                                    <td>{o.codMateria?.codMateria ?? '-'}</td>
-                                    <td>{o.codMateria?.nombre ?? '-'}</td>
-                                    <td>{o.codComision?.descripcion ?? '-'}</td>
-                                    <td>{o.modalidad}</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
             </main>
         </div>
     )

@@ -9,7 +9,8 @@
   "scripts": {
     "build": "gulp bundle --ship & gulp package-solution --ship",
     "clean": "gulp clean",
-    "test": "gulp test"
+    "test": "gulp test",
+    "serve": "fast-serve"
   },
   "dependencies": {
     "@fluentui/react": "^8.106.4",
@@ -41,6 +42,8 @@
     "eslint": "8.57.1",
     "eslint-plugin-react-hooks": "4.3.0",
     "gulp": "4.0.2",
+    "spfx-fast-serve": "^4.0.2",
+    "spfx-fast-serve-helpers": "~1.21.0",
     "typescript": "~5.3.3"
   }
 }

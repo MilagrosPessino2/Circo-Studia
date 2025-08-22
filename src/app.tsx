@@ -53,6 +53,14 @@ const AppRoutes: React.FC<ICircoStudiaProps> = (props) => {
     return (
         <Routes>
             <Route
+                path='/'
+                element={
+                    <ProtectedPresetRoute>
+                        <Navigate to='/inicio' replace />
+                    </ProtectedPresetRoute>
+                }
+            />
+            <Route
                 path='/preset/select-carrera'
                 element={<SeleccionarCarrera {...props} />}
             />
