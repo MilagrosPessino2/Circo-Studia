@@ -110,14 +110,20 @@ const formularioCursando: React.FC<ISeleccionarCarreraProps> = ({
                 const estado: IEstadoItem[] = await sp.web.lists
                     .getByTitle('Estado')
                     .items.filter(
-                        `idEstudianteId eq ${estudiante.ID} and (condicion eq 'A' or condicion eq 'R')`
+                        `idEstudianteId eq ${estudiante.ID} and (condicion eq 'A' or condicion eq 'R' or condicion eq 'C')`
                     )
                     .select('codMateria/Id', 'condicion')
                     .expand('codMateria')()
 
-                const idsAprobadas = estado.map((e) => e.codMateria.Id)
+                const idsAprobadas = estado
+                    .filter((e) => e.condicion === 'A' || e.condicion === 'R')
+                    .map((e) => e.codMateria.Id)
 
-                // DESPUÉS
+                const idsEnCurso = new Set(
+                    estado
+                        .filter((e) => e.condicion === 'C')
+                        .map((e) => e.codMateria.Id)
+                )
                 const correlativasItems: ICorrelativaItem[] = await sp.web.lists
                     .getByTitle('Correlativa')
                     .items.select('codMateria/Id', 'codMateriaRequerida/Id')
@@ -179,7 +185,12 @@ const formularioCursando: React.FC<ISeleccionarCarreraProps> = ({
                         idsAprobadas.includes(id)
                     )
 
-                    if (!puedeCursar || idsAprobadas.includes(mId)) return
+                    if (
+                        !puedeCursar ||
+                        idsAprobadas.includes(mId) ||
+                        idsEnCurso.has(mId)
+                    )
+                        return
 
                     if (!agrupadas.has(mId)) {
                         agrupadas.set(mId, {
