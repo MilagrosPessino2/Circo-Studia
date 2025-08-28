@@ -4,6 +4,7 @@ import { getSP } from '../../../pnpjsConfig'
 import styles from './Estudiantes.module.scss'
 import { PrimaryButton, Spinner, SpinnerSize, Text } from '@fluentui/react'
 import { UserPicker, IUserInfo } from '@pnp/spfx-controls-react/lib/userPicker'
+import '@pnp/sp/sputilities'
 
 interface Props extends IEstudiantesProps {
     onEstudianteAgregado?: () => void
@@ -69,14 +70,47 @@ const Estudiantes: React.FC<Props> = ({ context, onEstudianteAgregado }) => {
                     intentos++
                 }
 
-                if (idEstudiante) {
-                    await sp.web.lists.getByTitle('AsignadoA').items.add({
-                        idEstudianteId: idEstudiante,
-                        idRolId: 2,
-                    })
-                } else {
+                if (!idEstudiante) {
                     throw new Error('No se pudo obtener el ID del estudiante.')
                 }
+
+                await sp.web.lists.getByTitle('AsignadoA').items.add({
+                    idEstudianteId: idEstudiante,
+                    idRolId: 2,
+                })
+
+                await sp.utility.sendEmail({
+                    To: [usuario.userPrincipalName],
+                    Subject: '¡Bienvenido a Circo Studia!',
+                    Body: `
+                        <p>Hola ${usuario.userPrincipalName},</p>
+                        <p>Has sido dado de alta como estudiante en <strong>Circo Studia</strong>.</p>
+                        <p>Ya podés ingresar al sistema y comenzar a usarlo.</p>
+                        
+                        <p>
+                        <a href="https://circo.sharepoint.com/sites/CircoStudia/SitePages/CollabHome.aspx#/"
+                            style="
+                            display: inline-block;
+                            padding: 10px 20px;
+                            font-size: 16px;
+                            color: white;
+                            background-color: #0078D4;
+                            text-decoration: none;
+                            border-radius: 5px;
+                            margin-top: 10px;
+                            "
+                            target="_blank"
+                        >
+                            Ingresar a Circo Studia
+                        </a>
+                        </p>
+
+                        <p>Saludos,<br />Equipo Circo Studia</p>
+                    `,
+                    AdditionalHeaders: {
+                        'content-type': 'text/html',
+                    },
+                })
             }
 
             setMensaje('✅ Estudiantes agregados correctamente.')

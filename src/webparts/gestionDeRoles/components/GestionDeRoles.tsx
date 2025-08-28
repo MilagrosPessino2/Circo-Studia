@@ -29,6 +29,9 @@ interface IAsignadoA {
 
 const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
     const sp = getSP(context)
+    const reloadTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+        null
+    )
 
     const [estudiantes, setEstudiantes] = useState<IEstudiante[]>([])
     const [roles, setRoles] = useState<IRol[]>([])
@@ -76,6 +79,35 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
             setLoading(false)
         }
     }, [sp])
+    const onEstudianteAgregado = useCallback(
+        (delay = 3000, retries = 2, interval = 1200) => {
+            // si ya hay un timer, lo reiniciamos
+            if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current)
+
+            const run = async (left: number): Promise<void> => {
+                await cargarDatos().catch(console.error)
+                if (left > 0) {
+                    // reintento por latencia eventual de SP
+                    reloadTimerRef.current = setTimeout(
+                        () => run(left - 1),
+                        interval
+                    )
+                } else {
+                    reloadTimerRef.current = null
+                }
+            }
+
+            reloadTimerRef.current = setTimeout(() => run(retries), delay)
+        },
+        [cargarDatos]
+    )
+
+    // cleanup al desmontar
+    useEffect(() => {
+        return () => {
+            if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current)
+        }
+    }, [])
 
     useEffect(() => {
         const rol = localStorage.getItem('rol')
@@ -223,7 +255,10 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
                 )}
 
                 {/* Componente embebido para alta de estudiantes */}
-                <Estudiantes context={context} />
+                <Estudiantes
+                    context={context}
+                    onEstudianteAgregado={onEstudianteAgregado}
+                />
             </div>
         </div>
     )
