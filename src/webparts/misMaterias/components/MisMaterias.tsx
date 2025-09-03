@@ -3,7 +3,7 @@ import Menu from '../../menu/components/Menu'
 import type { IMisMateriasProps } from './IMisMateriasProps'
 import { getSP } from '../../../pnpjsConfig'
 import { useEffect, useState } from 'react'
-import { Spinner } from '@fluentui/react'
+import { DefaultButton, Spinner } from '@fluentui/react'
 import styles from '../../inicio/components/Inicio.module.scss'
 import Boton from '../../../utils/boton/Boton'
 import { Dialog, DialogType, DialogFooter } from '@fluentui/react'
@@ -22,21 +22,45 @@ interface IMateria {
     bloqueada: boolean
 }
 
+type Paginated<T> = {
+  slice: T[]
+  totalPages: number
+  total: number
+  current: number
+}
+
 const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
     const sp = getSP(context)
     const [modoVista, setModoVista] = useState<'curso' | 'historial'>('curso')
     const [loading, setLoading] = useState(true)
     const [materias, setMaterias] = useState<IMateria[]>([])
-    const [correlativasInversas, setCorrelativasInversas] = useState<
-        Record<number, number[]>
-    >({})
+    const [correlativasInversas, setCorrelativasInversas] = useState<Record<number, number[]>>({})
     const [mostrarDialogo, setMostrarDialogo] = useState(false)
-    const [materiaAEliminar, setMateriaAEliminar] = useState<IMateria | null>(
-        null
-    )
-    const [confirmarCallback, setConfirmarCallback] = useState<() => void>(
-        () => () => {}
-    )
+    const [materiaAEliminar, setMateriaAEliminar] = useState<IMateria | null>(null)
+    const [confirmarCallback, setConfirmarCallback] = useState<() => void>(() => () => { })
+    const pageSize = 10
+    const [pageByGrupo, setPageByGrupo] = useState<Record<string, number>>({})
+    useEffect(() => {
+        setPageByGrupo({})
+    }, [modoVista, materias])
+    const getPage = (grupoKey: string): number => pageByGrupo[grupoKey] ?? 1
+    const setPage = (grupoKey: string, page: number): void => {
+    setPageByGrupo(prev => ({ ...prev, [grupoKey]: page }))
+}
+
+    const paginate = <T,>(items: T[], grupoKey: string): Paginated<T>=> {
+        const total = items.length
+        if (total <= pageSize) return { slice: items, totalPages: 1, total, current: 1 }
+        const current = Math.min(getPage(grupoKey), Math.ceil(total / pageSize))
+        const start = (current - 1) * pageSize
+        const end = start + pageSize
+        return {
+            slice: items.slice(start, end),
+            totalPages: Math.ceil(total / pageSize),
+            total,
+            current,
+        }
+    }
 
     /** Obtiene el ID del estudiante actual */
     const getEstudianteId = async (): Promise<number | null> => {
@@ -50,10 +74,6 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
         return est?.ID ?? null
     }
 
-    /**
-     * Elimina TODOS los registros de Estado del estudiante para una materia con condicion = 'C'
-     * (sirve para limpiar duplicados o cuando no tenemos idHistorial a mano)
-     */
     const deleteEstadoCByMateria = async (
         estudianteId: number,
         codMateriaId?: number
@@ -89,9 +109,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 .items.select('ID', 'usuario/Id')
                 .expand('usuario')()
 
-            const estudiante = estudiantes.find(
-                (e) => e.usuario?.Id === user.Id
-            )
+            const estudiante = estudiantes.find((e) => e.usuario?.Id === user.Id)
             if (!estudiante) return
 
             const cursaEnItems = await sp.web.lists
@@ -108,9 +126,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 return
             }
 
-            const filterString = ofertaIds
-                .map((id) => `Id eq ${id}`)
-                .join(' or ')
+            const filterString = ofertaIds.map((id) => `Id eq ${id}`).join(' or ')
 
             const ofertas = await sp.web.lists
                 .getByTitle('OfertaDeMaterias')
@@ -131,12 +147,8 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
 
             const datos: IMateria[] = await Promise.all(
                 cursaEnItems.map(async (item) => {
-                    const oferta = ofertas.find(
-                        (o) => o.Id === item.idOferta?.Id
-                    )
-                    const com = comisiones.find(
-                        (c) => c.ID === oferta?.codComision?.Id
-                    )
+                    const oferta = ofertas.find((o) => o.Id === item.idOferta?.Id)
+                    const com = comisiones.find((c) => c.ID === oferta?.codComision?.Id)
 
                     const codMateriaId = oferta?.codMateria?.ID
                     const estudianteId = estudiante.ID
@@ -184,20 +196,13 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 .items.select('ID', 'usuario/Id')
                 .expand('usuario')()
 
-            const estudiante = estudiantes.find(
-                (e) => e.usuario?.Id === user.Id
-            )
+            const estudiante = estudiantes.find((e) => e.usuario?.Id === user.Id)
             if (!estudiante) return
 
             const estadoItems = await sp.web.lists
                 .getByTitle('Estado')
                 .items.filter(`idEstudianteId eq ${estudiante.ID}`)
-                .select(
-                    'Id',
-                    'condicion',
-                    'codMateria/codMateria',
-                    'codMateria/nombre'
-                )
+                .select('Id', 'condicion', 'codMateria/codMateria', 'codMateria/nombre')
                 .expand('codMateria')()
 
             const datos: IMateria[] = estadoItems.map((item) => ({
@@ -211,8 +216,8 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                     item.condicion === 'A'
                         ? 'Aprobada'
                         : item.condicion === 'R'
-                        ? 'En final'
-                        : '-',
+                            ? 'En final'
+                            : '-',
                 bloqueada: false,
             }))
 
@@ -232,15 +237,11 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 await fetchMateriasHistorial()
             }
         }
-        cargarMaterias().catch((err) =>
-            console.error('Error al cargar materias:', err)
-        )
+        cargarMaterias().catch((err) => console.error('Error al cargar materias:', err))
     }, [modoVista])
 
     /** Elimina una entrada del historial (lista Estado) */
-    const eliminarMateriaHistorial = async (
-        idHistorial: number
-    ): Promise<void> => {
+    const eliminarMateriaHistorial = async (idHistorial: number): Promise<void> => {
         const materia = materias.find((m) => m.idHistorial === idHistorial)
         if (!materia) return
 
@@ -259,10 +260,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
         setCorrelativasInversas((c) => ({ ...c, [idHistorial]: [] }))
 
         try {
-            await sp.web.lists
-                .getByTitle('Estado')
-                .items.getById(idHistorial)
-                .recycle()
+            await sp.web.lists.getByTitle('Estado').items.getById(idHistorial).recycle()
             await fetchMateriasHistorial()
         } catch (error: unknown) {
             if (
@@ -277,10 +275,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
         }
     }
 
-    const confirmarEliminacion = (
-        materia: IMateria,
-        onConfirmar: () => void
-    ): void => {
+    const confirmarEliminacion = (materia: IMateria, onConfirmar: () => void): void => {
         setMateriaAEliminar(materia)
         setConfirmarCallback(() => onConfirmar)
         setMostrarDialogo(true)
@@ -291,10 +286,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
      * 1) Borra TODOS los Estado=C de esa materia para el estudiante (limpia duplicados)
      * 2) Borra el registro en CursaEn
      */
-    const eliminarMateriaCurso = async (
-        idCurso: number,
-        _idHistorial?: number
-    ): Promise<void> => {
+    const eliminarMateriaCurso = async (idCurso: number, _idHistorial?: number): Promise<void> => {
         try {
             const estudianteId = await getEstudianteId()
             if (!estudianteId) throw new Error('Estudiante no encontrado')
@@ -304,17 +296,11 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
             await deleteEstadoCByMateria(estudianteId, materia?.codMateriaId)
 
             // Luego eliminamos el registro de CursaEn
-            await sp.web.lists
-                .getByTitle('CursaEn')
-                .items.getById(idCurso)
-                .recycle()
+            await sp.web.lists.getByTitle('CursaEn').items.getById(idCurso).recycle()
 
             await fetchMateriasCursando()
         } catch (error) {
-            console.error(
-                'Error eliminando materia de CursaEn y Estado:',
-                error
-            )
+            console.error('Error eliminando materia de CursaEn y Estado:', error)
         }
     }
 
@@ -323,70 +309,50 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
      * y luego borra CursaEn. En "historial" borra directamente de Estado.
      */
     const eliminarMaterias = async (estadoAEliminar: string): Promise<void> => {
-        const materiasAEliminar = materias.filter(
-            (m) => m.estado === estadoAEliminar
-        )
+        const materiasAEliminar = materias.filter((m) => m.estado === estadoAEliminar)
 
         if (materiasAEliminar.length === 0) {
-            alert(
-                `No hay materias en estado "${estadoAEliminar}" para eliminar.`
-            )
+            alert(`No hay materias en estado "${estadoAEliminar}" para eliminar.`)
             return
         }
 
-        confirmarEliminacion(
-            { nombre: `${materiasAEliminar.length} materias` } as IMateria,
-            async () => {
-                try {
-                    if (modoVista === 'historial') {
-                        // En historial: borrar elementos de Estado
-                        await Promise.all(
-                            materiasAEliminar
-                                .filter((m) => m.idHistorial)
-                                .map((m) =>
-                                    sp.web.lists
-                                        .getByTitle('Estado')
-                                        .items.getById(m.idHistorial!)
-                                        .recycle()
-                                )
-                        )
-                        await fetchMateriasHistorial()
-                    } else {
-                        // En curso: primero limpiar TODOS los Estado=C por materia, luego borrar CursaEn
-                        const estudianteId = await getEstudianteId()
-                        if (!estudianteId)
-                            throw new Error('Estudiante no encontrado')
+        confirmarEliminacion({ nombre: `${materiasAEliminar.length} materias` } as IMateria, async () => {
+            try {
+                if (modoVista === 'historial') {
+                    // En historial: borrar elementos de Estado
+                    await Promise.all(
+                        materiasAEliminar
+                            .filter((m) => m.idHistorial)
+                            .map((m) => sp.web.lists.getByTitle('Estado').items.getById(m.idHistorial!).recycle())
+                    )
+                    await fetchMateriasHistorial()
+                } else {
+                    // En curso: primero limpiar TODOS los Estado=C por materia, luego borrar CursaEn
+                    const estudianteId = await getEstudianteId()
+                    if (!estudianteId) throw new Error('Estudiante no encontrado')
 
-                        for (const m of materiasAEliminar) {
-                            await deleteEstadoCByMateria(
-                                estudianteId,
-                                m.codMateriaId
-                            )
-                            if (m.idCurso) {
-                                await sp.web.lists
-                                    .getByTitle('CursaEn')
-                                    .items.getById(m.idCurso)
-                                    .recycle()
-                            }
+                    for (const m of materiasAEliminar) {
+                        await deleteEstadoCByMateria(estudianteId, m.codMateriaId)
+                        if (m.idCurso) {
+                            await sp.web.lists.getByTitle('CursaEn').items.getById(m.idCurso).recycle()
                         }
-                        await fetchMateriasCursando()
                     }
-                } catch (error) {
-                    console.error('Error eliminando materias:', error)
+                    await fetchMateriasCursando()
                 }
+            } catch (error) {
+                console.error('Error eliminando materias:', error)
             }
-        )
+        })
     }
 
     const materiasAgrupadas =
         modoVista === 'historial'
             ? {
-                  Aprobadas: materias.filter((m) => m.estado === 'Aprobada'),
-                  EnFinal: materias.filter((m) => m.estado === 'En final'),
-              }
+                Aprobadas: materias.filter((m) => m.estado === 'Aprobada'),
+                EnFinal: materias.filter((m) => m.estado === 'En final'),
+            }
             : { EnCurso: materias }
 
-    // ...resto del componente (JSX/handlers de diálogo/etc.)
     return (
         <div
             style={{
@@ -399,18 +365,14 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
             <div style={{ padding: 24 }}>
                 <div className={styles.vistaHeader}>
                     <button
-                        className={`${styles.tabButton} ${
-                            modoVista === 'curso' ? styles.activo : ''
-                        }`}
+                        className={`${styles.tabButton} ${modoVista === 'curso' ? styles.activo : ''}`}
                         onClick={() => setModoVista('curso')}
                     >
                         Materias en curso
                     </button>
 
                     <button
-                        className={`${styles.tabButton} ${
-                            modoVista === 'historial' ? styles.activo : ''
-                        }`}
+                        className={`${styles.tabButton} ${modoVista === 'historial' ? styles.activo : ''}`}
                         onClick={() => setModoVista('historial')}
                     >
                         Historial académico
@@ -418,19 +380,16 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                 </div>
 
                 <h2 className={styles.titulo}>
-                    {modoVista === 'curso'
-                        ? 'Materias en curso'
-                        : 'Historial de materias'}
+                    {modoVista === 'curso' ? 'Materias en curso' : 'Historial de materias'}
                 </h2>
+
                 {modoVista === 'historial' && (
                     <div style={{ marginBottom: 16 }}>
                         <p>
-                            <strong>Total aprobadas:</strong>{' '}
-                            {materiasAgrupadas.Aprobadas?.length ?? 0}
+                            <strong>Total aprobadas:</strong> {materiasAgrupadas.Aprobadas?.length ?? 0}
                         </p>
                         <p>
-                            <strong>Total regularizadas:</strong>{' '}
-                            {materiasAgrupadas.EnFinal?.length ?? 0}
+                            <strong>Total regularizadas:</strong> {materiasAgrupadas.EnFinal?.length ?? 0}
                         </p>
                     </div>
                 )}
@@ -439,11 +398,19 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                     <Spinner label='Cargando materias...' />
                 ) : (
                     <>
-                        {Object.entries(materiasAgrupadas).map(
-                            ([grupo, lista]) => (
+                        {Object.entries(materiasAgrupadas).map(([grupo, lista]) => {
+                            const grupoKey = `${modoVista}-${grupo}`
+                            const { slice, totalPages, total, current } = paginate(lista, grupoKey)
+
+                            return (
                                 <div key={grupo} style={{ marginBottom: 24 }}>
                                     {modoVista === 'historial' && (
-                                        <h3>{grupo}</h3>
+                                        <div style={{ display: 'flex', alignItems: 'baseline', gap: 12 }}>
+                                            <h3 style={{ margin: 0 }}>{grupo}</h3>
+                                            <small style={{ opacity: 0.8 }}>
+                                                {total} item{total !== 1 ? 's' : ''}
+                                            </small>
+                                        </div>
                                     )}
 
                                     <table className={styles.tabla}>
@@ -452,54 +419,38 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                                                 <th>Código</th>
                                                 <th>Materia</th>
                                                 <th>Estado</th>
-                                                {modoVista === 'curso' && (
-                                                    <th>Comision</th>
-                                                )}
-                                                {modoVista === 'curso' && (
-                                                    <th>Horario</th>
-                                                )}
+                                                {modoVista === 'curso' && <th>Comision</th>}
+                                                {modoVista === 'curso' && <th>Horario</th>}
+
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {lista.map((m: IMateria) => (
+                                            {slice.map((m: IMateria) => (
                                                 <tr key={m.id}>
                                                     <td>{m.codigo}</td>
                                                     <td>{m.nombre}</td>
                                                     <td>{m.estado}</td>
                                                     {modoVista === 'curso' && (
                                                         <>
-                                                            <td>
-                                                                {m.comision}
-                                                            </td>
+                                                            <td>{m.comision}</td>
                                                             <td>{m.horario}</td>
                                                         </>
                                                     )}
 
                                                     <td>
-                                                        {modoVista ===
-                                                        'curso' ? (
+                                                        {modoVista === 'curso' ? (
                                                             <button
                                                                 onClick={async () => {
                                                                     try {
-                                                                        confirmarEliminacion(
-                                                                            m,
-                                                                            async () => {
-                                                                                await eliminarMateriaCurso(
-                                                                                    m.idCurso!,
-                                                                                    m.idHistorial
-                                                                                )
-                                                                            }
-                                                                        )
+                                                                        confirmarEliminacion(m, async () => {
+                                                                            await eliminarMateriaCurso(m.idCurso!, m.idHistorial)
+                                                                        })
                                                                     } catch (error) {
-                                                                        console.error(
-                                                                            'Error al eliminar:',
-                                                                            error
-                                                                        )
+                                                                        console.error('Error al eliminar:', error)
                                                                     }
                                                                 }}
                                                                 style={{
-                                                                    background:
-                                                                        'transparent',
+                                                                    background: 'transparent',
                                                                     border: 'none',
                                                                     cursor: 'pointer',
                                                                     fontSize: 18,
@@ -525,24 +476,15 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                                                                 <button
                                                                     onClick={async () => {
                                                                         try {
-                                                                            confirmarEliminacion(
-                                                                                m,
-                                                                                async () => {
-                                                                                    await eliminarMateriaHistorial(
-                                                                                        m.idHistorial!
-                                                                                    )
-                                                                                }
-                                                                            )
+                                                                            confirmarEliminacion(m, async () => {
+                                                                                await eliminarMateriaHistorial(m.idHistorial!)
+                                                                            })
                                                                         } catch (error) {
-                                                                            console.error(
-                                                                                'Error al eliminar del historial:',
-                                                                                error
-                                                                            )
+                                                                            console.error('Error al eliminar del historial:', error)
                                                                         }
                                                                     }}
                                                                     style={{
-                                                                        background:
-                                                                            'transparent',
+                                                                        background: 'transparent',
                                                                         border: 'none',
                                                                         cursor: 'pointer',
                                                                         fontSize: 18,
@@ -569,31 +511,46 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                                             ))}
                                         </tbody>
                                     </table>
+
+                                    {/* Controles de paginación: solo si hay más de 10 */}
+                                    {totalPages > 1 && (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 12 }}>
+
+
+                                            <DefaultButton
+                                                text='Anterior'
+                                                disabled={current === 1}
+                                                onClick={() => setPage(grupoKey, Math.max(1, current - 1))}
+                                                style={{ padding: '6px 10px' }}
+                                            />
+
+                                            <span style={{ opacity: 0.85 }}>
+                                                Página {current} de {totalPages}
+                                            </span>
+                                            
+                                             <DefaultButton
+                                                text='Siguiente'
+                                                disabled={current === totalPages}
+                                                 onClick={() => setPage(grupoKey, Math.min(totalPages, current + 1))}
+                                                style={{ padding: '6px 10px' }}
+                                            />
+                                            
+                                        </div>
+                                    )}
                                 </div>
                             )
-                        )}
+                        })}
 
                         <div style={{ marginTop: 20 }}>
                             <Boton
                                 style={{ marginRight: 20 }}
-                                to={
-                                    modoVista === 'curso'
-                                        ? '/formularioCursando'
-                                        : '/formulario'
-                                }
+                                to={modoVista === 'curso' ? '/formularioCursando' : '/formulario'}
                             >
-                                {' '}
                                 Añadir
                             </Boton>
                             {modoVista === 'curso' &&
-                                materias.some(
-                                    (m) => m.estado === 'En curso'
-                                ) && (
-                                    <Boton
-                                        onClick={() =>
-                                            eliminarMaterias('En curso')
-                                        }
-                                    >
+                                materias.some((m) => m.estado === 'En curso') && (
+                                    <Boton onClick={() => eliminarMaterias('En curso')}>
                                         Eliminar todas
                                     </Boton>
                                 )}
@@ -601,6 +558,7 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                     </>
                 )}
             </div>
+
             <Dialog
                 hidden={!mostrarDialogo}
                 onDismiss={() => setMostrarDialogo(false)}
@@ -609,11 +567,10 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                     title: 'Confirmar eliminación',
                     closeButtonAriaLabel: 'Cerrar',
                     subText: materiaAEliminar
-                        ? `¿Estás seguro que querés eliminar ${
-                              materiaAEliminar.nombre.includes('materias')
-                                  ? materiaAEliminar.nombre
-                                  : `la materia "${materiaAEliminar.nombre}"`
-                          }?`
+                        ? `¿Estás seguro que querés eliminar ${materiaAEliminar.nombre.includes('materias')
+                            ? materiaAEliminar.nombre
+                            : `la materia "${materiaAEliminar.nombre}"`
+                        }?`
                         : '',
                 }}
             >
@@ -624,11 +581,11 @@ const MisMaterias: React.FC<IMisMateriasProps> = ({ context }) => {
                             await confirmarCallback()
                         }}
                     >
-                        Sí, eliminar{' '}
+                        Sí, eliminar
                     </Boton>
 
                     <Boton onClick={() => setMostrarDialogo(false)}>
-                        Cancelar{' '}
+                        Cancelar
                     </Boton>
                 </DialogFooter>
             </Dialog>
