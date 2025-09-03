@@ -50,6 +50,6 @@
     "gulp": "4.0.2",
     "spfx-fast-serve": "^4.0.2",
     "spfx-fast-serve-helpers": "~1.21.0",
-    "typescript": "~5.3.3"
+    "typescript": "^5.3.3"
   }
 }

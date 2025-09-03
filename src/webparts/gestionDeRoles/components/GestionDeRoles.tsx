@@ -1,50 +1,50 @@
-import * as React from 'react'
-import { useEffect, useState, useCallback } from 'react'
-import { Dropdown, Spinner, TextField } from '@fluentui/react'
-import { getSP } from '../../../pnpjsConfig'
-import styles from './GestionDeRoles.module.scss'
-import type { IGestionDeRolesProps } from './IGestionDeRolesProps'
-import Menu from '../../menu/components/Menu'
-import Estudiantes from '../../estudiantes/components/Estudiantes'
+import * as React from 'react';
+import { useEffect, useState, useCallback } from 'react';
+import { Dropdown, Spinner, TextField } from '@fluentui/react';
+import { getSP } from '../../../pnpjsConfig';
+import styles from './GestionDeRoles.module.scss';
+import type { IGestionDeRolesProps } from './IGestionDeRolesProps';
+import Menu from '../../menu/components/Menu';
+import Estudiantes from '../../estudiantes/components/Estudiantes';
 
 interface IEstudiante {
-    Id: number
+    Id: number;
     usuario: {
-        Title: string
-        EMail: string
-        Name: string
-    }
+        Title: string;
+        EMail: string;
+        Name: string;
+    };
 }
 
 interface IRol {
-    Id: number
-    nombreRol: string
+    Id: number;
+    nombreRol: string;
 }
 
 interface IAsignadoA {
-    Id: number
-    idEstudiante: { Id: number }
-    idRol: { Id: number }
+    Id: number;
+    idEstudiante: { Id: number };
+    idRol: { Id: number };
 }
 
 const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
-    const sp = getSP(context)
+    const sp = getSP(context);
     const reloadTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
         null
-    )
+    );
 
-    const [estudiantes, setEstudiantes] = useState<IEstudiante[]>([])
-    const [roles, setRoles] = useState<IRol[]>([])
-    const [asignaciones, setAsignaciones] = useState<IAsignadoA[]>([])
-    const [loading, setLoading] = useState(true)
-    const [usuarioActual, setUsuarioActual] = useState<string>('')
-    const [filtro, setFiltro] = useState<string>('')
+    const [estudiantes, setEstudiantes] = useState<IEstudiante[]>([]);
+    const [roles, setRoles] = useState<IRol[]>([]);
+    const [asignaciones, setAsignaciones] = useState<IAsignadoA[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [usuarioActual, setUsuarioActual] = useState<string>('');
+    const [filtro, setFiltro] = useState<string>('');
 
     const cargarDatos = useCallback(async () => {
-        setLoading(true)
+        setLoading(true);
         try {
-            const user = await sp.web.currentUser()
-            setUsuarioActual(user.Email.toLowerCase())
+            const user = await sp.web.currentUser();
+            setUsuarioActual(user.Email.toLowerCase());
 
             const [est, rolesList, asignados] = await Promise.all([
                 sp.web.lists
@@ -68,57 +68,57 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
                     .items.select('Id', 'idEstudiante/Id', 'idRol/Id')
                     .expand('idEstudiante', 'idRol')
                     .top(4999)(),
-            ])
+            ]);
 
-            setEstudiantes(est)
-            setRoles(rolesList)
-            setAsignaciones(asignados)
+            setEstudiantes(est);
+            setRoles(rolesList);
+            setAsignaciones(asignados);
         } catch (err) {
-            console.error('❌ Error cargando datos:', err)
+            console.error('❌ Error cargando datos:', err);
         } finally {
-            setLoading(false)
+            setLoading(false);
         }
-    }, [sp])
+    }, [sp]);
     const onEstudianteAgregado = useCallback(
-        (delay = 3000, retries = 2, interval = 1200) => {
+        (delay = 3000, retries = 1, interval = 1200) => {
             // si ya hay un timer, lo reiniciamos
-            if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current)
+            if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
 
             const run = async (left: number): Promise<void> => {
-                await cargarDatos().catch(console.error)
+                await cargarDatos().catch(console.error);
                 if (left > 0) {
                     // reintento por latencia eventual de SP
                     reloadTimerRef.current = setTimeout(
                         () => run(left - 1),
                         interval
-                    )
+                    );
                 } else {
-                    reloadTimerRef.current = null
+                    reloadTimerRef.current = null;
                 }
-            }
+            };
 
-            reloadTimerRef.current = setTimeout(() => run(retries), delay)
+            reloadTimerRef.current = setTimeout(() => run(retries), delay);
         },
         [cargarDatos]
-    )
+    );
 
     // cleanup al desmontar
     useEffect(() => {
         return () => {
-            if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current)
-        }
-    }, [])
+            if (reloadTimerRef.current) clearTimeout(reloadTimerRef.current);
+        };
+    }, []);
 
     useEffect(() => {
-        const rol = localStorage.getItem('rol')
+        const rol = localStorage.getItem('rol');
         if (rol !== '1') {
-            window.location.href = '/inicio'
+            window.location.href = '/inicio';
         }
-    }, [])
+    }, []);
 
     useEffect(() => {
-        cargarDatos().catch(console.error)
-    }, [cargarDatos])
+        cargarDatos().catch(console.error);
+    }, [cargarDatos]);
 
     const handleRolChange = async (
         estudianteId: number,
@@ -127,13 +127,13 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
         try {
             const existente = asignaciones.find(
                 (a) => a.idEstudiante?.Id === estudianteId
-            )
+            );
 
             if (existente) {
                 await sp.web.lists
                     .getByTitle('AsignadoA')
                     .items.getById(existente.Id)
-                    .update({ idRolId: nuevoRolId })
+                    .update({ idRolId: nuevoRolId });
 
                 setAsignaciones((prev) =>
                     prev.map((a) =>
@@ -141,14 +141,14 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
                             ? { ...a, idRol: { Id: nuevoRolId } }
                             : a
                     )
-                )
+                );
             } else {
                 const nuevo = await sp.web.lists
                     .getByTitle('AsignadoA')
                     .items.add({
                         idEstudianteId: estudianteId,
                         idRolId: nuevoRolId,
-                    })
+                    });
 
                 setAsignaciones((prev) => [
                     ...prev,
@@ -157,12 +157,12 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
                         idEstudiante: { Id: estudianteId },
                         idRol: { Id: nuevoRolId },
                     },
-                ])
+                ]);
             }
         } catch (err) {
-            console.error('❌ Error actualizando rol:', err)
+            console.error('❌ Error actualizando rol:', err);
         }
-    }
+    };
 
     const estudiantesFiltrados = estudiantes
         .filter((e) => e.usuario?.EMail?.toLowerCase() !== usuarioActual)
@@ -172,7 +172,7 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
                     filtro.toLowerCase()
                 ) ||
                 e.usuario?.EMail?.toLowerCase().includes(filtro.toLowerCase())
-        )
+        );
 
     return (
         <div className={styles.layout}>
@@ -205,13 +205,13 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
                                     ? `/_layouts/15/userphoto.aspx?accountname=${encodeURIComponent(
                                           e.usuario.Name
                                       )}&size=S`
-                                    : 'https://static.thenounproject.com/png/5034901-200.png'
+                                    : 'https://static.thenounproject.com/png/5034901-200.png';
 
                                 const asignacion = asignaciones.find(
                                     (a) => a.idEstudiante?.Id === e.Id
-                                )
+                                );
 
-                                const rolAsignado = asignacion?.idRol?.Id ?? ''
+                                const rolAsignado = asignacion?.idRol?.Id ?? '';
 
                                 return (
                                     <tr key={e.Id}>
@@ -248,7 +248,7 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
                                             />
                                         </td>
                                     </tr>
-                                )
+                                );
                             })}
                         </tbody>
                     </table>
@@ -261,7 +261,7 @@ const GestionDeRoles: React.FC<IGestionDeRolesProps> = ({ context }) => {
                 />
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default GestionDeRoles
+export default GestionDeRoles;
